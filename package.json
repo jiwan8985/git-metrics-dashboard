@@ -3,6 +3,29 @@
   "displayName": "Git Metrics Dashboard",
   "description": "개발자별 Git 커밋 통계 및 메트릭 대시보드",
   "version": "0.0.1",
+  "publisher": "jiwan-dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jiwan8985/git-metrics-dashboard.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jiwan8985/git-metrics-dashboard/issues"
+  },
+  "homepage": "https://github.com/jiwan8985/git-metrics-dashboard#readme",
+  "author": {
+    "name": "jiwan",
+    "email": "jiwan8985@gmail.com"
+  },
+  "license": "MIT",
+  "icon": "images/icon.png",
+  "keywords": [
+    "git",
+    "metrics",
+    "dashboard",
+    "statistics", 
+    "commits",
+    "analytics"
+  ],
   "engines": {
     "vscode": "^1.102.0"
   },
@@ -66,7 +89,9 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "package": "vsce package",
+    "publish": "vsce publish"
   },
   "devDependencies": {
     "@types/vscode": "^1.102.0",
@@ -77,6 +102,7 @@
     "eslint": "^9.25.1",
     "typescript": "^5.8.3",
     "@vscode/test-cli": "^0.0.11",
-    "@vscode/test-electron": "^2.5.2"
+    "@vscode/test-electron": "^2.5.2",
+    "@vscode/vsce": "^2.19.0"
   }
 }
