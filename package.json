@@ -1,0 +1,82 @@
+{
+  "name": "git-metrics-dashboard",
+  "displayName": "Git Metrics Dashboard",
+  "description": "개발자별 Git 커밋 통계 및 메트릭 대시보드",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.102.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "gitMetrics.showDashboard",
+        "title": "📊 Git Metrics Dashboard 열기",
+        "category": "Git Metrics"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "gitMetrics.showDashboard",
+          "when": "workspaceFolderCount > 0"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "gitMetrics.showDashboard",
+          "when": "view == explorer",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Git Metrics Dashboard",
+      "properties": {
+        "gitMetrics.defaultPeriod": {
+          "type": "number",
+          "default": 30,
+          "description": "기본 분석 기간 (일)"
+        },
+        "gitMetrics.autoRefresh": {
+          "type": "boolean",
+          "default": false,
+          "description": "자동 새로고침 활성화"
+        },
+        "gitMetrics.showAuthorStats": {
+          "type": "boolean", 
+          "default": true,
+          "description": "작성자별 통계 표시"
+        },
+        "gitMetrics.maxTopFiles": {
+          "type": "number",
+          "default": 10,
+          "description": "상위 파일 표시 개수"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.102.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@typescript-eslint/eslint-plugin": "^8.31.1",
+    "@typescript-eslint/parser": "^8.31.1",
+    "eslint": "^9.25.1",
+    "typescript": "^5.8.3",
+    "@vscode/test-cli": "^0.0.11",
+    "@vscode/test-electron": "^2.5.2"
+  }
+}
