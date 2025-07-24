@@ -9,6 +9,13 @@
 
 ## ✨ 주요 기능 (Key Features)
 
+![cap1](https://github.com/user-attachments/assets/f9fb7225-a5a3-4df4-bb27-2097eff6ca35)
+![cap2](https://github.com/user-attachments/assets/fa5a69c6-c9e3-4952-9b31-4a43d782f62e)
+![cap3](https://github.com/user-attachments/assets/05ba7535-058c-46c3-9304-017f78e2f39b)
+![cap4](https://github.com/user-attachments/assets/4837819b-40f5-4536-b2cb-946208faa1bc)
+![cap5](https://github.com/user-attachments/assets/092b7286-5f57-47e8-ad34-8948e21c0a58)
+![cap6](https://github.com/user-attachments/assets/1f3cff03-7434-43ce-b35b-819e33986e73)
+
 ### 📈 **일별 커밋 추이 분석**
 - 최근 7일/30일/90일 커밋 트렌드를 라인 차트로 시각화
 - 일평균 커밋 수, 최고 기록 등 핵심 메트릭 제공
