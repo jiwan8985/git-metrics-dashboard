@@ -44,7 +44,7 @@
 ### 1. 직접 설치 (Direct Installation)
 ```bash
 # 저장소 클론
-git clone https://github.com/your-username/git-metrics-dashboard.git
+git clone https://github.com/jiwan8985/git-metrics-dashboard.git
 cd git-metrics-dashboard
 
 # 의존성 설치
@@ -193,7 +193,7 @@ vsce package
 
 ## 🐛 버그 리포트 (Bug Reports)
 
-버그를 발견하셨나요? [Issues](https://github.com/your-username/git-metrics-dashboard/issues)에서 다음 정보와 함께 제보해주세요:
+버그를 발견하셨나요? [Issues](https://github.com/jiwan8985/git-metrics-dashboard/issues)에서 다음 정보와 함께 제보해주세요:
 
 - VSCode 버전
 - Extension 버전
@@ -235,6 +235,6 @@ vsce package
 
 Made with ❤️ by developers, for developers
 
-[🐛 버그 리포트](https://github.com/your-username/git-metrics-dashboard/issues) | [💡 기능 제안](https://github.com/your-username/git-metrics-dashboard/issues) | [📖 문서](https://github.com/your-username/git-metrics-dashboard/wiki)
+[🐛 버그 리포트](https://github.com/jiwan8985/git-metrics-dashboard/issues) | [💡 기능 제안](https://github.com/jiwan8985/git-metrics-dashboard/issues) | [📖 문서](https://github.com/jiwan8985/git-metrics-dashboard/wiki)
 
 </div>
