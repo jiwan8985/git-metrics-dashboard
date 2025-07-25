@@ -511,74 +511,6 @@ export class DashboardProvider {
             min-width: 35px;
             text-align: right;
         }
-        
-        /* 시간대별 분석 스타일 */
-        .heatmap-container {
-            width: 100%;
-            height: 220px;
-            margin: 10px 0;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .heatmap-container canvas {
-            width: 100% !important;
-            height: 100% !important;
-        }
-        
-        .insight-list {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        
-        .insight-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            padding: 12px;
-            background: var(--vscode-list-hoverBackground);
-            border-radius: 8px;
-            transition: all 0.2s ease;
-        }
-        
-        .insight-item:hover {
-            background: var(--vscode-list-activeSelectionBackground);
-            transform: translateX(4px);
-        }
-        
-        .insight-icon {
-            font-size: 24px;
-            flex-shrink: 0;
-            width: 32px;
-            text-align: center;
-        }
-        
-        .insight-content {
-            flex: 1;
-        }
-        
-        .insight-title {
-            font-weight: 600;
-            color: var(--vscode-editor-foreground);
-            margin-bottom: 4px;
-            font-size: 14px;
-        }
-        
-        .insight-value {
-            font-weight: bold;
-            color: var(--vscode-terminal-ansiGreen);
-            margin-bottom: 2px;
-            font-size: 16px;
-        }
-        
-        .insight-desc {
-            font-size: 11px;
-            color: var(--vscode-descriptionForeground);
-            opacity: 0.8;
-        }
     </style>
 </head>
 <body>
@@ -634,30 +566,6 @@ export class DashboardProvider {
             <div class="metric-value stats-highlight" style="font-size: 24px;">${metrics.topFileType}</div>
             <div class="metric-subtitle">${metrics.fileTypeStats[0]?.commits || 0} commits</div>
         </div>
-        
-        <div class="metric-card">
-            <div class="metric-title">⏰ 피크 시간</div>
-            <div class="metric-value stats-highlight" style="font-size: 24px;">${metrics.timeAnalysis.peakHour}</div>
-            <div class="metric-subtitle">가장 활발한 시간대</div>
-        </div>
-        
-        <div class="metric-card">
-            <div class="metric-title">📅 피크 요일</div>
-            <div class="metric-value stats-highlight" style="font-size: 24px;">${metrics.timeAnalysis.peakDay}</div>
-            <div class="metric-subtitle">가장 활발한 요일</div>
-        </div>
-        
-        <div class="metric-card">
-            <div class="metric-title">🌙 야간 작업</div>
-            <div class="metric-value stats-highlight">${metrics.timeAnalysis.nightPercentage}%</div>
-            <div class="metric-subtitle">${metrics.timeAnalysis.nightCommits} commits (22-06시)</div>
-        </div>
-        
-        <div class="metric-card">
-            <div class="metric-title">🏖️ 주말 작업</div>
-            <div class="metric-value stats-highlight">${metrics.timeAnalysis.weekendPercentage}%</div>
-            <div class="metric-subtitle">${metrics.timeAnalysis.weekendCommits} commits (토일)</div>
-        </div>
     </div>
 
     <div class="metric-card large-chart">
@@ -694,37 +602,6 @@ export class DashboardProvider {
                 <div class="chart-container" style="height: 300px;">
                     <canvas id="categoryChart"></canvas>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 시간대별 분석 섹션 -->
-    <div class="metric-card large-chart">
-        <div class="metric-title">⏰ 시간대별 활동 패턴 분석</div>
-        <div class="dashboard-grid" style="margin-bottom: 20px;">
-            <div class="metric-card" style="margin: 0;">
-                <div class="metric-title">🕐 24시간 활동 분포</div>
-                <div class="chart-container" style="height: 300px;">
-                    <canvas id="hourlyChart"></canvas>
-                </div>
-            </div>
-            <div class="metric-card" style="margin: 0;">
-                <div class="metric-title">📅 요일별 활동 패턴</div>
-                <div class="chart-container" style="height: 300px;">
-                    <canvas id="weeklyChart"></canvas>
-                </div>
-            </div>
-        </div>
-        
-        <div class="metric-card" style="margin: 20px 0 0 0;">
-            <div class="metric-title">🔥 활동 히트맵 (요일 × 시간)</div>
-            <div class="heatmap-info">
-                <div style="font-size: 12px; color: var(--vscode-descriptionForeground); margin-bottom: 10px;">
-                    색이 진할수록 해당 시간대에 더 많은 커밋이 있었습니다
-                </div>
-            </div>
-            <div class="heatmap-container">
-                <canvas id="heatmapChart" style="height: 200px;"></canvas>
             </div>
         </div>
     </div>
@@ -789,56 +666,6 @@ export class DashboardProvider {
                 }
             </div>
         </div>
-
-        <div class="metric-card">
-            <div class="metric-title">⏰ 시간대별 인사이트</div>
-            <div class="insight-list">
-                <div class="insight-item">
-                    <div class="insight-icon">🏢</div>
-                    <div class="insight-content">
-                        <div class="insight-title">핵심 근무시간</div>
-                        <div class="insight-value">${this.formatWorkingHours(metrics.timeAnalysis.workingHours)}</div>
-                        <div class="insight-desc">가장 활발한 8시간 연속 구간</div>
-                    </div>
-                </div>
-                
-                <div class="insight-item">
-                    <div class="insight-icon">🌙</div>
-                    <div class="insight-content">
-                        <div class="insight-title">야간 작업 패턴</div>
-                        <div class="insight-value">${metrics.timeAnalysis.nightPercentage}% (${metrics.timeAnalysis.nightCommits}개)</div>
-                        <div class="insight-desc">22시-06시 커밋 비율</div>
-                    </div>
-                </div>
-                
-                <div class="insight-item">
-                    <div class="insight-icon">🏖️</div>
-                    <div class="insight-content">
-                        <div class="insight-title">주말 활동</div>
-                        <div class="insight-value">${metrics.timeAnalysis.weekendPercentage}% (${metrics.timeAnalysis.weekendCommits}개)</div>
-                        <div class="insight-desc">토요일, 일요일 커밋</div>
-                    </div>
-                </div>
-                
-                <div class="insight-item">
-                    <div class="insight-icon">💼</div>
-                    <div class="insight-content">
-                        <div class="insight-title">평일 작업</div>
-                        <div class="insight-value">${Math.round((metrics.timeAnalysis.workdayCommits / metrics.totalCommits) * 100)}% (${metrics.timeAnalysis.workdayCommits}개)</div>
-                        <div class="insight-desc">월-금 정규 근무일</div>
-                    </div>
-                </div>
-                
-                <div class="insight-item">
-                    <div class="insight-icon">📊</div>
-                    <div class="insight-content">
-                        <div class="insight-title">작업 패턴</div>
-                        <div class="insight-value">${this.getWorkPattern(metrics.timeAnalysis)}</div>
-                        <div class="insight-desc">주요 작업 스타일 분석</div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <div class="dashboard-grid">
@@ -883,20 +710,6 @@ export class DashboardProvider {
     <script>
         const vscode = acquireVsCodeApi();
         
-        // 테마 색상 감지 및 설정
-        const isDarkTheme = document.body.classList.contains('vscode-dark') || 
-                           getComputedStyle(document.body).backgroundColor.includes('30, 30, 30') ||
-                           window.matchMedia('(prefers-color-scheme: dark)').matches;
-                           
-        const textColor = isDarkTheme ? '#CCCCCC' : '#333333';
-        const gridColor = isDarkTheme ? '#404040' : '#E0E0E0';
-        const borderColor = isDarkTheme ? '#555555' : '#CCCCCC';
-        
-        // Chart.js 기본 색상 설정
-        Chart.defaults.color = textColor;
-        Chart.defaults.borderColor = gridColor;
-        Chart.defaults.backgroundColor = 'rgba(0, 0, 0, 0)';
-        
         // 일별 커밋 라인 차트
         const dailyData = ${JSON.stringify(dailyCommitsData)};
         const ctx1 = document.getElementById('dailyCommitsChart').getContext('2d');
@@ -934,15 +747,13 @@ export class DashboardProvider {
                         display: false
                     },
                     tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
                         titleColor: '#ffffff',
                         bodyColor: '#ffffff',
                         borderColor: '#007ACC',
                         borderWidth: 2,
                         cornerRadius: 8,
                         displayColors: false,
-                        titleFont: { size: 14, weight: 'bold' },
-                        bodyFont: { size: 13 },
                         callbacks: {
                             title: function(tooltipItems) {
                                 return tooltipItems[0].label;
@@ -956,37 +767,29 @@ export class DashboardProvider {
                 scales: {
                     x: {
                         ticks: {
-                            color: textColor,
+                            color: 'var(--vscode-editor-foreground)',
                             maxTicksLimit: 15,
                             font: {
-                                size: 12,
-                                weight: '500'
+                                size: 12
                             }
                         },
                         grid: {
-                            color: gridColor,
+                            color: 'var(--vscode-panel-border)',
                             drawBorder: false
-                        },
-                        border: {
-                            color: borderColor
                         }
                     },
                     y: {
                         ticks: {
-                            color: textColor,
+                            color: 'var(--vscode-editor-foreground)',
                             beginAtZero: true,
                             precision: 0,
                             font: {
-                                size: 12,
-                                weight: '500'
+                                size: 12
                             }
                         },
                         grid: {
-                            color: gridColor,
+                            color: 'var(--vscode-panel-border)',
                             drawBorder: false
-                        },
-                        border: {
-                            color: borderColor
                         }
                     }
                 },
@@ -1018,7 +821,7 @@ export class DashboardProvider {
                             '#5F27CD', '#00D2D3'
                         ],
                         borderWidth: 3,
-                        borderColor: isDarkTheme ? '#1E1E1E' : '#FFFFFF',
+                        borderColor: 'var(--vscode-editor-background)',
                         hoverBorderWidth: 4,
                         hoverOffset: 8
                     }]
@@ -1030,23 +833,20 @@ export class DashboardProvider {
                         legend: {
                             position: 'bottom',
                             labels: {
-                                color: textColor,
+                                color: 'var(--vscode-editor-foreground)',
                                 padding: 20,
                                 usePointStyle: true,
                                 pointStyle: 'circle',
                                 font: {
-                                    size: 12,
-                                    weight: '500'
+                                    size: 12
                                 }
                             }
                         },
                         tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
                             titleColor: '#ffffff',
                             bodyColor: '#ffffff',
                             cornerRadius: 8,
-                            titleFont: { size: 14, weight: 'bold' },
-                            bodyFont: { size: 13 },
                             callbacks: {
                                 label: function(tooltipItem) {
                                     const total = tooltipItem.dataset.data.reduce((a, b) => a + b, 0);
@@ -1064,6 +864,7 @@ export class DashboardProvider {
                 }
             });
         } else {
+            // 데이터가 없을 때
             document.getElementById('fileStatsChart').parentElement.innerHTML = 
                 '<div class="empty-state"><div class="empty-icon">📊</div><div>파일 데이터가 없습니다</div></div>';
         }
@@ -1102,12 +903,10 @@ export class DashboardProvider {
                             display: false
                         },
                         tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
                             titleColor: '#ffffff',
                             bodyColor: '#ffffff',
                             cornerRadius: 8,
-                            titleFont: { size: 14, weight: 'bold' },
-                            bodyFont: { size: 13 },
                             callbacks: {
                                 title: function(tooltipItems) {
                                     return tooltipItems[0].label;
@@ -1127,35 +926,24 @@ export class DashboardProvider {
                     scales: {
                         x: {
                             ticks: {
-                                color: textColor,
+                                color: 'var(--vscode-editor-foreground)',
                                 beginAtZero: true,
-                                precision: 0,
-                                font: {
-                                    size: 12,
-                                    weight: '500'
-                                }
+                                precision: 0
                             },
                             grid: {
-                                color: gridColor,
+                                color: 'var(--vscode-panel-border)',
                                 drawBorder: false
-                            },
-                            border: {
-                                color: borderColor
                             }
                         },
                         y: {
                             ticks: {
-                                color: textColor,
+                                color: 'var(--vscode-editor-foreground)',
                                 font: {
-                                    size: 12,
-                                    weight: '500'
+                                    size: 12
                                 }
                             },
                             grid: {
                                 display: false
-                            },
-                            border: {
-                                color: borderColor
                             }
                         }
                     },
@@ -1172,7 +960,7 @@ export class DashboardProvider {
             new Chart(ctx4, {
                 type: 'pie',
                 data: {
-                    labels: authorData.labels.slice(0, 8),
+                    labels: authorData.labels.slice(0, 8), // 상위 8명만
                     datasets: [{
                         data: authorData.data.slice(0, 8),
                         backgroundColor: [
@@ -1180,7 +968,7 @@ export class DashboardProvider {
                             '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4'
                         ],
                         borderWidth: 3,
-                        borderColor: isDarkTheme ? '#1E1E1E' : '#FFFFFF',
+                        borderColor: 'var(--vscode-editor-background)',
                         hoverBorderWidth: 4,
                         hoverOffset: 12
                     }]
@@ -1192,13 +980,12 @@ export class DashboardProvider {
                         legend: {
                             position: 'bottom',
                             labels: {
-                                color: textColor,
+                                color: 'var(--vscode-editor-foreground)',
                                 padding: 15,
                                 usePointStyle: true,
                                 pointStyle: 'circle',
                                 font: {
-                                    size: 11,
-                                    weight: '500'
+                                    size: 11
                                 },
                                 generateLabels: function(chart) {
                                     const data = chart.data;
@@ -1217,12 +1004,10 @@ export class DashboardProvider {
                             }
                         },
                         tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
                             titleColor: '#ffffff',
                             bodyColor: '#ffffff',
                             cornerRadius: 8,
-                            titleFont: { size: 14, weight: 'bold' },
-                            bodyFont: { size: 13 },
                             callbacks: {
                                 label: function(tooltipItem) {
                                     const authorInfo = ${JSON.stringify(metrics.authorStats)};
@@ -1257,7 +1042,7 @@ export class DashboardProvider {
                             data: languageData.data,
                             backgroundColor: languageData.colors,
                             borderWidth: 3,
-                            borderColor: isDarkTheme ? '#1E1E1E' : '#FFFFFF',
+                            borderColor: 'var(--vscode-editor-background)',
                             hoverBorderWidth: 4,
                             hoverOffset: 10
                         }]
@@ -1269,13 +1054,12 @@ export class DashboardProvider {
                             legend: {
                                 position: 'bottom',
                                 labels: {
-                                    color: textColor,
+                                    color: 'var(--vscode-editor-foreground)',
                                     padding: 15,
                                     usePointStyle: true,
                                     pointStyle: 'circle',
                                     font: {
-                                        size: 11,
-                                        weight: '500'
+                                        size: 11
                                     }
                                 }
                             },
@@ -1284,8 +1068,6 @@ export class DashboardProvider {
                                 titleColor: '#ffffff',
                                 bodyColor: '#ffffff',
                                 cornerRadius: 8,
-                                titleFont: { size: 14, weight: 'bold' },
-                                bodyFont: { size: 13 },
                                 callbacks: {
                                     label: function(tooltipItem) {
                                         const total = tooltipItem.dataset.data.reduce((a, b) => a + b, 0);
@@ -1338,8 +1120,6 @@ export class DashboardProvider {
                                 titleColor: '#ffffff',
                                 bodyColor: '#ffffff',
                                 cornerRadius: 8,
-                                titleFont: { size: 14, weight: 'bold' },
-                                bodyFont: { size: 13 },
                                 callbacks: {
                                     label: function(tooltipItem) {
                                         return \`\${tooltipItem.label}: \${tooltipItem.parsed.y} commits\`;
@@ -1350,35 +1130,24 @@ export class DashboardProvider {
                         scales: {
                             x: {
                                 ticks: {
-                                    color: textColor,
+                                    color: 'var(--vscode-editor-foreground)',
                                     font: {
-                                        size: 11,
-                                        weight: '500'
+                                        size: 11
                                     }
                                 },
                                 grid: {
                                     display: false
-                                },
-                                border: {
-                                    color: borderColor
                                 }
                             },
                             y: {
                                 ticks: {
-                                    color: textColor,
+                                    color: 'var(--vscode-editor-foreground)',
                                     beginAtZero: true,
-                                    precision: 0,
-                                    font: {
-                                        size: 11,
-                                        weight: '500'
-                                    }
+                                    precision: 0
                                 },
                                 grid: {
-                                    color: gridColor,
+                                    color: 'var(--vscode-panel-border)',
                                     drawBorder: false
-                                },
-                                border: {
-                                    color: borderColor
                                 }
                             }
                         },
@@ -1392,199 +1161,16 @@ export class DashboardProvider {
                 document.getElementById('categoryChart').parentElement.innerHTML = 
                     '<div class="empty-state"><div class="empty-icon">📊</div><div>카테고리 데이터가 없습니다</div></div>';
             }
-
-            // 시간대별 레이더 차트
-            const hourlyData = ${JSON.stringify(this.prepareHourlyData(metrics.timeAnalysis.hourlyActivity))};
-            if (hourlyData.data.length > 0) {
-                const ctx7 = document.getElementById('hourlyChart').getContext('2d');
-                
-                new Chart(ctx7, {
-                    type: 'radar',
-                    data: {
-                        labels: hourlyData.labels,
-                        datasets: [{
-                            label: '커밋 수',
-                            data: hourlyData.data,
-                            borderColor: '#FF6B6B',
-                            backgroundColor: 'rgba(255, 107, 107, 0.2)',
-                            borderWidth: 3,
-                            pointBackgroundColor: '#FF6B6B',
-                            pointBorderColor: '#ffffff',
-                            pointBorderWidth: 2,
-                            pointRadius: 4,
-                            pointHoverRadius: 6
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: false
-                            },
-                            tooltip: {
-                                backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                                titleColor: '#ffffff',
-                                bodyColor: '#ffffff',
-                                cornerRadius: 8,
-                                titleFont: { size: 14, weight: 'bold' },
-                                bodyFont: { size: 13 },
-                                callbacks: {
-                                    label: function(tooltipItem) {
-                                        return \`\${tooltipItem.label}: \${tooltipItem.parsed.r}개 커밋\`;
-                                    }
-                                }
-                            }
-                        },
-                        scales: {
-                            r: {
-                                beginAtZero: true,
-                                ticks: {
-                                    color: textColor,
-                                    stepSize: Math.max(1, Math.ceil(Math.max(...hourlyData.data) / 5)),
-                                    font: {
-                                        size: 11,
-                                        weight: '500'
-                                    }
-                                },
-                                grid: {
-                                    color: gridColor
-                                },
-                                angleLines: {
-                                    color: gridColor
-                                },
-                                pointLabels: {
-                                    color: textColor,
-                                    font: {
-                                        size: 11,
-                                        weight: '600'
-                                    }
-                                }
-                            }
-                        },
-                        animation: {
-                            duration: 2000,
-                            easing: 'easeInOutQuart'
-                        }
-                    }
-                });
-            } else {
-                document.getElementById('hourlyChart').parentElement.innerHTML = 
-                    '<div class="empty-state"><div class="empty-icon">🕐</div><div>시간대 데이터가 없습니다</div></div>';
-            }
-
-            // 요일별 폴라 차트
-            const weeklyData = ${JSON.stringify(this.prepareWeeklyData(metrics.timeAnalysis.weeklyActivity))};
-            if (weeklyData.data.length > 0) {
-                const ctx8 = document.getElementById('weeklyChart').getContext('2d');
-                
-                new Chart(ctx8, {
-                    type: 'polarArea',
-                    data: {
-                        labels: weeklyData.labels,
-                        datasets: [{
-                            data: weeklyData.data,
-                            backgroundColor: [
-                                'rgba(255, 99, 132, 0.6)',   // 일
-                                'rgba(54, 162, 235, 0.6)',   // 월
-                                'rgba(255, 205, 86, 0.6)',   // 화
-                                'rgba(75, 192, 192, 0.6)',   // 수
-                                'rgba(153, 102, 255, 0.6)',  // 목
-                                'rgba(255, 159, 64, 0.6)',   // 금
-                                'rgba(199, 199, 199, 0.6)'   // 토
-                            ],
-                            borderColor: [
-                                'rgba(255, 99, 132, 1)',
-                                'rgba(54, 162, 235, 1)',
-                                'rgba(255, 205, 86, 1)',
-                                'rgba(75, 192, 192, 1)',
-                                'rgba(153, 102, 255, 1)',
-                                'rgba(255, 159, 64, 1)',
-                                'rgba(199, 199, 199, 1)'
-                            ],
-                            borderWidth: 2
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: {
-                                    color: textColor,
-                                    padding: 15,
-                                    usePointStyle: true,
-                                    font: {
-                                        size: 12,
-                                        weight: '500'
-                                    }
-                                }
-                            },
-                            tooltip: {
-                                backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                                titleColor: '#ffffff',
-                                bodyColor: '#ffffff',
-                                cornerRadius: 8,
-                                titleFont: { size: 14, weight: 'bold' },
-                                bodyFont: { size: 13 },
-                                callbacks: {
-                                    label: function(tooltipItem) {
-                                        const total = tooltipItem.dataset.data.reduce((a, b) => a + b, 0);
-                                        const percentage = ((tooltipItem.parsed / total) * 100).toFixed(1);
-                                        return \`\${tooltipItem.label}: \${tooltipItem.parsed}개 (\${percentage}%)\`;
-                                    }
-                                }
-                            }
-                        },
-                        scales: {
-                            r: {
-                                beginAtZero: true,
-                                ticks: {
-                                    color: textColor,
-                                    font: {
-                                        size: 11,
-                                        weight: '500'
-                                    }
-                                },
-                                grid: {
-                                    color: gridColor
-                                }
-                            }
-                        },
-                        animation: {
-                            animateRotate: true,
-                            duration: 2500
-                        }
-                    }
-                });
-            } else {
-                document.getElementById('weeklyChart').parentElement.innerHTML = 
-                    '<div class="empty-state"><div class="empty-icon">📅</div><div>요일별 데이터가 없습니다</div></div>';
-            }
-
-            // 히트맵 차트
-            const heatmapData = ${JSON.stringify(metrics.timeAnalysis.heatmapData)};
-            if (heatmapData.length > 0) {
-                drawHeatmap('heatmapChart', heatmapData);
-            } else {
-                document.getElementById('heatmapChart').parentElement.innerHTML = 
-                    '<div class="empty-state"><div class="empty-icon">🔥</div><div>히트맵 데이터가 없습니다</div></div>';
-            }
         } else {
-            // 데이터가 없을 때의 처리
-            const emptyCharts = [
-                'authorCommitsChart', 'authorPieChart', 'languageChart', 
-                'categoryChart', 'hourlyChart', 'weeklyChart'
-            ];
-            
-            emptyCharts.forEach(chartId => {
-                const element = document.getElementById(chartId);
-                if (element) {
-                    element.parentElement.innerHTML = 
-                        '<div class="empty-state"><div class="empty-icon">📊</div><div>데이터가 없습니다</div></div>';
-                }
-            });
+            // 데이터가 없을 때
+            document.getElementById('authorCommitsChart').parentElement.innerHTML = 
+                '<div class="empty-state"><div class="empty-icon">👥</div><div>작성자 데이터가 없습니다</div></div>';
+            document.getElementById('authorPieChart').parentElement.innerHTML = 
+                '<div class="empty-state"><div class="empty-icon">📊</div><div>기여도 데이터가 없습니다</div></div>';
+            document.getElementById('languageChart').parentElement.innerHTML = 
+                '<div class="empty-state"><div class="empty-icon">💻</div><div>언어 데이터가 없습니다</div></div>';
+            document.getElementById('categoryChart').parentElement.innerHTML = 
+                '<div class="empty-state"><div class="empty-icon">📊</div><div>카테고리 데이터가 없습니다</div></div>';
         }
 
         // 컨트롤 함수들
@@ -1595,6 +1181,7 @@ export class DashboardProvider {
         }
 
         function changePeriod(days) {
+            // 버튼 활성화 상태 변경
             document.querySelectorAll('.btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
             
@@ -1604,79 +1191,13 @@ export class DashboardProvider {
             });
         }
 
-        // 히트맵 그리기 함수 (개선된 버전)
-        function drawHeatmap(canvasId, data) {
-            const canvas = document.getElementById(canvasId);
-            const ctx = canvas.getContext('2d');
-            
-            const containerWidth = canvas.parentElement.clientWidth - 40;
-            const containerHeight = 180;
-            canvas.width = containerWidth + 40;
-            canvas.height = containerHeight + 30;
-            
-            const cellWidth = containerWidth / 24;
-            const cellHeight = containerHeight / 7;
-            const startX = 30;
-            const startY = 10;
-            
-            const maxCommits = Math.max(...data.map(d => d.commits));
-            const dayLabels = ['일', '월', '화', '수', '목', '금', '토'];
-            
-            // 히트맵 셀 그리기
-            data.forEach(item => {
-                const x = startX + (item.hour * cellWidth);
-                const y = startY + (item.day * cellHeight);
-                
-                const intensity = maxCommits > 0 ? item.commits / maxCommits : 0;
-                const alpha = Math.max(0.1, intensity);
-                ctx.fillStyle = \`rgba(0, 122, 204, \${alpha})\`;
-                
-                ctx.fillRect(x, y, cellWidth - 1, cellHeight - 1);
-                
-                ctx.strokeStyle = isDarkTheme ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.2)';
-                ctx.lineWidth = 0.5;
-                ctx.strokeRect(x, y, cellWidth - 1, cellHeight - 1);
-                
-                if (item.commits > 0 && cellWidth > 25) {
-                    ctx.fillStyle = intensity > 0.5 ? '#ffffff' : textColor;
-                    ctx.font = '9px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    
-                    ctx.fillText(
-                        item.commits.toString(),
-                        x + cellWidth / 2,
-                        y + cellHeight / 2
-                    );
-                }
-            });
-            
-            // 축 라벨
-            ctx.fillStyle = textColor;
-            ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-            
-            // 시간 라벨
-            ctx.textAlign = 'center';
-            for (let hour = 0; hour < 24; hour += 4) {
-                const x = startX + (hour * cellWidth) + cellWidth / 2;
-                ctx.fillText(\`\${hour}\`, x, containerHeight + startY + 20);
-            }
-            
-            // 요일 라벨
-            ctx.textAlign = 'right';
-            ctx.textBaseline = 'middle';
-            dayLabels.forEach((day, index) => {
-                const y = startY + (index * cellHeight) + cellHeight / 2;
-                ctx.fillText(day, startX - 5, y);
-            });
-        }
-
-        // 페이지 로드 완료 시 처리
+        // 페이지 로드 완료 시 애니메이션
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.metric-card').forEach((card, index) => {
                 card.style.animationDelay = \`\${index * 0.1}s\`;
             });
 
+            // 작성자 순위에 메달 스타일 적용
             document.querySelectorAll('.author-rank').forEach((rank, index) => {
                 const rankNumber = index + 1;
                 if (rankNumber === 1) {
@@ -1871,46 +1392,5 @@ export class DashboardProvider {
         };
         
         return colorMap[language] || '#95A5A6';
-    }
-
-    private prepareHourlyData(hourlyActivity: { [hour: string]: number }) {
-        const labels = [];
-        const data = [];
-        
-        for (let hour = 0; hour < 24; hour++) {
-            labels.push(`${hour}시`);
-            data.push(hourlyActivity[hour.toString()] || 0);
-        }
-        
-        return { labels, data };
-    }
-
-    private prepareWeeklyData(weeklyActivity: { [day: string]: number }) {
-        const dayOrder = ['일', '월', '화', '수', '목', '금', '토'];
-        const labels = dayOrder;
-        const data = dayOrder.map(day => weeklyActivity[day] || 0);
-        
-        return { labels, data };
-    }
-
-    private formatWorkingHours(workingHours: any): string {
-        const start = workingHours.start;
-        const end = (workingHours.start + 7) % 24;
-        return `${start}시 - ${end}시`;
-    }
-
-    private getWorkPattern(timeAnalysis: any): string {
-        const nightRatio = timeAnalysis.nightPercentage;
-        const weekendRatio = timeAnalysis.weekendPercentage;
-        
-        if (nightRatio > 30) {
-            return "🦉 야간형";
-        } else if (weekendRatio > 25) {
-            return "🏖️ 주말형";
-        } else if (nightRatio < 10 && weekendRatio < 15) {
-            return "🏢 정규형";
-        } else {
-            return "⚖️ 균형형";
-        }
     }
 }
