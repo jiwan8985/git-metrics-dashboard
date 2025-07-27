@@ -2,7 +2,7 @@
   "name": "git-metrics-dashboard",
   "displayName": "Git Metrics Dashboard",
   "description": "개발자별 Git 커밋 통계 및 메트릭 대시보드",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "publisher": "jiwan",
   "repository": {
     "type": "git",
