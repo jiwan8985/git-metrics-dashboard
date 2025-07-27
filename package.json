@@ -2,7 +2,7 @@
   "name": "git-metrics-dashboard",
   "displayName": "Git Metrics Dashboard",
   "description": "개발자별 Git 커밋 통계 및 메트릭 대시보드",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "publisher": "jiwan",
   "repository": {
     "type": "git",
@@ -22,7 +22,7 @@
     "git",
     "metrics",
     "dashboard",
-    "statistics", 
+    "statistics",
     "commits",
     "analytics"
   ],
@@ -71,7 +71,7 @@
           "description": "자동 새로고침 활성화"
         },
         "gitMetrics.showAuthorStats": {
-          "type": "boolean", 
+          "type": "boolean",
           "default": true,
           "description": "작성자별 통계 표시"
         },
