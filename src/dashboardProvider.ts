@@ -1,13 +1,19 @@
 import * as vscode from 'vscode';
 import { GitAnalyzer, MetricsData } from './gitAnalyzer';
+import { ReportGenerator, ReportOptions } from './reportGenerator';
 
 export class DashboardProvider {
     private panel: vscode.WebviewPanel | undefined;
+    private reportGenerator: ReportGenerator;
+    private currentMetrics: MetricsData | undefined;
+    private currentPeriod: number = 30;
 
     constructor(
         private context: vscode.ExtensionContext,
         private gitAnalyzer: GitAnalyzer
-    ) {}
+    ) {
+        this.reportGenerator = new ReportGenerator(context);
+    }
 
     async showDashboard() {
         if (this.panel) {
@@ -40,6 +46,12 @@ export class DashboardProvider {
                     case 'changeRange':
                         await this.updateContent(message.days);
                         break;
+                    case 'exportReport':
+                        await this.handleExportReport(message.options);
+                        break;
+                    case 'showExportDialog':
+                        await this.showExportDialog();
+                        break;
                 }
             },
             undefined,
@@ -58,10 +70,14 @@ export class DashboardProvider {
             const defaultPeriod = days || config.get<number>('defaultPeriod', 30);
             const maxTopFiles = config.get<number>('maxTopFiles', 10);
             
+            this.currentPeriod = defaultPeriod;
+            
             vscode.window.showInformationMessage('📊 Git 데이터 분석 중...');
             
             const commits = await this.gitAnalyzer.getCommitHistory(defaultPeriod);
             const metrics = await this.gitAnalyzer.generateMetrics(commits);
+            
+            this.currentMetrics = metrics; // 현재 메트릭 저장
 
             this.panel.webview.html = this.generateAdvancedHTML(metrics, defaultPeriod, maxTopFiles);
             
@@ -71,10 +87,115 @@ export class DashboardProvider {
         }
     }
 
+    private async handleExportReport(options: ReportOptions) {
+        if (!this.currentMetrics) {
+            vscode.window.showErrorMessage('먼저 데이터를 로드해주세요.');
+            return;
+        }
+
+        try {
+            vscode.window.showInformationMessage('📄 리포트 생성 중...');
+            
+            const result = await this.reportGenerator.generateReport(this.currentMetrics, options);
+            
+            if (result.success && result.filePath) {
+                const config = vscode.workspace.getConfiguration('gitMetrics');
+                const autoOpen = config.get<boolean>('export.autoOpenAfterExport', false);
+                
+                if (autoOpen) {
+                    const doc = await vscode.workspace.openTextDocument(result.filePath);
+                    await vscode.window.showTextDocument(doc);
+                } else {
+                    const action = await vscode.window.showInformationMessage(
+                        `✅ 리포트가 성공적으로 생성되었습니다!`,
+                        '파일 열기',
+                        '폴더에서 보기'
+                    );
+
+                    if (action === '파일 열기') {
+                        const doc = await vscode.workspace.openTextDocument(result.filePath);
+                        await vscode.window.showTextDocument(doc);
+                    } else if (action === '폴더에서 보기') {
+                        vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(result.filePath));
+                    }
+                }
+            } else {
+                vscode.window.showErrorMessage(result.error || '리포트 생성에 실패했습니다.');
+            }
+        } catch (error) {
+            vscode.window.showErrorMessage(`리포트 생성 오류: ${error}`);
+        }
+    }
+
+    private async showExportDialog() {
+        // Quick Pick을 사용한 간단한 옵션 선택
+        const format = await vscode.window.showQuickPick([
+            { label: '📄 HTML', description: '웹 브라우저에서 볼 수 있는 리포트', detail: 'html' },
+            { label: '📋 JSON', description: '프로그래밍적으로 처리 가능한 데이터', detail: 'json' },
+            { label: '📊 CSV', description: 'Excel에서 열 수 있는 표 형식', detail: 'csv' },
+            { label: '📝 Markdown', description: 'GitHub README 스타일 문서', detail: 'markdown' }
+        ], {
+            placeHolder: '내보내기 형식을 선택하세요'
+        });
+
+        if (!format) return;
+
+        const includeOptions = await vscode.window.showQuickPick([
+            { label: '📊 전체 리포트', description: '모든 섹션 포함', picked: true },
+            { label: '📋 요약만', description: '기본 통계만 포함' },
+            { label: '🎯 사용자 정의', description: '포함할 섹션 선택' }
+        ], {
+            placeHolder: '포함할 내용을 선택하세요'
+        });
+
+        if (!includeOptions) return;
+
+        let reportOptions: ReportOptions = {
+            format: format.detail as any,
+            includeSummary: true,
+            includeCharts: true,
+            includeFileStats: true,
+            includeAuthorStats: true,
+            includeTimeAnalysis: true,
+            period: this.currentPeriod
+        };
+
+        if (includeOptions.label === '📋 요약만') {
+            reportOptions = {
+                ...reportOptions,
+                includeCharts: false,
+                includeFileStats: false,
+                includeAuthorStats: false,
+                includeTimeAnalysis: false
+            };
+        } else if (includeOptions.label === '🎯 사용자 정의') {
+            const sections = await vscode.window.showQuickPick([
+                { label: '📋 요약 통계', picked: true, detail: 'includeSummary' },
+                { label: '👥 개발자별 통계', picked: true, detail: 'includeAuthorStats' },
+                { label: '📁 파일 타입별 분석', picked: true, detail: 'includeFileStats' },
+                { label: '⏰ 시간대별 분석', picked: true, detail: 'includeTimeAnalysis' }
+            ], {
+                placeHolder: '포함할 섹션을 선택하세요 (다중 선택 가능)',
+                canPickMany: true
+            });
+
+            if (!sections) return;
+
+            reportOptions.includeSummary = sections.some(s => s.detail === 'includeSummary');
+            reportOptions.includeAuthorStats = sections.some(s => s.detail === 'includeAuthorStats');
+            reportOptions.includeFileStats = sections.some(s => s.detail === 'includeFileStats');
+            reportOptions.includeTimeAnalysis = sections.some(s => s.detail === 'includeTimeAnalysis');
+        }
+
+        await this.handleExportReport(reportOptions);
+    }
+
     private generateAdvancedHTML(metrics: MetricsData, days: number, maxTopFiles: number): string {
         const dailyCommitsData = this.prepareDailyCommitsData(metrics.dailyCommits, days);
         const fileStatsData = this.prepareFileStatsData(metrics.fileStats);
         const authorStatsData = this.prepareAuthorStatsData(metrics.authorStats);
+        const languageData = this.prepareLanguageData(metrics.programmingLanguages);
+        const categoryData = this.prepareCategoryData(metrics.fileTypeStats);
         
         return `<!DOCTYPE html>
 <html>
@@ -112,12 +233,13 @@ export class DashboardProvider {
             display: flex;
             gap: 8px;
             align-items: center;
+            flex-wrap: wrap;
         }
         
         .btn {
             background: var(--vscode-button-background);
             color: var(--vscode-button-foreground);
-            border: none;
+            border: 1px solid var(--vscode-button-border, transparent);
             padding: 10px 16px;
             border-radius: 6px;
             cursor: pointer;
@@ -139,7 +261,27 @@ export class DashboardProvider {
         
         .btn.refresh {
             background: var(--vscode-terminal-ansiGreen);
-            color: white;
+            color: var(--vscode-editor-background);
+            border: 1px solid var(--vscode-terminal-ansiGreen);
+        }
+        
+        .btn.refresh:hover {
+            background: var(--vscode-terminal-ansiGreen);
+            opacity: 0.8;
+            color: var(--vscode-editor-background);
+        }
+        
+        .btn.export {
+            background: var(--vscode-terminal-ansiBlue);
+            color: var(--vscode-editor-background);
+            margin-left: 12px;
+            border: 1px solid var(--vscode-terminal-ansiBlue);
+        }
+        
+        .btn.export:hover {
+            background: var(--vscode-terminal-ansiBlue);
+            opacity: 0.8;
+            color: var(--vscode-editor-background);
         }
         
         .dashboard-grid {
@@ -173,13 +315,15 @@ export class DashboardProvider {
         .metric-card:hover {
             transform: translateY(-4px);
             box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            border-color: var(--vscode-textLink-foreground);
+            background: var(--vscode-list-hoverBackground);
         }
         
         .metric-title {
             font-size: 16px;
             font-weight: 600;
             margin-bottom: 16px;
-            color: var(--vscode-textLink-foreground);
+            color: var(--vscode-editor-foreground);
             display: flex;
             align-items: center;
             gap: 8px;
@@ -237,6 +381,7 @@ export class DashboardProvider {
             padding-left: 16px;
             padding-right: 16px;
             border-radius: 6px;
+            border: 1px solid var(--vscode-list-hoverBackground);
         }
         
         .file-name {
@@ -249,7 +394,7 @@ export class DashboardProvider {
         
         .file-index {
             background: var(--vscode-textLink-foreground);
-            color: white;
+            color: var(--vscode-editor-background);
             border-radius: 50%;
             width: 24px;
             height: 24px;
@@ -279,10 +424,27 @@ export class DashboardProvider {
         }
         
         .stats-highlight {
+            /* 기본 폴백 색상 (background-clip을 지원하지 않는 브라우저용) */
+            color: var(--vscode-terminal-ansiGreen);
+            
+            /* 그라디언트 텍스트 (지원하는 브라우저용) */
             background: linear-gradient(135deg, var(--vscode-terminal-ansiGreen), var(--vscode-terminal-ansiBlue));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            
+            /* 브라우저 호환성을 위한 추가 처리 */
+            display: inline-block;
+        }
+        
+        /* background-clip을 지원하지 않는 브라우저를 위한 폴백 */
+        @supports not (background-clip: text) {
+            .stats-highlight {
+                background: none !important;
+                -webkit-background-clip: unset !important;
+                -webkit-text-fill-color: unset !important;
+                color: var(--vscode-terminal-ansiGreen) !important;
+            }
         }
         
         .empty-state {
@@ -294,6 +456,7 @@ export class DashboardProvider {
         .empty-icon {
             font-size: 48px;
             margin-bottom: 16px;
+            opacity: 0.6;
         }
         
         @keyframes fadeIn {
@@ -327,6 +490,7 @@ export class DashboardProvider {
             padding-left: 16px;
             padding-right: 16px;
             border-radius: 8px;
+            border: 1px solid var(--vscode-list-hoverBackground);
         }
         
         .author-info {
@@ -338,7 +502,7 @@ export class DashboardProvider {
         
         .author-rank {
             background: linear-gradient(135deg, var(--vscode-textLink-foreground), var(--vscode-terminal-ansiBlue));
-            color: white;
+            color: var(--vscode-editor-background);
             border-radius: 50%;
             width: 32px;
             height: 32px;
@@ -352,14 +516,17 @@ export class DashboardProvider {
         
         .author-rank.gold {
             background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #000;
         }
         
         .author-rank.silver {
             background: linear-gradient(135deg, #C0C0C0, #A0A0A0);
+            color: #000;
         }
         
         .author-rank.bronze {
             background: linear-gradient(135deg, #CD7F32, #B87333);
+            color: #fff;
         }
         
         .author-details {
@@ -431,6 +598,7 @@ export class DashboardProvider {
             padding-left: 12px;
             padding-right: 12px;
             border-radius: 6px;
+            border: 1px solid var(--vscode-list-hoverBackground);
         }
         
         .file-type-info {
@@ -442,7 +610,7 @@ export class DashboardProvider {
         
         .file-type-rank {
             background: var(--vscode-textLink-foreground);
-            color: white;
+            color: var(--vscode-editor-background);
             border-radius: 50%;
             width: 24px;
             height: 24px;
@@ -521,6 +689,7 @@ export class DashboardProvider {
             <button class="btn ${days === 30 ? 'active' : ''}" onclick="changePeriod(30)">30일</button>
             <button class="btn ${days === 90 ? 'active' : ''}" onclick="changePeriod(90)">90일</button>
             <button class="btn refresh" onclick="refresh()">🔄 새로고침</button>
+            <button class="btn export" onclick="exportReport()">📄 리포트 내보내기</button>
         </div>
     </div>
     
@@ -710,13 +879,43 @@ export class DashboardProvider {
     <script>
         const vscode = acquireVsCodeApi();
         
+        // 컨트롤 함수들
+        function refresh() {
+            vscode.postMessage({
+                command: 'refresh'
+            });
+        }
+
+        function changePeriod(days) {
+            // 버튼 활성화 상태 변경
+            document.querySelectorAll('.btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            vscode.postMessage({
+                command: 'changeRange',
+                days: days
+            });
+        }
+
+        function exportReport() {
+            vscode.postMessage({
+                command: 'showExportDialog'
+            });
+        }
+
         // 일별 커밋 라인 차트
         const dailyData = ${JSON.stringify(dailyCommitsData)};
         const ctx1 = document.getElementById('dailyCommitsChart').getContext('2d');
         
+        // VS Code 테마에 맞는 색상 가져오기
+        const computedStyle = getComputedStyle(document.documentElement);
+        const foregroundColor = computedStyle.getPropertyValue('--vscode-editor-foreground').trim() || '#cccccc';
+        const linkColor = computedStyle.getPropertyValue('--vscode-textLink-foreground').trim() || '#007ACC';
+        const borderColor = computedStyle.getPropertyValue('--vscode-panel-border').trim() || '#3c3c3c';
+        
         const gradient = ctx1.createLinearGradient(0, 0, 0, 300);
-        gradient.addColorStop(0, 'rgba(0, 122, 204, 0.3)');
-        gradient.addColorStop(1, 'rgba(0, 122, 204, 0.05)');
+        gradient.addColorStop(0, linkColor + '4D'); // 30% opacity
+        gradient.addColorStop(1, linkColor + '0D'); // 5% opacity
         
         new Chart(ctx1, {
             type: 'line',
@@ -725,17 +924,17 @@ export class DashboardProvider {
                 datasets: [{
                     label: '커밋 수',
                     data: dailyData.data,
-                    borderColor: '#007ACC',
+                    borderColor: linkColor,
                     backgroundColor: gradient,
                     tension: 0.4,
                     fill: true,
-                    pointBackgroundColor: '#007ACC',
-                    pointBorderColor: '#ffffff',
-                    pointBorderWidth: 3,
-                    pointRadius: 5,
-                    pointHoverRadius: 8,
-                    pointHoverBackgroundColor: '#007ACC',
-                    pointHoverBorderColor: '#ffffff',
+                    pointBackgroundColor: linkColor,
+                    pointBorderColor: foregroundColor,
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    pointHoverBackgroundColor: linkColor,
+                    pointHoverBorderColor: foregroundColor,
                     borderWidth: 3
                 }]
             },
@@ -747,10 +946,10 @@ export class DashboardProvider {
                         display: false
                     },
                     tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        titleColor: '#ffffff',
-                        bodyColor: '#ffffff',
-                        borderColor: '#007ACC',
+                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                        titleColor: foregroundColor,
+                        bodyColor: foregroundColor,
+                        borderColor: linkColor,
                         borderWidth: 2,
                         cornerRadius: 8,
                         displayColors: false,
@@ -767,20 +966,20 @@ export class DashboardProvider {
                 scales: {
                     x: {
                         ticks: {
-                            color: 'var(--vscode-editor-foreground)',
+                            color: foregroundColor,
                             maxTicksLimit: 15,
                             font: {
                                 size: 12
                             }
                         },
                         grid: {
-                            color: 'var(--vscode-panel-border)',
+                            color: borderColor,
                             drawBorder: false
                         }
                     },
                     y: {
                         ticks: {
-                            color: 'var(--vscode-editor-foreground)',
+                            color: foregroundColor,
                             beginAtZero: true,
                             precision: 0,
                             font: {
@@ -788,7 +987,7 @@ export class DashboardProvider {
                             }
                         },
                         grid: {
-                            color: 'var(--vscode-panel-border)',
+                            color: borderColor,
                             drawBorder: false
                         }
                     }
@@ -809,19 +1008,27 @@ export class DashboardProvider {
         if (fileData.labels.length > 0) {
             const ctx2 = document.getElementById('fileStatsChart').getContext('2d');
             
+            // 테마 호환 색상 팔레트
+            const chartColors = [
+                linkColor, 
+                computedStyle.getPropertyValue('--vscode-terminal-ansiRed').trim() || '#FF6B6B',
+                computedStyle.getPropertyValue('--vscode-terminal-ansiGreen').trim() || '#4ECDC4',
+                computedStyle.getPropertyValue('--vscode-terminal-ansiBlue').trim() || '#45B7D1',
+                computedStyle.getPropertyValue('--vscode-terminal-ansiMagenta').trim() || '#96CEB4',
+                computedStyle.getPropertyValue('--vscode-terminal-ansiYellow').trim() || '#FECA57',
+                computedStyle.getPropertyValue('--vscode-terminal-ansiCyan').trim() || '#FF9FF3',
+                '#54A0FF', '#5F27CD', '#00D2D3'
+            ];
+            
             new Chart(ctx2, {
                 type: 'doughnut',
                 data: {
                     labels: fileData.labels,
                     datasets: [{
                         data: fileData.data,
-                        backgroundColor: [
-                            '#007ACC', '#FF6B6B', '#4ECDC4', '#45B7D1', 
-                            '#96CEB4', '#FECA57', '#FF9FF3', '#54A0FF',
-                            '#5F27CD', '#00D2D3'
-                        ],
+                        backgroundColor: chartColors,
                         borderWidth: 3,
-                        borderColor: 'var(--vscode-editor-background)',
+                        borderColor: computedStyle.getPropertyValue('--vscode-editor-background').trim(),
                         hoverBorderWidth: 4,
                         hoverOffset: 8
                     }]
@@ -833,7 +1040,7 @@ export class DashboardProvider {
                         legend: {
                             position: 'bottom',
                             labels: {
-                                color: 'var(--vscode-editor-foreground)',
+                                color: foregroundColor,
                                 padding: 20,
                                 usePointStyle: true,
                                 pointStyle: 'circle',
@@ -843,9 +1050,9 @@ export class DashboardProvider {
                             }
                         },
                         tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            titleColor: '#ffffff',
-                            bodyColor: '#ffffff',
+                            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                            titleColor: foregroundColor,
+                            bodyColor: foregroundColor,
                             cornerRadius: 8,
                             callbacks: {
                                 label: function(tooltipItem) {
@@ -866,7 +1073,7 @@ export class DashboardProvider {
         } else {
             // 데이터가 없을 때
             document.getElementById('fileStatsChart').parentElement.innerHTML = 
-                '<div class="empty-state"><div class="empty-icon">📊</div><div>파일 데이터가 없습니다</div></div>';
+                '<div class="empty-state" style="color: ' + foregroundColor + ';"><div class="empty-icon">📊</div><div>파일 데이터가 없습니다</div></div>';
         }
 
         // 작성자별 커밋 바 차트
@@ -882,11 +1089,20 @@ export class DashboardProvider {
                         label: '커밋 수',
                         data: authorData.data,
                         backgroundColor: authorData.labels.map((_, index) => {
-                            const colors = ['#FFD700', '#C0C0C0', '#CD7F32', '#007ACC', '#FF6B6B', '#4ECDC4'];
+                            const colors = [
+                                '#FFD700', '#C0C0C0', '#CD7F32', 
+                                linkColor, 
+                                computedStyle.getPropertyValue('--vscode-terminal-ansiRed').trim() || '#FF6B6B',
+                                computedStyle.getPropertyValue('--vscode-terminal-ansiGreen').trim() || '#4ECDC4'
+                            ];
                             return colors[index % colors.length];
                         }),
                         borderColor: authorData.labels.map((_, index) => {
-                            const colors = ['#FFA500', '#A0A0A0', '#B87333', '#005A9E', '#FF5252', '#26C6DA'];
+                            const colors = [
+                                '#FFA500', '#A0A0A0', '#B87333', 
+                                linkColor, 
+                                '#FF5252', '#26C6DA'
+                            ];
                             return colors[index % colors.length];
                         }),
                         borderWidth: 2,
@@ -903,9 +1119,9 @@ export class DashboardProvider {
                             display: false
                         },
                         tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            titleColor: '#ffffff',
-                            bodyColor: '#ffffff',
+                            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                            titleColor: foregroundColor,
+                            bodyColor: foregroundColor,
                             cornerRadius: 8,
                             callbacks: {
                                 title: function(tooltipItems) {
@@ -913,7 +1129,7 @@ export class DashboardProvider {
                                 },
                                 label: function(tooltipItem) {
                                     const authorInfo = ${JSON.stringify(metrics.authorStats)};
-                                    const author = authorInfo.find(a => a.name === tooltipItem.label);
+                                    const author = authorInfo.find(a => a.name.includes(tooltipItem.label) || tooltipItem.label.includes(a.name.substring(0, 12)));
                                     return [
                                         \`커밋: \${tooltipItem.parsed.x}개\`,
                                         \`파일: \${author?.files || 0}개\`,
@@ -926,18 +1142,18 @@ export class DashboardProvider {
                     scales: {
                         x: {
                             ticks: {
-                                color: 'var(--vscode-editor-foreground)',
+                                color: foregroundColor,
                                 beginAtZero: true,
                                 precision: 0
                             },
                             grid: {
-                                color: 'var(--vscode-panel-border)',
+                                color: borderColor,
                                 drawBorder: false
                             }
                         },
                         y: {
                             ticks: {
-                                color: 'var(--vscode-editor-foreground)',
+                                color: foregroundColor,
                                 font: {
                                     size: 12
                                 }
@@ -964,11 +1180,14 @@ export class DashboardProvider {
                     datasets: [{
                         data: authorData.data.slice(0, 8),
                         backgroundColor: [
-                            '#FFD700', '#C0C0C0', '#CD7F32', '#007ACC', 
-                            '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4'
+                            '#FFD700', '#C0C0C0', '#CD7F32', linkColor, 
+                            computedStyle.getPropertyValue('--vscode-terminal-ansiRed').trim() || '#FF6B6B',
+                            computedStyle.getPropertyValue('--vscode-terminal-ansiGreen').trim() || '#4ECDC4',
+                            computedStyle.getPropertyValue('--vscode-terminal-ansiYellow').trim() || '#45B7D1',
+                            computedStyle.getPropertyValue('--vscode-terminal-ansiMagenta').trim() || '#96CEB4'
                         ],
                         borderWidth: 3,
-                        borderColor: 'var(--vscode-editor-background)',
+                        borderColor: computedStyle.getPropertyValue('--vscode-editor-background').trim(),
                         hoverBorderWidth: 4,
                         hoverOffset: 12
                     }]
@@ -980,7 +1199,7 @@ export class DashboardProvider {
                         legend: {
                             position: 'bottom',
                             labels: {
-                                color: 'var(--vscode-editor-foreground)',
+                                color: foregroundColor,
                                 padding: 15,
                                 usePointStyle: true,
                                 pointStyle: 'circle',
@@ -991,7 +1210,7 @@ export class DashboardProvider {
                                     const data = chart.data;
                                     const authorInfo = ${JSON.stringify(metrics.authorStats)};
                                     return data.labels.map((label, index) => {
-                                        const author = authorInfo.find(a => a.name === label);
+                                        const author = authorInfo.find(a => a.name.includes(label) || label.includes(a.name.substring(0, 12)));
                                         return {
                                             text: \`\${label} (\${author?.percentage || 0}%)\`,
                                             fillStyle: data.datasets[0].backgroundColor[index],
@@ -1004,14 +1223,14 @@ export class DashboardProvider {
                             }
                         },
                         tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            titleColor: '#ffffff',
-                            bodyColor: '#ffffff',
+                            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                            titleColor: foregroundColor,
+                            bodyColor: foregroundColor,
                             cornerRadius: 8,
                             callbacks: {
                                 label: function(tooltipItem) {
                                     const authorInfo = ${JSON.stringify(metrics.authorStats)};
-                                    const author = authorInfo.find(a => a.name === tooltipItem.label);
+                                    const author = authorInfo.find(a => a.name.includes(tooltipItem.label) || tooltipItem.label.includes(a.name.substring(0, 12)));
                                     return [
                                         \`\${tooltipItem.label}\`,
                                         \`커밋: \${tooltipItem.parsed}개\`,
@@ -1030,7 +1249,7 @@ export class DashboardProvider {
             });
 
             // 프로그래밍 언어 분포 차트
-            const languageData = ${JSON.stringify(this.prepareLanguageData(metrics.programmingLanguages))};
+            const languageData = ${JSON.stringify(languageData)};
             if (languageData.labels.length > 0) {
                 const ctx5 = document.getElementById('languageChart').getContext('2d');
                 
@@ -1042,7 +1261,7 @@ export class DashboardProvider {
                             data: languageData.data,
                             backgroundColor: languageData.colors,
                             borderWidth: 3,
-                            borderColor: 'var(--vscode-editor-background)',
+                            borderColor: computedStyle.getPropertyValue('--vscode-editor-background').trim(),
                             hoverBorderWidth: 4,
                             hoverOffset: 10
                         }]
@@ -1054,7 +1273,7 @@ export class DashboardProvider {
                             legend: {
                                 position: 'bottom',
                                 labels: {
-                                    color: 'var(--vscode-editor-foreground)',
+                                    color: foregroundColor,
                                     padding: 15,
                                     usePointStyle: true,
                                     pointStyle: 'circle',
@@ -1065,8 +1284,8 @@ export class DashboardProvider {
                             },
                             tooltip: {
                                 backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                                titleColor: '#ffffff',
-                                bodyColor: '#ffffff',
+                                titleColor: foregroundColor,
+                                bodyColor: foregroundColor,
                                 cornerRadius: 8,
                                 callbacks: {
                                     label: function(tooltipItem) {
@@ -1086,11 +1305,11 @@ export class DashboardProvider {
                 });
             } else {
                 document.getElementById('languageChart').parentElement.innerHTML = 
-                    '<div class="empty-state"><div class="empty-icon">💻</div><div>언어 데이터가 없습니다</div></div>';
+                    '<div class="empty-state" style="color: ' + foregroundColor + ';"><div class="empty-icon">💻</div><div>언어 데이터가 없습니다</div></div>';
             }
 
             // 카테고리별 활동 차트
-            const categoryData = ${JSON.stringify(this.prepareCategoryData(metrics.fileTypeStats))};
+            const categoryData = ${JSON.stringify(categoryData)};
             if (categoryData.labels.length > 0) {
                 const ctx6 = document.getElementById('categoryChart').getContext('2d');
                 
@@ -1117,8 +1336,8 @@ export class DashboardProvider {
                             },
                             tooltip: {
                                 backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                                titleColor: '#ffffff',
-                                bodyColor: '#ffffff',
+                                titleColor: foregroundColor,
+                                bodyColor: foregroundColor,
                                 cornerRadius: 8,
                                 callbacks: {
                                     label: function(tooltipItem) {
@@ -1130,7 +1349,7 @@ export class DashboardProvider {
                         scales: {
                             x: {
                                 ticks: {
-                                    color: 'var(--vscode-editor-foreground)',
+                                    color: foregroundColor,
                                     font: {
                                         size: 11
                                     }
@@ -1141,12 +1360,12 @@ export class DashboardProvider {
                             },
                             y: {
                                 ticks: {
-                                    color: 'var(--vscode-editor-foreground)',
+                                    color: foregroundColor,
                                     beginAtZero: true,
                                     precision: 0
                                 },
                                 grid: {
-                                    color: 'var(--vscode-panel-border)',
+                                    color: borderColor,
                                     drawBorder: false
                                 }
                             }
@@ -1159,36 +1378,18 @@ export class DashboardProvider {
                 });
             } else {
                 document.getElementById('categoryChart').parentElement.innerHTML = 
-                    '<div class="empty-state"><div class="empty-icon">📊</div><div>카테고리 데이터가 없습니다</div></div>';
+                    '<div class="empty-state" style="color: ' + foregroundColor + ';"><div class="empty-icon">📊</div><div>카테고리 데이터가 없습니다</div></div>';
             }
         } else {
             // 데이터가 없을 때
             document.getElementById('authorCommitsChart').parentElement.innerHTML = 
-                '<div class="empty-state"><div class="empty-icon">👥</div><div>작성자 데이터가 없습니다</div></div>';
+                '<div class="empty-state" style="color: ' + foregroundColor + ';"><div class="empty-icon">👥</div><div>작성자 데이터가 없습니다</div></div>';
             document.getElementById('authorPieChart').parentElement.innerHTML = 
-                '<div class="empty-state"><div class="empty-icon">📊</div><div>기여도 데이터가 없습니다</div></div>';
+                '<div class="empty-state" style="color: ' + foregroundColor + ';"><div class="empty-icon">📊</div><div>기여도 데이터가 없습니다</div></div>';
             document.getElementById('languageChart').parentElement.innerHTML = 
-                '<div class="empty-state"><div class="empty-icon">💻</div><div>언어 데이터가 없습니다</div></div>';
+                '<div class="empty-state" style="color: ' + foregroundColor + ';"><div class="empty-icon">💻</div><div>언어 데이터가 없습니다</div></div>';
             document.getElementById('categoryChart').parentElement.innerHTML = 
-                '<div class="empty-state"><div class="empty-icon">📊</div><div>카테고리 데이터가 없습니다</div></div>';
-        }
-
-        // 컨트롤 함수들
-        function refresh() {
-            vscode.postMessage({
-                command: 'refresh'
-            });
-        }
-
-        function changePeriod(days) {
-            // 버튼 활성화 상태 변경
-            document.querySelectorAll('.btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            
-            vscode.postMessage({
-                command: 'changeRange',
-                days: days
-            });
+                '<div class="empty-state" style="color: ' + foregroundColor + ';"><div class="empty-icon">📊</div><div>카테고리 데이터가 없습니다</div></div>';
         }
 
         // 페이지 로드 완료 시 애니메이션
@@ -1214,6 +1415,7 @@ export class DashboardProvider {
 </html>`;
     }
 
+    // 기존의 private 메서드들
     private prepareDailyCommitsData(dailyCommits: { [date: string]: number }, days: number) {
         const labels = [];
         const data = [];

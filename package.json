@@ -2,8 +2,8 @@
   "name": "git-metrics-dashboard",
   "displayName": "Git Metrics Dashboard",
   "description": "개발자별 Git 커밋 통계 및 메트릭 대시보드",
-  "version": "0.0.3",
-  "publisher": "jiwan",
+  "version": "0.0.5",
+  "publisher": "jiwan-dev",
   "repository": {
     "type": "git",
     "url": "https://github.com/jiwan8985/git-metrics-dashboard.git"
@@ -24,7 +24,13 @@
     "dashboard",
     "statistics",
     "commits",
-    "analytics"
+    "analytics",
+    "report",
+    "export",
+    "html",
+    "json",
+    "csv",
+    "markdown"
   ],
   "engines": {
     "vscode": "^1.102.0"
@@ -32,7 +38,13 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onCommand:gitMetrics.showDashboard",
+    "onCommand:gitMetrics.quickExport",
+    "onCommand:gitMetrics.customExport",
+    "onCommand:gitMetrics.openReportsFolder",
+    "workspaceContains:.git"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
@@ -40,12 +52,39 @@
         "command": "gitMetrics.showDashboard",
         "title": "📊 Git Metrics Dashboard 열기",
         "category": "Git Metrics"
+      },
+      {
+        "command": "gitMetrics.quickExport",
+        "title": "📄 빠른 리포트 내보내기",
+        "category": "Git Metrics"
+      },
+      {
+        "command": "gitMetrics.customExport",
+        "title": "🎯 사용자 정의 리포트 내보내기",
+        "category": "Git Metrics"
+      },
+      {
+        "command": "gitMetrics.openReportsFolder",
+        "title": "📁 리포트 폴더 열기",
+        "category": "Git Metrics"
       }
     ],
     "menus": {
       "commandPalette": [
         {
           "command": "gitMetrics.showDashboard",
+          "when": "workspaceFolderCount > 0"
+        },
+        {
+          "command": "gitMetrics.quickExport",
+          "when": "workspaceFolderCount > 0"
+        },
+        {
+          "command": "gitMetrics.customExport",
+          "when": "workspaceFolderCount > 0"
+        },
+        {
+          "command": "gitMetrics.openReportsFolder",
           "when": "workspaceFolderCount > 0"
         }
       ],
@@ -55,6 +94,20 @@
           "when": "view == explorer",
           "group": "navigation"
         }
+      ],
+      "explorer/context": [
+        {
+          "command": "gitMetrics.showDashboard",
+          "group": "gitmetrics@1"
+        },
+        {
+          "command": "gitMetrics.quickExport",
+          "group": "gitmetrics@2"
+        },
+        {
+          "command": "gitMetrics.customExport",
+          "group": "gitmetrics@3"
+        }
       ]
     },
     "configuration": {
@@ -63,7 +116,9 @@
         "gitMetrics.defaultPeriod": {
           "type": "number",
           "default": 30,
-          "description": "기본 분석 기간 (일)"
+          "description": "기본 분석 기간 (일)",
+          "minimum": 1,
+          "maximum": 365
         },
         "gitMetrics.autoRefresh": {
           "type": "boolean",
@@ -78,10 +133,67 @@
         "gitMetrics.maxTopFiles": {
           "type": "number",
           "default": 10,
-          "description": "상위 파일 표시 개수"
+          "description": "상위 파일 표시 개수",
+          "minimum": 5,
+          "maximum": 50
+        },
+        "gitMetrics.export.defaultFormat": {
+          "type": "string",
+          "enum": [
+            "html",
+            "json",
+            "csv",
+            "markdown"
+          ],
+          "default": "html",
+          "description": "기본 리포트 내보내기 형식"
+        },
+        "gitMetrics.export.includeSummary": {
+          "type": "boolean",
+          "default": true,
+          "description": "리포트에 요약 통계 포함"
+        },
+        "gitMetrics.export.includeAuthorStats": {
+          "type": "boolean",
+          "default": true,
+          "description": "리포트에 개발자별 통계 포함"
+        },
+        "gitMetrics.export.includeFileStats": {
+          "type": "boolean",
+          "default": true,
+          "description": "리포트에 파일 타입별 분석 포함"
+        },
+        "gitMetrics.export.includeTimeAnalysis": {
+          "type": "boolean",
+          "default": true,
+          "description": "리포트에 시간대별 분석 포함"
+        },
+        "gitMetrics.export.autoOpenAfterExport": {
+          "type": "boolean",
+          "default": false,
+          "description": "내보내기 후 자동으로 파일 열기"
+        },
+        "gitMetrics.export.customReportsPath": {
+          "type": "string",
+          "default": "",
+          "description": "사용자 정의 리포트 저장 경로 (비어있으면 프로젝트 루트/git-metrics-reports 사용)"
         }
       }
-    }
+    },
+    "keybindings": [
+      {
+        "command": "gitMetrics.showDashboard",
+        "key": "ctrl+shift+g ctrl+shift+d",
+        "mac": "cmd+shift+g cmd+shift+d",
+        "when": "workspaceFolderCount > 0"
+      },
+      {
+        "command": "gitMetrics.quickExport",
+        "key": "ctrl+shift+g ctrl+shift+e",
+        "mac": "cmd+shift+g cmd+shift+e",
+        "when": "workspaceFolderCount > 0"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

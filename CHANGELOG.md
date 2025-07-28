@@ -1,90 +1,137 @@
-# Change Log
+# Changelog
 
 All notable changes to the "Git Metrics Dashboard" extension will be documented in this file.
 
-## [1.1.0] - 2024-01-XX
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.0.4] - 2025-07-28
 
-### 🎉 새로운 기능
+### ✨ Added - README 수정
+- **README Update**
 
-#### 📤 리포트 내보내기 기능
-- **PDF 내보내기**
-  - 전체 대시보드를 상세한 PDF 리포트로 생성
-  - 요약 통계, 기여자 순위, 언어 분포, 시간대별 활동 패턴 포함
-  - 작업 패턴 분석 (야간형/주말형/정규형/균형형)
-  - A4 크기로 최적화된 레이아웃
-  
-- **PNG 내보내기**
-  - 대시보드를 고해상도 이미지로 캡처
-  - html2canvas를 활용한 웹뷰 직접 캡처
-  - 프레젠테이션 및 문서 삽입에 적합
-  
-- **CSV 내보내기**
-  - 모든 메트릭 데이터를 구조화된 CSV 파일로 추출
-  - Excel, Google Sheets에서 추가 분석 가능
-  - 포함 데이터:
-    - 요약 통계
-    - 일별 커밋 트렌드
-    - 작성자별 상세 메트릭
-    - 언어별 분포 및 카테고리
-    - 시간대별/요일별 활동 패턴
-    - 자주 수정된 파일 목록
-    - Raw 커밋 데이터 (선택적)
+## [0.0.3] - 2025-07-28
 
-### 🛠️ 개선 사항
+### ✨ Added - 리포트 내보내기 기능
+- **다양한 형식 지원**: HTML, JSON, CSV, Markdown 형식으로 리포트 내보내기
+- **빠른 내보내기**: 상태바의 "📄 Export" 버튼으로 원클릭 내보내기
+- **사용자 정의 리포트**: 분석 기간, 포함 섹션, 형식을 자유롭게 선택
+- **프로페셔널 HTML 리포트**: 회사 보고서나 프레젠테이션에 적합한 고품질 HTML 리포트
+- **데이터 친화적 형식**: JSON/CSV 형식으로 추가 분석 도구와 연동 가능
+- **마크다운 문서**: GitHub README나 프로젝트 문서화에 바로 사용 가능
 
-- 내보내기 진행 상황을 표시하는 Progress 인디케이터 추가
-- 내보낸 파일을 바로 열 수 있는 옵션 제공
-- 리포트 저장 위치: `[프로젝트폴더]/git-metrics-reports/`
-- 파일명에 타임스탬프 자동 추가
+### 🎨 Improved - 사용자 경험 개선
+- **향상된 대시보드 UI**: 리포트 내보내기 버튼이 대시보드에 통합
+- **키보드 단축키**: `Ctrl+Shift+G` → `Ctrl+Shift+E`로 빠른 내보내기
+- **컨텍스트 메뉴**: 탐색기에서 우클릭으로 바로 접근 가능
+- **개선된 차트 상호작용**: 툴팁과 애니메이션 품질 향상
+- **에러 처리 강화**: 더 친화적인 오류 메시지와 해결 방법 제공
 
-### 🐛 버그 수정
+### 🔧 Technical Improvements
+- **모듈화된 아키텍처**: ReportGenerator 클래스로 깔끔한 코드 분리
+- **타입 안전성**: TypeScript 타입 정의 강화
+- **성능 최적화**: 메모리 사용량 최적화 및 렌더링 성능 개선
+- **설정 옵션 확장**: 내보내기 관련 세부 설정 추가
 
-- 대용량 저장소에서 메모리 사용량 최적화
-- 특수 문자가 포함된 파일명 처리 개선
+### 📋 New Commands
+- `gitMetrics.quickExport`: 빠른 리포트 내보내기
+- `gitMetrics.customExport`: 사용자 정의 리포트 내보내기  
+- `gitMetrics.openReportsFolder`: 리포트 폴더 열기
 
-### 📚 문서화
+### ⚙️ New Settings
+- `gitMetrics.export.defaultFormat`: 기본 내보내기 형식 설정
+- `gitMetrics.export.includeSummary`: 요약 통계 포함 여부
+- `gitMetrics.export.includeAuthorStats`: 개발자별 통계 포함 여부
+- `gitMetrics.export.includeFileStats`: 파일 타입별 분석 포함 여부
+- `gitMetrics.export.includeTimeAnalysis`: 시간대별 분석 포함 여부
+- `gitMetrics.export.autoOpenAfterExport`: 내보내기 후 자동 파일 열기
+- `gitMetrics.export.customReportsPath`: 사용자 정의 리포트 저장 경로
 
-- README에 리포트 내보내기 기능 사용법 추가
-- 각 내보내기 형식별 활용 사례 제공
+### 🗂️ File Structure
+```
+git-metrics-reports/
+├── git-metrics-report-2025-01-15-30days.html
+├── git-metrics-report-2025-01-15-30days.json
+├── git-metrics-report-2025-01-15-30days.csv
+└── git-metrics-report-2025-01-15-30days.md
+```
 
-## [1.0.0] - 2023-12-XX
+## [0.0.2] - 2025-07-25
 
-### 🎉 최초 릴리즈
+### ✨ Added - 기본 대시보드 기능
+- **실시간 Git 통계**: 커밋 수, 파일 변경, 개발자별 기여도
+- **시각적 차트**: Chart.js를 활용한 인터랙티브 차트
+- **개발자별 분석**: 순위, 기여도, 활동 패턴 분석
+- **파일 타입별 분석**: 프로그래밍 언어별 통계
+- **시간대별 분석**: 시간별, 요일별 활동 패턴
 
-- 📈 커밋 트렌드 분석 (7/30/90일)
-- 👥 팀원별 기여도 추적 및 순위
-- 💻 20+ 프로그래밍 언어 자동 분석
-- ⏰ 시간대별 활동 패턴 시각화
-- 🔄 실시간 자동 업데이트 기능
-- ⚙️ 커스터마이징 가능한 설정
+### 🎨 UI/UX
+- **VS Code 테마 통합**: 다크/라이트 테마 자동 적용
+- **반응형 디자인**: 다양한 화면 크기 지원
+- **인터랙티브 차트**: 호버 효과 및 애니메이션
+- **상태바 통합**: 빠른 접근을 위한 상태바 버튼
 
-### 주요 기능
+### ⚙️ Settings
+- `gitMetrics.defaultPeriod`: 기본 분석 기간 설정
+- `gitMetrics.autoRefresh`: 자동 새로고침 설정
+- `gitMetrics.showAuthorStats`: 작성자별 통계 표시 여부
+- `gitMetrics.maxTopFiles`: 상위 파일 표시 개수
 
-- 일별 커밋 추이 라인 차트
-- 작성자별 기여도 바 차트
-- 프로그래밍 언어 도넛 차트
-- 24시간 레이더 차트
-- 요일별 폴라 차트
-- 활동 히트맵
-- Top 기여자 테이블
-- 자주 수정된 파일 목록
+## [Unreleased] - 향후 계획
+
+### 🚀 Planned Features
+- **팀 대시보드**: 여러 저장소 통합 분석
+- **성능 메트릭**: 코드 품질 및 복잡도 분석
+- **자동 리포팅**: 정기적인 리포트 자동 생성
+- **GitHub 통합**: GitHub API 연동
+- **실시간 알림**: 중요한 메트릭 변화 알림
+- **커스텀 대시보드**: 사용자 정의 위젯 시스템
+
+### 🔧 Technical Roadmap
+- **데이터베이스 지원**: 장기 통계 저장
+- **API 서버**: 웹 대시보드 지원
+- **플러그인 시스템**: 확장 가능한 아키텍처
+- **다국어 지원**: 영어, 일본어 등 추가 언어
 
 ---
 
-## 업그레이드 가이드
+## 버전 관리 정책
 
-### v1.0.0 → v1.1.0
+### 버전 번호 규칙
+- **Major (X.0.0)**: 주요 기능 추가, Breaking Changes
+- **Minor (0.X.0)**: 새로운 기능 추가, 하위 호환성 유지  
+- **Patch (0.0.X)**: 버그 수정, 성능 개선
 
-1. VSCode에서 확장 프로그램 업데이트
-2. 새로운 "📤 내보내기" 버튼이 대시보드 우측 상단에 표시됨
-3. 기존 설정은 모두 유지됨
-4. 추가 설정 불필요
+### 릴리즈 주기
+- **Major**: 연 1-2회
+- **Minor**: 월 1-2회
+- **Patch**: 필요시 수시
 
-### 의존성 추가
-- html2canvas: PNG 캡처용
-- jsPDF: PDF 생성용
-- papaparse: CSV 처리용
+### 지원 정책
+- **최신 버전**: 전체 지원
+- **이전 Major 버전**: 보안 업데이트만
+- **VS Code 호환성**: 최신 버전 기준 1년간 지원
 
 ---
 
-더 자세한 정보는 [GitHub 저장소](https://github.com/jiwan8985/git-metrics-dashboard)를 참조하세요.
+## 기여 가이드
+
+### 버그 리포트
+1. [GitHub Issues](https://github.com/jiwan8985/git-metrics-dashboard/issues)에서 중복 확인
+2. 재현 가능한 단계 포함
+3. VS Code 버전, OS 정보 명시
+4. 스크린샷 또는 로그 첨부
+
+### 기능 제안
+1. GitHub Issues에 "enhancement" 라벨로 등록
+2. 사용 사례와 예상 효과 설명
+3. 비슷한 기능을 제공하는 도구 조사 결과
+
+### 풀 리퀘스트
+1. Fork & Branch 생성
+2. 테스트 케이스 추가
+3. 문서 업데이트
+4. 코드 스타일 준수 (`npm run lint`)
+
+---
+
+**전체 변경사항**: [GitHub Releases](https://github.com/jiwan8985/git-metrics-dashboard/releases)
