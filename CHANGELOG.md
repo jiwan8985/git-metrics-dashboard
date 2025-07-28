@@ -1,9 +1,90 @@
 # Change Log
 
-All notable changes to the "git-metrics-dashboard" extension will be documented in this file.
+All notable changes to the "Git Metrics Dashboard" extension will be documented in this file.
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+## [1.1.0] - 2024-01-XX
 
-## [Unreleased]
+### 🎉 새로운 기능
 
-- Initial release
+#### 📤 리포트 내보내기 기능
+- **PDF 내보내기**
+  - 전체 대시보드를 상세한 PDF 리포트로 생성
+  - 요약 통계, 기여자 순위, 언어 분포, 시간대별 활동 패턴 포함
+  - 작업 패턴 분석 (야간형/주말형/정규형/균형형)
+  - A4 크기로 최적화된 레이아웃
+  
+- **PNG 내보내기**
+  - 대시보드를 고해상도 이미지로 캡처
+  - html2canvas를 활용한 웹뷰 직접 캡처
+  - 프레젠테이션 및 문서 삽입에 적합
+  
+- **CSV 내보내기**
+  - 모든 메트릭 데이터를 구조화된 CSV 파일로 추출
+  - Excel, Google Sheets에서 추가 분석 가능
+  - 포함 데이터:
+    - 요약 통계
+    - 일별 커밋 트렌드
+    - 작성자별 상세 메트릭
+    - 언어별 분포 및 카테고리
+    - 시간대별/요일별 활동 패턴
+    - 자주 수정된 파일 목록
+    - Raw 커밋 데이터 (선택적)
+
+### 🛠️ 개선 사항
+
+- 내보내기 진행 상황을 표시하는 Progress 인디케이터 추가
+- 내보낸 파일을 바로 열 수 있는 옵션 제공
+- 리포트 저장 위치: `[프로젝트폴더]/git-metrics-reports/`
+- 파일명에 타임스탬프 자동 추가
+
+### 🐛 버그 수정
+
+- 대용량 저장소에서 메모리 사용량 최적화
+- 특수 문자가 포함된 파일명 처리 개선
+
+### 📚 문서화
+
+- README에 리포트 내보내기 기능 사용법 추가
+- 각 내보내기 형식별 활용 사례 제공
+
+## [1.0.0] - 2023-12-XX
+
+### 🎉 최초 릴리즈
+
+- 📈 커밋 트렌드 분석 (7/30/90일)
+- 👥 팀원별 기여도 추적 및 순위
+- 💻 20+ 프로그래밍 언어 자동 분석
+- ⏰ 시간대별 활동 패턴 시각화
+- 🔄 실시간 자동 업데이트 기능
+- ⚙️ 커스터마이징 가능한 설정
+
+### 주요 기능
+
+- 일별 커밋 추이 라인 차트
+- 작성자별 기여도 바 차트
+- 프로그래밍 언어 도넛 차트
+- 24시간 레이더 차트
+- 요일별 폴라 차트
+- 활동 히트맵
+- Top 기여자 테이블
+- 자주 수정된 파일 목록
+
+---
+
+## 업그레이드 가이드
+
+### v1.0.0 → v1.1.0
+
+1. VSCode에서 확장 프로그램 업데이트
+2. 새로운 "📤 내보내기" 버튼이 대시보드 우측 상단에 표시됨
+3. 기존 설정은 모두 유지됨
+4. 추가 설정 불필요
+
+### 의존성 추가
+- html2canvas: PNG 캡처용
+- jsPDF: PDF 생성용
+- papaparse: CSV 처리용
+
+---
+
+더 자세한 정보는 [GitHub 저장소](https://github.com/jiwan8985/git-metrics-dashboard)를 참조하세요.
