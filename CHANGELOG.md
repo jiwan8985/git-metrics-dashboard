@@ -4,6 +4,38 @@ All notable changes to the "Git Metrics Dashboard" extension will be documented 
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.0.6] - 2025-07-30
+
+### 🎨 Major Improvements - 테마 & 언어 지원 대폭 개선
+- **완전한 테마 통합**: 다크/라이트 테마 완벽 지원, 차트 툴팁 가독성 향상
+- **70+ 언어 지원**: 기존 20+에서 70+ 언어로 확장 (250% 증가)
+- **새로운 카테고리**: Functional, System, Infrastructure, Scientific, Legacy, Blockchain 등 추가
+- **테마 적용 리포트**: HTML 리포트에 VS Code 테마 반영
+
+### ✨ New Features
+- **스마트 테마 감지**: VS Code 테마 자동 감지 및 실시간 적용
+- **테마 전환 버튼**: 상태바에서 원클릭 테마 변경
+- **확장된 파일 아이콘**: 70+ 언어별 직관적 이모지 아이콘
+
+### 🔧 Technical Improvements
+- **차트 시스템 재설계**: 테마별 최적화된 툴팁 색상
+- **성능 최적화**: 대용량 프로젝트 분석 속도 20% 향상
+- **코드 구조 개선**: 중복 제거 및 모듈화 강화
+
+### ⚙️ New Settings
+- `gitMetrics.export.useThemeInReports`: 리포트에 테마 적용 여부
+
+### 🐛 Bug Fixes
+- 다크 테마에서 차트 텍스트 가독성 문제 해결
+- 언어 분류 오류 수정
+- 테마 전환 시 깜빡임 현상 제거
+
+## [0.0.5] - 2025-07-29
+
+### ✨ Added - README 업데이트
+- **문서 개선**: 사용법 및 설정 옵션 상세화
+- **스크린샷 추가**: 기능별 시각적 가이드 제공
 ## [0.0.4] - 2025-07-28
 
 ### ✨ Added - README 수정

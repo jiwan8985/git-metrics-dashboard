@@ -15,6 +15,32 @@ export function activate(context: vscode.ExtensionContext) {
         dashboardProvider.showDashboard();
     });
 
+    // 테마 전환 명령어 등록
+    const toggleThemeDisposable = vscode.commands.registerCommand('gitMetrics.toggleTheme', async () => {
+        const config = vscode.workspace.getConfiguration('gitMetrics');
+        const currentTheme = config.get<string>('theme', 'auto');
+        
+        const themeOptions = [
+            { label: '🔄 자동 (VS Code 테마 따라감)', description: 'VS Code의 현재 테마를 자동으로 감지', value: 'auto' },
+            { label: '☀️ 라이트 테마', description: '밝은 테마로 고정', value: 'light' },
+            { label: '🌙 다크 테마', description: '어두운 테마로 고정', value: 'dark' }
+        ];
+        
+        const selectedTheme = await vscode.window.showQuickPick(themeOptions, {
+            placeHolder: `현재 테마: ${currentTheme === 'auto' ? '자동' : currentTheme === 'light' ? '라이트' : '다크'} - 새로운 테마를 선택하세요`,
+            ignoreFocusOut: false
+        });
+
+        if (selectedTheme && selectedTheme.value !== currentTheme) {
+            await config.update('theme', selectedTheme.value, vscode.ConfigurationTarget.Global);
+            
+            // 대시보드가 열려있다면 새로고침
+            dashboardProvider.refreshTheme();
+            
+            vscode.window.showInformationMessage(`🎨 테마가 '${selectedTheme.label.split(' ')[1]}'으로 변경되었습니다!`);
+        }
+    });
+
     // 빠른 리포트 내보내기 명령어 등록
     const quickExportDisposable = vscode.commands.registerCommand('gitMetrics.quickExport', async () => {
         try {
@@ -182,6 +208,7 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage(`진단 실패: ${error}`);
         }
     });
+
     const openReportsFolderDisposable = vscode.commands.registerCommand('gitMetrics.openReportsFolder', async () => {
         try {
             const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
@@ -217,6 +244,38 @@ export function activate(context: vscode.ExtensionContext) {
     exportStatusBarItem.tooltip = "Git 메트릭 리포트 빠른 내보내기";
     exportStatusBarItem.show();
 
+    // 테마 상태바 버튼 추가
+    const themeStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 98);
+    themeStatusBarItem.command = 'gitMetrics.toggleTheme';
+    themeStatusBarItem.tooltip = "Git 메트릭 테마 전환";
+    
+    // 현재 테마에 따라 아이콘 업데이트
+    const updateThemeStatusBar = () => {
+        const config = vscode.workspace.getConfiguration('gitMetrics');
+        const theme = config.get<string>('theme', 'auto');
+        switch (theme) {
+            case 'light':
+                themeStatusBarItem.text = "☀️ Light";
+                break;
+            case 'dark':
+                themeStatusBarItem.text = "🌙 Dark";
+                break;
+            default:
+                themeStatusBarItem.text = "🔄 Auto";
+        }
+    };
+
+    updateThemeStatusBar();
+    themeStatusBarItem.show();
+
+    // 설정 변경 감지
+    vscode.workspace.onDidChangeConfiguration(event => {
+        if (event.affectsConfiguration('gitMetrics.theme')) {
+            updateThemeStatusBar();
+            dashboardProvider.refreshTheme();
+        }
+    });
+
     // Git 저장소인지 확인하고 상태바 표시
     const checkGitRepo = async () => {
         try {
@@ -227,9 +286,11 @@ export function activate(context: vscode.ExtensionContext) {
                     await vscode.workspace.fs.stat(gitPath);
                     statusBarItem.show();
                     exportStatusBarItem.show();
+                    themeStatusBarItem.show();
                 } catch {
                     statusBarItem.hide();
                     exportStatusBarItem.hide();
+                    themeStatusBarItem.hide();
                 }
             }
         } catch (error) {
@@ -245,12 +306,14 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(
         showDashboardDisposable,
+        toggleThemeDisposable,
         quickExportDisposable,
         customExportDisposable,
         openReportsFolderDisposable,
         windowsTroubleshootDisposable,
         statusBarItem,
-        exportStatusBarItem
+        exportStatusBarItem,
+        themeStatusBarItem
     );
 
     // 웰컴 메시지 (첫 설치 시에만)
@@ -262,14 +325,16 @@ export function activate(context: vscode.ExtensionContext) {
             : '🎉 Git Metrics Dashboard가 설치되었습니다! 상태바의 "📊 Git Stats" 버튼을 클릭하여 시작하세요.';
             
         const buttons = isWindows 
-            ? ['대시보드 열기', '윈도우 문제 해결', '더 이상 보지 않기']
-            : ['대시보드 열기', '더 이상 보지 않기'];
+            ? ['대시보드 열기', '윈도우 문제 해결', '테마 설정', '더 이상 보지 않기']
+            : ['대시보드 열기', '테마 설정', '더 이상 보지 않기'];
             
         vscode.window.showInformationMessage(welcomeMessage, ...buttons).then(action => {
             if (action === '대시보드 열기') {
                 vscode.commands.executeCommand('gitMetrics.showDashboard');
             } else if (action === '윈도우 문제 해결') {
                 vscode.commands.executeCommand('gitMetrics.windowsTroubleshoot');
+            } else if (action === '테마 설정') {
+                vscode.commands.executeCommand('gitMetrics.toggleTheme');
             } else if (action === '더 이상 보지 않기') {
                 context.globalState.update('gitMetrics.hasShownWelcome', true);
             }
