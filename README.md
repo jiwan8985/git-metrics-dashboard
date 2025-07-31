@@ -85,7 +85,7 @@ Git 저장소의 커밋 통계와 메트릭을 시각적으로 분석하고, 다
   "gitMetrics.export.autoOpenAfterExport": false,    // 내보내기 후 자동 열기
   "gitMetrics.export.customReportsPath": ""          // 사용자 정의 저장 경로
 }
-
+```
 ## 📁 리포트 저장 위치
 
 리포트는 기본적으로 다음 위치에 저장됩니다:
