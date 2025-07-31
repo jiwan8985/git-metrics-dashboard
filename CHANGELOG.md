@@ -5,6 +5,10 @@ All notable changes to the "Git Metrics Dashboard" extension will be documented 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.7] - 2025-07-30
+- **문서 개선**: README 및 CHANGELOG 수정
+- **버그 개선**: 테마 변경 시 로딩 수정
+  
 ## [0.0.6] - 2025-07-30
 
 ### 🎨 Major Improvements - 테마 & 언어 지원 대폭 개선
@@ -36,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### ✨ Added - README 업데이트
 - **문서 개선**: 사용법 및 설정 옵션 상세화
 - **스크린샷 추가**: 기능별 시각적 가이드 제공
+  
 ## [0.0.4] - 2025-07-28
 
 ### ✨ Added - README 수정
