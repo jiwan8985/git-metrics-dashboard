@@ -2028,6 +2028,7 @@
 import * as vscode from 'vscode';
 import { GitAnalyzer, MetricsData } from './gitAnalyzer';
 import { ReportGenerator, ReportOptions } from './reportGenerator';
+import { Badge, BadgeCategory, BadgeRarity } from './badgeSystem';
 
 export class DashboardProvider {
     private panel: vscode.WebviewPanel | undefined;
@@ -2273,6 +2274,7 @@ export class DashboardProvider {
             includeFileStats: true,
             includeAuthorStats: true,
             includeTimeAnalysis: true,
+            includeBadges: true,
             period: this.currentPeriod
         };
 
@@ -2282,14 +2284,16 @@ export class DashboardProvider {
                 includeCharts: false,
                 includeFileStats: false,
                 includeAuthorStats: false,
-                includeTimeAnalysis: false
+                includeTimeAnalysis: false,
+                includeBadges: false
             };
         } else if (includeOptions.label === '🎯 사용자 정의') {
             const sections = await vscode.window.showQuickPick([
                 { label: '📋 요약 통계', picked: true, detail: 'includeSummary' },
                 { label: '👥 개발자별 통계', picked: true, detail: 'includeAuthorStats' },
                 { label: '📁 파일 타입별 분석', picked: true, detail: 'includeFileStats' },
-                { label: '⏰ 시간대별 분석', picked: true, detail: 'includeTimeAnalysis' }
+                { label: '⏰ 시간대별 분석', picked: true, detail: 'includeTimeAnalysis' },
+                { label: '🏆 개발자 배지', picked: true, detail: 'includeBadges' }
             ], {
                 placeHolder: '포함할 섹션을 선택하세요 (다중 선택 가능)',
                 canPickMany: true
@@ -2301,6 +2305,7 @@ export class DashboardProvider {
             reportOptions.includeAuthorStats = sections.some(s => s.detail === 'includeAuthorStats');
             reportOptions.includeFileStats = sections.some(s => s.detail === 'includeFileStats');
             reportOptions.includeTimeAnalysis = sections.some(s => s.detail === 'includeTimeAnalysis');
+            reportOptions.includeBadges = sections.some(s => s.detail === 'includeBadges');
         }
 
         await this.handleExportReport(reportOptions);
@@ -2312,6 +2317,7 @@ export class DashboardProvider {
         const authorStatsData = this.prepareAuthorStatsData(metrics.authorStats);
         const languageData = this.prepareLanguageData(metrics.programmingLanguages);
         const categoryData = this.prepareCategoryData(metrics.fileTypeStats);
+        const badgeData = this.prepareBadgeData(metrics.badges || []);
         
         // 현재 테마 가져오기
         const currentTheme = this.getCurrentTheme();
@@ -2827,6 +2833,227 @@ export class DashboardProvider {
             min-width: 35px;
             text-align: right;
         }
+
+        /* 배지 시스템 스타일 */
+        .badge-section {
+            margin: 24px 0;
+        }
+
+        .badge-section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-color);
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 8px;
+        }
+
+        .badge-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .badge-card {
+            background: var(--secondary-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .badge-card.unlocked {
+            border-color: var(--success-color);
+            box-shadow: 0 4px 16px rgba(40, 167, 69, 0.2);
+        }
+
+        .badge-card.in-progress {
+            border-color: var(--warning-color);
+            box-shadow: 0 4px 16px rgba(255, 193, 7, 0.2);
+        }
+
+        .badge-card.locked {
+            opacity: 0.6;
+            border-color: var(--text-muted);
+        }
+
+        .badge-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--card-shadow);
+        }
+
+        .badge-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .badge-icon.grayscale {
+            filter: grayscale(100%);
+            opacity: 0.5;
+        }
+
+        .badge-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-color);
+        }
+
+        .badge-description {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .badge-rarity {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .badge-rarity.common {
+            background: #6c757d;
+            color: white;
+        }
+
+        .badge-rarity.uncommon {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-rarity.rare {
+            background: #007bff;
+            color: white;
+        }
+
+        .badge-rarity.epic {
+            background: #6f42c1;
+            color: white;
+        }
+
+        .badge-rarity.legendary {
+            background: #fd7e14;
+            color: white;
+        }
+
+        .badge-date {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+
+        .badge-progress-bar {
+            background: var(--border-color);
+            border-radius: 8px;
+            height: 16px;
+            margin: 8px 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .badge-progress-bar .progress-fill {
+            height: 100%;
+            background: var(--warning-color);
+            border-radius: 8px;
+            transition: width 0.3s ease;
+        }
+
+        .badge-progress-bar .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .badge-progress-desc {
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        .progress-bar {
+            background: var(--border-color);
+            border-radius: 8px;
+            height: 8px;
+            margin-top: 12px;
+            overflow: hidden;
+        }
+
+        .progress-bar .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--success-color));
+            border-radius: 8px;
+            transition: width 0.3s ease;
+        }
+
+        .rarity-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .rarity-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 0;
+        }
+
+        .rarity-badge {
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .rarity-badge.common {
+            background: #6c757d;
+            color: white;
+        }
+
+        .rarity-badge.uncommon {
+            background: #28a745;
+            color: white;
+        }
+
+        .rarity-badge.rare {
+            background: #007bff;
+            color: white;
+        }
+
+        .rarity-badge.epic {
+            background: #6f42c1;
+            color: white;
+        }
+
+        .rarity-badge.legendary {
+            background: #fd7e14;
+            color: white;
+        }
+
+        .more-badges {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 14px;
+            color: var(--text-muted);
+            font-style: italic;
+        }
     </style>
 </head>
 <body class="${currentTheme}-theme">
@@ -3023,6 +3250,103 @@ export class DashboardProvider {
                 <canvas id="authorPieChart"></canvas>
             </div>
         </div>
+    </div>
+
+    <!-- 배지 시스템 섹션 -->
+    <div class="metric-card large-chart">
+        <div class="metric-title">🏆 개발자 뱃지 시스템</div>
+        <div class="dashboard-grid" style="margin-bottom: 20px;">
+            <div class="metric-card" style="margin: 0;">
+                <div class="metric-title">📈 진행 상황</div>
+                <div class="metric-value stats-highlight">${badgeData.totalUnlocked}/${badgeData.totalBadges}</div>
+                <div class="metric-subtitle">${badgeData.completionPercentage}% 완료</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${badgeData.completionPercentage}%"></div>
+                </div>
+            </div>
+            <div class="metric-card" style="margin: 0;">
+                <div class="metric-title">⭐ 희귀도 통계</div>
+                <div class="rarity-stats">
+                    <div class="rarity-item">
+                        <span class="rarity-badge common">Common</span>
+                        <span>${badgeData.rarityStats.common}</span>
+                    </div>
+                    <div class="rarity-item">
+                        <span class="rarity-badge uncommon">Uncommon</span>
+                        <span>${badgeData.rarityStats.uncommon}</span>
+                    </div>
+                    <div class="rarity-item">
+                        <span class="rarity-badge rare">Rare</span>
+                        <span>${badgeData.rarityStats.rare}</span>
+                    </div>
+                    <div class="rarity-item">
+                        <span class="rarity-badge epic">Epic</span>
+                        <span>${badgeData.rarityStats.epic}</span>
+                    </div>
+                    <div class="rarity-item">
+                        <span class="rarity-badge legendary">Legendary</span>
+                        <span>${badgeData.rarityStats.legendary}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 언락된 배지들 -->
+        ${badgeData.unlocked.length > 0 ? `
+        <div class="badge-section">
+            <h3 class="badge-section-title">🏆 획득한 배지</h3>
+            <div class="badge-grid">
+                ${badgeData.unlocked.map(badge => `
+                <div class="badge-card unlocked ${badge.rarity}">
+                    <div class="badge-icon">${badge.icon}</div>
+                    <div class="badge-name">${badge.name}</div>
+                    <div class="badge-description">${badge.description}</div>
+                    <div class="badge-rarity ${badge.rarity}">${badge.rarity.toUpperCase()}</div>
+                    ${badge.unlockedAt ? `<div class="badge-date">획득일: ${badge.unlockedAt.toLocaleDateString()}</div>` : ''}
+                </div>
+                `).join('')}
+            </div>
+        </div>
+        ` : ''}
+        
+        <!-- 진행중인 배지들 -->
+        ${badgeData.inProgress.length > 0 ? `
+        <div class="badge-section">
+            <h3 class="badge-section-title">⏳ 진행 중인 배지</h3>
+            <div class="badge-grid">
+                ${badgeData.inProgress.map(badge => `
+                <div class="badge-card in-progress ${badge.rarity}">
+                    <div class="badge-icon">${badge.icon}</div>
+                    <div class="badge-name">${badge.name}</div>
+                    <div class="badge-description">${badge.description}</div>
+                    <div class="badge-progress-bar">
+                        <div class="progress-fill" style="width: ${badge.progress}%"></div>
+                        <span class="progress-text">${badge.progress}%</span>
+                    </div>
+                    <div class="badge-progress-desc">${badge.progressDescription}</div>
+                </div>
+                `).join('')}
+            </div>
+        </div>
+        ` : ''}
+        
+        <!-- 잠긴 배지들 (일부만 표시) -->
+        ${badgeData.locked.length > 0 ? `
+        <div class="badge-section">
+            <h3 class="badge-section-title">🔒 미획득 배지 (일부)</h3>
+            <div class="badge-grid">
+                ${badgeData.locked.slice(0, 6).map(badge => `
+                <div class="badge-card locked ${badge.rarity}">
+                    <div class="badge-icon grayscale">❓</div>
+                    <div class="badge-name">???</div>
+                    <div class="badge-description">조건을 만족하면 획득할 수 있습니다</div>
+                    <div class="badge-rarity ${badge.rarity}">${badge.rarity.toUpperCase()}</div>
+                </div>
+                `).join('')}
+            </div>
+            ${badgeData.locked.length > 6 ? `<div class="more-badges">... 그리고 ${badgeData.locked.length - 6}개 더</div>` : ''}
+        </div>
+        ` : ''}
     </div>
 
     <script>
@@ -3684,6 +4008,51 @@ export class DashboardProvider {
         const borderColors = labels.map(category => categoryColors[category]?.border || '#7F8C8D');
         
         return { labels, data, colors, borderColors };
+    }
+
+    private prepareBadgeData(badges: Badge[]) {
+        const unlockedBadges = badges.filter(badge => badge.unlocked);
+        const inProgressBadges = badges.filter(badge => !badge.unlocked && badge.progress > 0);
+        const lockedBadges = badges.filter(badge => !badge.unlocked && badge.progress === 0);
+
+        // 카테고리별 배지 그룹화
+        const badgesByCategory: { [key in BadgeCategory]: Badge[] } = {
+            [BadgeCategory.COMMIT_MASTER]: [],
+            [BadgeCategory.CODE_QUALITY]: [],
+            [BadgeCategory.COLLABORATOR]: [],
+            [BadgeCategory.TIME_WARRIOR]: [],
+            [BadgeCategory.MILESTONE]: [],
+            [BadgeCategory.CONSISTENCY]: [],
+            [BadgeCategory.EXPLORER]: []
+        };
+
+        badges.forEach(badge => {
+            badgesByCategory[badge.category].push(badge);
+        });
+
+        // 희귀도별 통계
+        const rarityStats: { [key in BadgeRarity]: number } = {
+            [BadgeRarity.COMMON]: 0,
+            [BadgeRarity.UNCOMMON]: 0,
+            [BadgeRarity.RARE]: 0,
+            [BadgeRarity.EPIC]: 0,
+            [BadgeRarity.LEGENDARY]: 0
+        };
+
+        unlockedBadges.forEach(badge => {
+            rarityStats[badge.rarity]++;
+        });
+
+        return {
+            unlocked: unlockedBadges,
+            inProgress: inProgressBadges,
+            locked: lockedBadges,
+            byCategory: badgesByCategory,
+            rarityStats,
+            totalUnlocked: unlockedBadges.length,
+            totalBadges: badges.length,
+            completionPercentage: Math.round((unlockedBadges.length / badges.length) * 100)
+        };
     }
 
     private getFileTypeIcon(extension: string): string {

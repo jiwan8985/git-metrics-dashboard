@@ -1,6 +1,7 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import * as vscode from 'vscode';
+import { BadgeSystem, Badge } from './badgeSystem';
 
 const execAsync = promisify(exec);
 
@@ -67,6 +68,8 @@ export interface MetricsData {
     programmingLanguages: { [lang: string]: number };
     // 시간대별 분석 추가
     timeAnalysis: TimeAnalysis;
+    // 배지 시스템 추가
+    badges: Badge[];
 }
 
 export interface ExtendedMetricsData extends MetricsData {
@@ -77,9 +80,11 @@ export interface ExtendedMetricsData extends MetricsData {
 
 export class GitAnalyzer {
     private workspaceRoot: string;
+    private badgeSystem: BadgeSystem;
 
     constructor() {
         this.workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '';
+        this.badgeSystem = new BadgeSystem();
     }
 
     async getCommitHistory(days: number = 30): Promise<CommitData[]> {
@@ -184,7 +189,8 @@ export class GitAnalyzer {
         // 시간대별 분석 계산
         const timeAnalysis = this.calculateTimeAnalysis(commits);
 
-        return {
+        // 기본 메트릭 데이터 생성
+        const metricsData = {
             dailyCommits,
             fileStats,
             thisWeekTopFiles,
@@ -197,8 +203,15 @@ export class GitAnalyzer {
             fileTypeStats,
             topFileType,
             programmingLanguages,
-            timeAnalysis
+            timeAnalysis,
+            badges: [] as Badge[]
         };
+
+        // 배지 계산 (30일 기준)
+        const badges = this.badgeSystem.calculateBadges(metricsData, commits, 30);
+        metricsData.badges = badges;
+
+        return metricsData;
     }
 
     async getDetailedCommitStats(days: number = 30): Promise<ExtendedMetricsData> {
@@ -784,5 +797,22 @@ export class GitAnalyzer {
         const hour = Object.entries(hourlyActivity)
             .sort(([, a], [, b]) => b - a)[0]?.[0] || '0';
         return `${hour}시`;
+    }
+
+    // 배지 관련 메소드들
+    getBadgeSystem(): BadgeSystem {
+        return this.badgeSystem;
+    }
+
+    async calculateBadgesForCommits(commits: CommitData[], metrics: MetricsData, period: number = 30): Promise<Badge[]> {
+        return this.badgeSystem.calculateBadges(metrics, commits, period);
+    }
+
+    getUnlockedBadges(): Badge[] {
+        return this.badgeSystem.getUnlockedBadges();
+    }
+
+    getBadgeStats() {
+        return this.badgeSystem.getBadgeStats();
     }
 }
