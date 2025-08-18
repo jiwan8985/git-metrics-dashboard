@@ -70,6 +70,7 @@ export function activate(context: vscode.ExtensionContext) {
                 includeFileStats: true,
                 includeAuthorStats: true,
                 includeTimeAnalysis: true,
+                includeBadges: true,
                 period: defaultPeriod
             };
 
@@ -153,6 +154,7 @@ export function activate(context: vscode.ExtensionContext) {
                 includeFileStats: sections.some(s => s.detail === 'includeFileStats'),
                 includeAuthorStats: sections.some(s => s.detail === 'includeAuthorStats'),
                 includeTimeAnalysis: sections.some(s => s.detail === 'includeTimeAnalysis'),
+                includeBadges: true,
                 period: period
             };
 

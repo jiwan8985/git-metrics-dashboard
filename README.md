@@ -1,6 +1,6 @@
 # 📊 Git Metrics Dashboard
 
-![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)
+![Version](https://img.shields.io/badge/version-0.0.7-blue.svg)
 ![VS Code](https://img.shields.io/badge/VS%20Code-1.102.0+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-yellow.svg)
 
@@ -14,12 +14,14 @@ Git 저장소의 커밋 통계와 메트릭을 시각적으로 분석하고, 다
 - **개발자별 분석**: 순위, 기여도, 활동 패턴 분석
 - **파일 타입별 분석**: **70+ 프로그래밍 언어** 지원
 - **시간대별 분석**: 시간별, 요일별 활동 패턴
+- **배지 시스템**: 개발 성취도를 추적하는 게이미피케이션 요소
 - **스마트 테마**: 다크/라이트 테마 완벽 지원
 
 ### 📄 리포트 내보내기
 - **다양한 포맷 지원**: HTML, JSON, CSV, Markdown
 - **테마 적용 리포트**: VS Code 테마를 리포트에 반영
 - **사용자 정의 옵션**: 기간, 포함 섹션 선택 가능
+- **배지 포함 리포트**: 개발 성취도 배지를 리포트에 포함
 - **프로페셔널 리포트**: 회사 보고서나 프로젝트 문서용
 - **자동화 친화적**: JSON/CSV 형식으로 추가 분석 가능
 

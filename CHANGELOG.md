@@ -5,6 +5,31 @@ All notable changes to the "Git Metrics Dashboard" extension will be documented 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.8] - 2025-08-18
+
+### 🎮 New Features - 배지 시스템 추가
+- **개발자 성취도 배지**: 커밋 활동과 개발 패턴을 기반으로 한 게이미피케이션 시스템
+- **다양한 배지 카테고리**: Productivity, Quality, Consistency, Milestone, Special 등 5개 카테고리
+- **진행률 추적**: 각 배지별 달성도 및 진행 상황 표시
+- **희귀도 시스템**: Common, Rare, Epic, Legendary 등급별 배지 분류
+
+### 🐛 Bug Fixes - TypeScript 컴파일 오류 수정
+- **badgeSystem.ts**: 사용하지 않는 import 제거 (TimeAnalysis, AuthorStats)
+- **Badge 인터페이스**: unlockedAt 속성 타입 호환성 문제 해결
+- **메서드 시그니처**: calculateActiveDaysProgress 함수의 불필요한 매개변수 제거
+- **ReportOptions**: 누락된 includeBadges 속성 추가
+- **reportGenerator.ts**: 사용하지 않는 import 정리 (Badge, BadgeCategory)
+
+### 📄 Documentation Updates
+- **README.md**: 배지 시스템 기능 설명 추가
+- **버전 정보**: 정확한 버전 번호 반영 (0.0.7)
+- **리포트 기능**: 배지 포함 리포트 기능 설명 추가
+
+### 🔧 Technical Improvements
+- **코드 품질**: TypeScript strict 모드 완전 호환
+- **타입 안전성**: 모든 컴파일 오류 해결
+- **성능 최적화**: 불필요한 코드 제거로 번들 크기 감소
+
 ## [0.0.7] - 2025-07-30
 - **문서 개선**: README 및 CHANGELOG 수정
 - **버그 개선**: 테마 변경 시 로딩 수정
