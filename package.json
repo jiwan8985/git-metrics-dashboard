@@ -2,7 +2,7 @@
   "name": "git-metrics-dashboard",
   "displayName": "Git Metrics Dashboard",
   "description": "Comprehensive Git repository analytics and metrics dashboard. Analyze commits, contributors, file changes, and time patterns with beautiful visualizations and detailed reports.",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "publisher": "jiwan-dev",
   "repository": {
     "type": "git",
