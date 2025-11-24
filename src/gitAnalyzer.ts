@@ -1,6 +1,9 @@
+import { exec } from 'child_process';
+import { promisify } from 'util';
 import * as vscode from 'vscode';
-import simpleGit, { SimpleGit } from 'simple-git';
 import { BadgeSystem, Badge } from './badgeSystem';
+
+const execAsync = promisify(exec);
 
 export interface CommitData {
     hash: string;
@@ -78,12 +81,10 @@ export interface ExtendedMetricsData extends MetricsData {
 export class GitAnalyzer {
     private workspaceRoot: string;
     private badgeSystem: BadgeSystem;
-    private git: SimpleGit;
 
     constructor() {
         this.workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '';
         this.badgeSystem = new BadgeSystem();
-        this.git = simpleGit(this.workspaceRoot);
     }
 
     async getCommitHistory(days: number = 30): Promise<CommitData[]> {
@@ -106,15 +107,16 @@ export class GitAnalyzer {
         }
 
         try {
-            // simple-git 사용 (안전한 명령 실행)
-            const logResult = await this.git.log([
-                `--since=${sinceStr}`,
-                '--pretty=format:%H|%an|%ad|%s',
-                '--date=iso',
-                '--name-only'
-            ]);
+            // exec 사용 (커스텀 포맷 지원)
+            const { stdout } = await execAsync(
+                `git log --since="${sinceStr}" --pretty=format:"%H|%an|%ad|%s" --date=iso --name-only`,
+                { cwd: this.workspaceRoot }
+            );
 
-            return this.parseGitLog(logResult.all);
+            console.log('📝 Git log 조회 완료');
+            console.log(`📊 Raw output length: ${stdout.length}`);
+
+            return this.parseGitLog(stdout);
         } catch (error) {
             const errorMsg = error instanceof Error ? error.message : '알 수 없는 오류';
             vscode.window.showErrorMessage(`Git 분석 오류: ${errorMsg}`);
