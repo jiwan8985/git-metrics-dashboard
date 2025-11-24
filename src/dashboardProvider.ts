@@ -70,8 +70,20 @@ export class DashboardProvider {
         if (this.panel && this.currentMetrics) {
             const config = vscode.workspace.getConfiguration('gitMetrics');
             const maxTopFiles = config.get<number>('maxTopFiles', 10);
-            this.panel.webview.html = this.generateAdvancedHTML(this.currentMetrics, this.currentPeriod, maxTopFiles);
+            const themeSetting = config.get<string>('theme', 'auto');
+            const themeClass = this.getThemeClass(themeSetting);
+            this.panel.webview.html = this.generateAdvancedHTML(this.currentMetrics, this.currentPeriod, maxTopFiles, themeClass);
         }
+    }
+
+    private getThemeClass(themeSetting: string): string {
+        if (themeSetting === 'light') {
+            return 'light-theme';
+        } else if (themeSetting === 'dark') {
+            return 'dark-theme';
+        }
+        // auto: VS Code의 자동 테마 사용
+        return '';
     }
 
     private async updateContent(days?: number) {
@@ -92,7 +104,9 @@ export class DashboardProvider {
 
             this.currentMetrics = metrics; // 현재 메트릭 저장
 
-            this.panel.webview.html = this.generateAdvancedHTML(metrics, defaultPeriod, maxTopFiles);
+            const themeSetting = config.get<string>('theme', 'auto');
+            const themeClass = this.getThemeClass(themeSetting);
+            this.panel.webview.html = this.generateAdvancedHTML(metrics, defaultPeriod, maxTopFiles, themeClass);
 
             vscode.window.showInformationMessage('✅ Git 메트릭 대시보드 업데이트 완료!');
         } catch (error) {
@@ -204,7 +218,7 @@ export class DashboardProvider {
         await this.handleExportReport(reportOptions);
     }
 
-    private generateAdvancedHTML(metrics: MetricsData, days: number, maxTopFiles: number): string {
+    private generateAdvancedHTML(metrics: MetricsData, days: number, maxTopFiles: number, themeClass: string = ''): string {
         const dailyCommitsData = this.prepareDailyCommitsData(metrics.dailyCommits, days);
         const fileStatsData = this.prepareFileStatsData(metrics.fileStats);
         const authorStatsData = this.prepareAuthorStatsData(metrics.authorStats);
@@ -693,9 +707,55 @@ export class DashboardProvider {
             min-width: 35px;
             text-align: right;
         }
+
+        /* 라이트 테마 강제 적용 */
+        body.light-theme {
+            --vscode-editor-background: #ffffff !important;
+            --vscode-editor-foreground: #24292e !important;
+            --vscode-textLink-foreground: #0366d6 !important;
+            --vscode-button-background: #f5f5f5 !important;
+            --vscode-button-foreground: #24292e !important;
+            --vscode-button-hoverBackground: #e1e4e8 !important;
+            --vscode-button-border: #d1d5da !important;
+            --vscode-panel-border: #e1e4e8 !important;
+            --vscode-terminal-ansiGreen: #28a745 !important;
+            --vscode-terminal-ansiBlue: #0366d6 !important;
+        }
+
+        body.light-theme .metric-card {
+            background: #f6f8fa !important;
+            border-color: #e1e4e8 !important;
+        }
+
+        body.light-theme .chart-container {
+            background: #f6f8fa !important;
+        }
+
+        /* 다크 테마 강제 적용 */
+        body.dark-theme {
+            --vscode-editor-background: #0d1117 !important;
+            --vscode-editor-foreground: #c9d1d9 !important;
+            --vscode-textLink-foreground: #58a6ff !important;
+            --vscode-button-background: #21262d !important;
+            --vscode-button-foreground: #c9d1d9 !important;
+            --vscode-button-hoverBackground: #30363d !important;
+            --vscode-button-border: #444c56 !important;
+            --vscode-panel-border: #30363d !important;
+            --vscode-terminal-ansiGreen: #3fb950 !important;
+            --vscode-terminal-ansiBlue: #58a6ff !important;
+        }
+
+        body.dark-theme .metric-card {
+            background: #161b22 !important;
+            border-color: #30363d !important;
+        }
+
+        body.dark-theme .chart-container {
+            background: #161b22 !important;
+        }
     </style>
 </head>
-<body>
+<body class="${themeClass}">
     <div class="header">
         <h1 class="title">📊 Git Metrics Dashboard</h1>
         <div class="controls">
