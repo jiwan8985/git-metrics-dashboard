@@ -2,7 +2,7 @@
   "name": "git-metrics-dashboard",
   "displayName": "Git Metrics Dashboard",
   "description": "Comprehensive Git repository analytics and metrics dashboard. Analyze commits, contributors, file changes, and time patterns with beautiful visualizations and detailed reports.",
-  "version": "0.1.0",
+  "version": "0.0.9",
   "publisher": "jiwan-dev",
   "repository": {
     "type": "git",
@@ -152,19 +152,7 @@
         "gitMetrics.autoRefresh": {
           "type": "boolean",
           "default": false,
-          "description": "Git 변경 시 대시보드 자동 새로고침 활성화"
-        },
-        "gitMetrics.autoRefreshInterval": {
-          "type": "number",
-          "default": 5000,
-          "description": "자동 새로고침 감지 간격 (밀리초)",
-          "minimum": 100,
-          "maximum": 30000
-        },
-        "gitMetrics.showChangeNotification": {
-          "type": "boolean",
-          "default": false,
-          "description": "Git 변경 감지 시 알림 표시"
+          "description": "자동 새로고침 활성화"
         },
         "gitMetrics.showAuthorStats": {
           "type": "boolean",
