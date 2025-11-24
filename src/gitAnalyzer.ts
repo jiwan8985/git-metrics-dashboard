@@ -1,6 +1,9 @@
+import { exec } from 'child_process';
+import { promisify } from 'util';
 import * as vscode from 'vscode';
-import simpleGit, { SimpleGit } from 'simple-git';
 import { BadgeSystem, Badge } from './badgeSystem';
+
+const execAsync = promisify(exec);
 
 export interface CommitData {
     hash: string;
@@ -78,12 +81,10 @@ export interface ExtendedMetricsData extends MetricsData {
 export class GitAnalyzer {
     private workspaceRoot: string;
     private badgeSystem: BadgeSystem;
-    private git: SimpleGit;
 
     constructor() {
         this.workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '';
         this.badgeSystem = new BadgeSystem();
-        this.git = simpleGit(this.workspaceRoot);
     }
 
     async getCommitHistory(days: number = 30): Promise<CommitData[]> {
@@ -106,15 +107,16 @@ export class GitAnalyzer {
         }
 
         try {
-            // simple-git 사용 (안전한 명령 실행)
-            const logResult = await this.git.log([
-                `--since=${sinceStr}`,
-                '--pretty=format:%H|%an|%ad|%s',
-                '--date=iso',
-                '--name-only'
-            ]);
+            // exec 사용 (커스텀 포맷 지원)
+            const { stdout } = await execAsync(
+                `git log --since="${sinceStr}" --pretty=format:"%H|%an|%ad|%s" --date=iso --name-only`,
+                { cwd: this.workspaceRoot }
+            );
 
-            return this.parseGitLog(logResult.all);
+            console.log('📝 Git log 조회 완료');
+            console.log(`📊 Raw output length: ${stdout.length}`);
+
+            return this.parseGitLog(stdout);
         } catch (error) {
             const errorMsg = error instanceof Error ? error.message : '알 수 없는 오류';
             vscode.window.showErrorMessage(`Git 분석 오류: ${errorMsg}`);
@@ -130,69 +132,103 @@ export class GitAnalyzer {
     private parseGitLog(gitOutput: string | readonly any[]): CommitData[] {
         const commits: CommitData[] = [];
 
+        if (!gitOutput) {
+            console.log('⚠️ gitOutput가 비어있음');
+            return commits;
+        }
+
         // simple-git는 logResult.all 배열로 반환 (readonly)
         let logArray: any[];
         if (Array.isArray(gitOutput)) {
             logArray = Array.from(gitOutput);
+            console.log(`📋 배열 변환 완료, 항목 수: ${logArray.length}`);
         } else if (typeof gitOutput === 'string') {
-            logArray = gitOutput.split('\n\n').filter((block: string) => block.trim());
+            logArray = gitOutput.split('\n');
+            console.log(`📋 문자열 분할 완료, 라인 수: ${logArray.length}`);
         } else {
+            console.log(`⚠️ gitOutput 타입이 배열이나 문자열이 아님: ${typeof gitOutput}`);
             return commits;
         }
 
-        for (const item of logArray) {
-            try {
-                let hash = '';
-                let author = '';
-                let dateStr = '';
-                let message = '';
-                let files: string[] = [];
+        // 커밋 단위로 파싱 (hash|author|date|message 형식이 커밋 헤더)
+        let currentCommit: any = null;
+        let hashCount = 0;
 
-                if (typeof item === 'string') {
-                    // 문자열 형식 파싱
-                    const lines = item.split('\n');
-                    if (lines.length < 1) {continue;}
+        for (const line of logArray) {
+            // 문자열이 아닌 경우 스킵
+            if (typeof line !== 'string') {
+                console.warn(`⚠️ 예상치 않은 타입: ${typeof line}`, line);
+                continue;
+            }
 
-                    const parts = lines[0].split('|');
-                    if (parts.length < 4) {continue;}
+            const trimmedLine = line.trim();
 
-                    [hash, author, dateStr, message] = parts;
-                    files = lines.slice(1)
-                        .filter(line => line.trim() && !line.includes('|'))
-                        .map(line => line.trim());
-                } else if (item && typeof item === 'object') {
-                    // simple-git 객체 형식
-                    hash = item.hash || '';
-                    author = item.author_name || '';
-                    dateStr = item.date || new Date().toISOString();
-                    message = item.message || '';
-                    files = [];
+            // 빈 줄 무시
+            if (!trimmedLine) {continue;}
+
+            // hash|author|date|message 형식의 줄이 커밋 헤더
+            if (trimmedLine.includes('|')) {
+                // 이전 커밋 저장
+                if (currentCommit && currentCommit.hash) {
+                    const commit = this.createCommitData(currentCommit);
+                    if (commit) {commits.push(commit);}
                 }
 
-                // 데이터 검증 (XSS 방지)
-                if (!hash || !author || !dateStr) {continue;}
-
-                // 날짜 검증
-                const commitDate = new Date(dateStr);
-                if (isNaN(commitDate.getTime())) {continue;}
-
-                commits.push({
-                    hash: this.sanitizeString(hash),
-                    author: this.sanitizeString(author),
-                    date: commitDate,
-                    message: this.sanitizeString(message),
-                    files: files.map(f => this.sanitizeString(f)),
-                    insertions: 0,
-                    deletions: 0
-                });
-            } catch (parseError) {
-                // 단일 항목 파싱 실패는 무시하고 계속
-                console.debug('파싱 오류:', parseError);
-                continue;
+                hashCount++;
+                // 새 커밋 시작
+                const parts = trimmedLine.split('|');
+                if (parts.length >= 4) {
+                    const [hash, author, dateStr, message] = parts;
+                    currentCommit = {
+                        hash,
+                        author,
+                        date: dateStr,
+                        message,
+                        files: []
+                    };
+                }
+            } else if (currentCommit && currentCommit.hash) {
+                // 파일 이름 추가 (파이프가 없고 비어있지 않으면 파일)
+                currentCommit.files.push(trimmedLine);
             }
         }
 
+        // 마지막 커밋 저장
+        if (currentCommit && currentCommit.hash) {
+            const commit = this.createCommitData(currentCommit);
+            if (commit) {commits.push(commit);}
+        }
+
+        console.log(`🔍 파싱 결과: 발견된 hash 수=${hashCount}, 완료된 커밋 수=${commits.length}`);
+        if (commits.length > 0) {
+            console.log(`📌 첫 번째 커밋:`, commits[0]);
+        }
+
         return commits;
+    }
+
+    /**
+     * 파싱된 커밋 데이터를 CommitData로 변환
+     */
+    private createCommitData(commitData: any): CommitData | null {
+        const { hash, author, date: dateStr, message, files } = commitData;
+
+        // 필수 데이터 검증
+        if (!hash || !author || !dateStr) {return null;}
+
+        // 날짜 검증
+        const commitDate = new Date(dateStr);
+        if (isNaN(commitDate.getTime())) {return null;}
+
+        return {
+            hash: this.sanitizeString(hash),
+            author: this.sanitizeString(author),
+            date: commitDate,
+            message: this.sanitizeString(message || ''),
+            files: (files || []).map((f: string) => this.sanitizeString(f)),
+            insertions: 0,
+            deletions: 0
+        };
     }
 
     /**

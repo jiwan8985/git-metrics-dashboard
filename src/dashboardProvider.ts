@@ -2092,6 +2092,12 @@ export class DashboardProvider {
         await this.updateContent();
     }
 
+    // 대시보드 새로고침 (실시간 변경 감지용)
+    async refreshDashboard() {
+        if (!this.panel) {return;}
+        await this.updateContent(this.currentPeriod);
+    }
+
     // 테마 새로고침 기능
     refreshTheme() {
         if (this.panel && this.currentMetrics) {
