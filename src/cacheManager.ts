@@ -12,7 +12,7 @@ export class CacheManager {
 
     get(key: string): any | null {
         const item = this.cache.get(key);
-        if (!item) return null;
+        if (!item) {return null;}
 
         if (Date.now() - item.timestamp > this.CACHE_DURATION) {
             this.cache.delete(key);

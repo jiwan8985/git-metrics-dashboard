@@ -111,24 +111,45 @@ export class GitAnalyzer {
 
     private parseGitLog(gitOutput: string): CommitData[] {
         const commits: CommitData[] = [];
-        const commitBlocks = gitOutput.split('\n\n').filter(block => block.trim());
+        const lines = gitOutput.split('\n');
 
-        for (const block of commitBlocks) {
-            const lines = block.split('\n');
-            if (lines.length < 2) continue;
+        let currentCommit: any = null;
 
-            const [hash, author, dateStr, message] = lines[0].split('|');
-            const files = lines.slice(1).filter(line => line.trim() && !line.includes('|'));
+        for (const line of lines) {
+            const trimmedLine = line.trim();
 
-            commits.push({
-                hash: hash || '',
-                author: author || 'Unknown',
-                date: new Date(dateStr),
-                message: message || '',
-                files,
-                insertions: 0,
-                deletions: 0
-            });
+            // 빈 줄 또는 파이프(|)를 포함한 줄이 커밋 헤더
+            if (trimmedLine.includes('|')) {
+                // 이전 커밋 저장
+                if (currentCommit) {
+                    commits.push(currentCommit);
+                }
+
+                // 새 커밋 시작
+                const [hash, author, dateStr, message] = trimmedLine.split('|');
+                currentCommit = {
+                    hash: hash || '',
+                    author: author || 'Unknown',
+                    date: new Date(dateStr),
+                    message: message || '',
+                    files: [],
+                    insertions: 0,
+                    deletions: 0
+                };
+            } else if (trimmedLine && currentCommit) {
+                // 파일 이름 추가 (파이프가 없고 비어있지 않으면 파일)
+                currentCommit.files.push(trimmedLine);
+            }
+        }
+
+        // 마지막 커밋 저장
+        if (currentCommit) {
+            commits.push(currentCommit);
+        }
+
+        console.log(`✅ 파싱된 커밋 수: ${commits.length}`);
+        if (commits.length > 0) {
+            console.log(`📌 첫 번째 커밋:`, commits[0]);
         }
 
         return commits;

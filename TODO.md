@@ -1,0 +1,575 @@
+# Git Metrics Dashboard - 개발 로드맵 & TODO List
+
+## 📋 개요
+
+**Marketplace 배포 중인 프로덕션 플러그인의 개발 로드맵**
+
+**현재 버전:** 0.0.9 (보안 패치 & 실시간 감지 기능 완료)
+**최종 업데이트:** 2025-11-24
+**상태:** 🟢 보안 패치 완료, 실시간 Git 변경 감지 완료, Phase 2 진행 중
+
+---
+
+## 🔴 즉시 배포 (This Week)
+
+### 1. ⚡ v0.0.9 보안 패치 & 실시간 감지 배포
+**상태:** ✅ 완료됨
+**소요 시간:** 8시간
+
+**파일 변경:**
+- ✅ `src/gitAnalyzer.ts` - simple-git 도입, XSS 방지
+- ✅ `src/reportGenerator.ts` - CSV 인젝션 방지
+- ✅ `src/dashboardStyles.ts` - 새로 생성 (테마 중앙화)
+- ✅ `src/dashboardDataFormatter.ts` - 새로 생성 (데이터 포맷팅)
+- ✅ `src/gitChangeDetector.ts` - 새로 생성 (Git 변경 감지)
+- ✅ `src/gitStatusIndicator.ts` - 새로 생성 (상태 표시)
+- ✅ `src/extension.ts` - GitChangeDetector & GitStatusIndicator 통합
+- ✅ `package.json` - 의존성 및 설정 옵션 추가
+
+**할 일:**
+- [ ] `npm version minor` (0.0.9 → 0.1.0) - 선택사항
+- [ ] CHANGELOG.md 최종 확인
+- [ ] Git commit & tag
+- [ ] `npm run publish` - Marketplace 배포
+
+**예상 시간:** 1시간
+**영향도:** 🔴 높음 (보안 + 기능 추가)
+
+---
+
+## 🟠 Phase 1: 기초 안정화 (1개월 - 12월)
+
+### 2. 📝 테스트 커버리지 구축
+**상태:** ✅ 완료됨
+**우선도:** 🔴 높음
+**예상 시간:** 20-30시간
+
+#### 단위 테스트 (Unit Tests)
+- [ ] **GitAnalyzer 테스트**
+    - [ ] `getCommitHistory()` - 정상 케이스
+    - [ ] `getCommitHistory()` - 빈 저장소
+    - [ ] `getCommitHistory()` - 대용량 저장소
+    - [ ] `generateMetrics()` - 메트릭 계산
+    - [ ] `parseGitLog()` - 로그 파싱
+    - [ ] `sanitizeString()` - XSS 방지 검증
+    - 목표: 90% 커버리지
+
+- [ ] **BadgeSystem 테스트**
+    - [ ] 배지 임계값 계산
+    - [ ] 진행도 계산
+    - [ ] 엣지 케이스 (0 커밋, 극값)
+    - 목표: 85% 커버리지
+
+- [ ] **ReportGenerator 테스트**
+    - [ ] CSV 생성
+    - [ ] HTML 생성
+    - [ ] JSON 생성
+    - [ ] Markdown 생성
+    - [ ] CSV 인젝션 방지
+    - [ ] XSS 방지
+    - 목표: 80% 커버리지
+
+#### 통합 테스트 (Integration Tests)
+- [ ] 전체 흐름 테스트 (Git → 분석 → 리포트)
+- [ ] 다양한 데이터 시나리오
+- [ ] 에러 처리 경로
+
+#### UI 테스트 (Webview Tests)
+- [ ] 대시보드 렌더링
+- [ ] 차트 표시
+- [ ] 테마 전환
+- [ ] 내보내기 기능
+
+**파일:** `src/test/extension.test.ts` (확장)
+
+---
+
+### 3. 🌐 국제화 (i18n) - 기본 구현
+**상태:** ✅ 완료됨
+**우선도:** 🟠 중간
+**예상 시간:** 15-20시간
+
+#### 지원 언어
+- [ ] **영어 (English)** - 우선순위 1
+    - Marketplace 글로벌 사용자
+    - 검색 순위 향상
+
+- [ ] **일본어 (日本語)** - 우선순위 2
+    - 아시아 시장
+    - 기술 커뮤니티
+
+- [ ] **중국어 간체 (简体中文)** - 우선순위 3
+    - 가장 큰 개발자 시장
+    - 높은 수익성
+
+#### 구현 계획
+- [ ] i18next 설치
+- [ ] 번역 파일 구조 생성:
+  ```
+  src/locales/
+  ├── en.json (영어)
+  ├── ko.json (한국어)
+  ├── ja.json (일본어)
+  └── zh-CN.json (중국어)
+  ```
+- [ ] UI 문자열 추출
+- [ ] 메인 메시지 번역
+- [ ] 대시보드 UI 번역
+- [ ] 리포트 헤더/레이블 번역
+- [ ] 에러 메시지 번역
+
+**효과:**
+- 영문 구현: 다운로드 ↑ 300-400%
+- 일본어 추가: 다운로드 ↑ 100-150%
+- 중국어 추가: 다운로드 ↑ 200-300%
+
+---
+
+### 4. 📊 Marketplace 최적화
+**상태:** ✅ 완료됨
+**우선도:** 🟠 중간
+**예상 시간:** 3-5시간
+
+- [ ] 메타데이터 업데이트
+    - [ ] Keywords 확대 (현재 14개 → 25개)
+    - [ ] Category: "Developer Tools"로 변경
+    - [ ] 설명 영문화
+
+- [ ] 마케팅 자산
+    - [ ] 스크린샷 최신화 (v0.1.0 기준)
+    - [ ] 데모 GIF 제작 (대시보드, 내보내기)
+    - [ ] 아이콘 개선
+
+- [ ] README 영문화
+    - [ ] 영문 버전 작성
+    - [ ] 사용 예제 추가
+
+---
+
+### 5. 🐛 버그 수정 & 안정화
+**상태:** ⏳ 대기 중
+**우선도:** 🟠 중간
+**예상 시간:** 5-10시간
+
+- [ ] Marketplace 리뷰 모니터링
+    - [ ] 주 1회 리뷰 확인
+    - [ ] 부정적 리뷰 대응
+
+- [ ] GitHub Issues 관리
+    - [ ] 보고된 버그 수정
+    - [ ] 사용자 피드백 반영
+
+- [ ] 엣지 케이스 처리
+    - [ ] 특수 문자 처리
+    - [ ] 인코딩 이슈
+    - [ ] 대용량 저장소 테스트
+
+---
+
+## 🟡 Phase 2: 핵심 기능 확장 (2개월 - 1월-2월)
+
+**마지막 업데이트:** 2025-11-24
+**현재 진행률:** 2/7 (29%) - 실시간 Git 변경 감지 완료, 다중 저장소 지원 대기 중
+
+### 6. 🔄 실시간 Git 변경 감지
+**상태:** ✅ 완료됨
+**우선도:** ⭐⭐ 높음 (차별화 기능)
+**소요 시간:** 3시간
+
+**구현 완료:**
+
+**구현 계획:**
+- [x] Git 워처 추가
+  ```typescript
+  // src/gitChangeDetector.ts (새로 생성 - 155줄)
+  export class GitChangeDetector {
+    watchForChanges(callback): void
+    setDebounceDelay(delayMs): void
+    dispose(): void
+  }
+  ```
+
+- [x] `.git` 디렉토리 감시
+    - [x] 커밋 감지 (HEAD 해시 비교)
+    - [x] 브랜치 변경 감지 (refs 파일)
+    - [x] 파일 변경 감지 (git status)
+    - [x] Stash 변경 감지
+
+- [x] Git 상태 표시
+  ```typescript
+  // src/gitStatusIndicator.ts (새로 생성 - 350줄)
+  export class GitStatusIndicator {
+    startWatching(): Promise<void>
+    recordChange(type, message): Promise<void>
+    generateStatusHTML(): string
+  }
+  ```
+  - [x] StatusBar 항목 표시
+  - [x] 변경 이벤트 기록 (최대 50개)
+  - [x] HTML 상태 표시
+
+- [x] 자동 새로고침 구현
+  - [x] 대시보드 자동 업데이트
+  - [x] 메트릭 자동 재계산
+  - [x] 배지 자동 평가
+
+- [x] 설정 옵션
+  ```json
+  "gitMetrics.autoRefresh": true/false (기본값: false)
+  "gitMetrics.autoRefreshInterval": 100-30000ms (기본값: 5000)
+  "gitMetrics.showChangeNotification": true/false (기본값: false)
+  ```
+
+**효과:**
+- 사용자 경험 ↑↑↑
+- 경쟁 제품 대비 차별화
+- 활성 사용자 시간 ↑ 50%
+
+---
+
+### 7. 📁 다중 저장소 지원 ⭐⭐
+**상태:** ⏳ 대기 중
+**우선도:** ⭐⭐ 매우 높음 (B2B 기회)
+**예상 시간:** 8-12시간
+
+**현재 한계:** 단일 워크스페이스만 지원
+
+**구현 계획:**
+- [ ] 다중 저장소 분석 엔진
+  ```typescript
+  // src/multiRepoAnalyzer.ts (새로 생성)
+  export class MultiRepoAnalyzer {
+    analyzeMultipleRepos(): Promise<AggregatedMetrics>
+    aggregateMetrics(): AggregatedMetrics
+  }
+  ```
+
+- [ ] 저장소별 탭 네비게이션
+  - [ ] 저장소 선택 드롭다운
+  - [ ] 전체/개별 보기 토글
+  - [ ] 비교 분석
+
+- [ ] 팀 메트릭 대시보드
+  - [ ] 전체 팀 통계
+  - [ ] 저장소별 기여도
+  - [ ] 팀원 순위
+
+- [ ] 설정
+  ```json
+  "gitMetrics.analyzeAllWorkspaceFolders": true
+  "gitMetrics.excludeRepositories": []
+  ```
+
+**B2B 활용:**
+- 팀 리더용 통합 대시보드
+- CTO용 기술 부채 분석
+- HR용 성과 평가
+
+**기대 수익:** 팀 라이선스 모델 가능
+
+---
+
+### 8. 📈 히스토리 & 트렌드 분석
+**상태:** ⏳ 대기 중
+**우선도:** 🟠 중간
+**예상 시간:** 10-15시간
+
+**현재 한계:** 현재 시점만 분석
+
+**구현 계획:**
+- [ ] SQLite 데이터베이스 추가
+  ```typescript
+  // src/historyManager.ts (새로 생성)
+  export class HistoryManager {
+    saveDailyMetrics(): void
+    getTrendData(): TrendData
+    detectAnomalies(): Anomaly[]
+  }
+  ```
+
+- [ ] 일일 메트릭 저장
+  - [ ] 자동 저장 (일 1회)
+  - [ ] 90일 히스토리 유지
+  - [ ] 자동 정리
+
+- [ ] 트렌드 시각화
+  - [ ] 90일 커밋 추이
+  - [ ] 성장률 계산
+  - [ ] 월간 비교
+
+- [ ] 이상 탐지
+  - [ ] 비정상 활동 감지
+  - [ ] 경고 알림
+  - [ ] 원인 분석
+
+**데이터 스키마:**
+```sql
+CREATE TABLE daily_metrics (
+  id INTEGER PRIMARY KEY,
+  date DATE UNIQUE,
+  total_commits INTEGER,
+  total_authors INTEGER,
+  new_files INTEGER,
+  deleted_files INTEGER,
+  avg_commit_size REAL,
+  created_at TIMESTAMP
+);
+```
+
+---
+
+### 9. 🎨 추가 리포트 형식
+**상태:** ⏳ 대기 중
+**우선도:** 🟠 중간
+**예상 시간:** 8-10시간
+
+**현재 지원:** HTML, JSON, CSV, Markdown
+
+#### 추가할 형식
+- [ ] **PDF 리포트** (고급 포매팅)
+  - [ ] 라이브러리: PDFKit 또는 puppeteer
+  - [ ] 차트 포함
+  - [ ] 페이지 레이아웃
+  - [ ] 기업 템플릿
+
+- [ ] **Excel 리포트** (.xlsx)
+  - [ ] 라이브러리: ExcelJS
+  - [ ] 다중 시트
+  - [ ] 차트 & 수식
+  - [ ] 필터링
+
+- [ ] **PowerPoint** (프레젠테이션)
+  - [ ] 라이브러리: pptxgen-js
+  - [ ] 슬라이드 자동 생성
+  - [ ] 차트 삽입
+  - [ ] 커스텀 테마
+
+**예상 시간 추가:** +5시간
+
+---
+
+## 🟢 Phase 3: 성능 & 최적화 (3개월 - 3월-5월)
+
+### 10. ⚡ dashboardProvider.ts 분할
+**상태:** ⏳ 대기 중
+**우선도:** 🟡 중간
+**예상 시간:** 8-10시간
+
+**현재 상태:** 4,350줄 (거대한 파일)
+
+**분할 계획:**
+```
+dashboardProvider.ts (4,350줄)
+  ├── dashboardProvider.ts (500줄) - 핵심 관리
+  ├── dashboardHtmlGenerator.ts (1,500줄) - HTML 생성
+  ├── dashboardMessageHandler.ts (800줄) - 메시지 처리
+  ├── dashboardExportHandler.ts (550줄) - 내보내기
+  └── dashboardChartBuilder.ts (500줄) - 차트 생성
+```
+
+**효과:**
+- 가독성 ↑↑↑
+- 유지보수성 ↑↑
+- 테스트 용이성 ↑↑
+- 로드 시간 ↓
+
+---
+
+### 11. 🚀 성능 최적화
+**상태:** ⏳ 대기 중
+**우선도:** 🟡 중간
+**예상 시간:** 5-8시간
+
+- [ ] 메모리 최적화
+  - [ ] 대용량 저장소 처리
+  - [ ] 메모리 누수 방지
+  - [ ] 프로파일링
+
+- [ ] 렌더링 최적화
+  - [ ] Webview 렌더링 시간 단축
+  - [ ] 차트 최적화
+  - [ ] 가상 스크롤링
+
+- [ ] 캐시 개선
+  - [ ] CacheManager 활성화
+  - [ ] 캐시 전략 개선
+  - [ ] TTL 최적화
+
+---
+
+### 12. 🧪 통합 테스트 & CI/CD
+**상태:** ⏳ 대기 중
+**우선도:** 🟡 중간
+**예상 시간:** 4-6시간
+
+- [ ] GitHub Actions 설정
+  ```yaml
+  # .github/workflows/test.yml
+  - lint
+  - compile
+  - test
+  - build
+  ```
+
+- [ ] 자동 배포
+  - [ ] PR 자동 테스트
+  - [ ] 마스터 병합 시 자동 배포
+  - [ ] 버전 자동 관리
+
+- [ ] 릴리스 자동화
+  - [ ] CHANGELOG 자동 생성
+  - [ ] GitHub Release 생성
+  - [ ] Marketplace 자동 배포
+
+---
+
+## 🔵 Phase 4: 고급 기능 (4-6개월 - 6월-8월)
+
+### 13. 👥 팀 협업 기능
+**상태:** 💡 아이디어
+**우선도:** 🟡 중간
+**예상 시간:** 15-20시간
+**복잡도:** 높음
+
+- [ ] 팀원 비교 뷰
+  - [ ] 개발자별 메트릭 비교
+  - [ ] 성과 순위
+  - [ ] 강점/약점 분석
+
+- [ ] 코드 리뷰 통계
+  - [ ] PR 분석
+  - [ ] 리뷰 속도
+  - [ ] 협력도
+
+- [ ] 팀 속도 추적
+  - [ ] 스프린트 속도
+  - [ ] 번다운 차트
+  - [ ] 예측 분석
+
+---
+
+### 14. 🔗 GitHub/GitLab 통합
+**상태:** 💡 아이디어
+**우선도:** 🟡 중간
+**예상 시간:** 20-30시간
+**복잡도:** 매우 높음
+
+- [ ] GitHub API 연동
+  - [ ] PR 메트릭
+  - [ ] Issue 통계
+  - [ ] 릴리스 분석
+
+- [ ] GitLab API 연동
+  - [ ] MR 메트릭
+  - [ ] CI/CD 통계
+  - [ ] 파이프라인 분석
+
+- [ ] 웹 대시보드
+  - [ ] 팀 공유 가능
+  - [ ] 실시간 업데이트
+  - [ ] 알림 기능
+
+---
+
+### 15. 📊 고급 분석 & 인사이트
+**상태:** 💡 아이디어
+**우선도:** 🟡 중간
+**예상 시간:** 15-20시간
+
+- [ ] 코드 복잡도 분석
+  - [ ] ESLint 통합
+  - [ ] 복잡도 추이
+  - [ ] 개선 권장사항
+
+- [ ] 성능 메트릭
+  - [ ] 빌드 시간
+  - [ ] 테스트 커버리지
+  - [ ] 버그 밀도
+
+- [ ] 머신 러닝 인사이트 (향후)
+  - [ ] 패턴 학습
+  - [ ] 이상 탐지
+  - [ ] 성과 예측
+
+---
+
+## 📊 통계 & 목표
+
+### 다운로드 목표
+```
+현재 (11월):     ~100-150
+3개월 (2월):     500+
+6개월 (5월):     2,000+
+12개월 (11월):   5,000+
+```
+
+### 개발 일정
+```
+Phase 1 (1개월):   보안 패치, 테스트, i18n
+Phase 2 (2개월):   핵심 기능 (실시간, 다중 저장소, 트렌드)
+Phase 3 (3개월):   성능 최적화, 분할, CI/CD
+Phase 4 (4-6개월): 고급 기능 (팀, 통합, 분석)
+```
+
+### 버전 로드맵
+```
+0.0.9  (1주)   - 보안 패치 배포
+0.1.0  (1개월) - 테스트, i18n, 버그 수정
+0.2.0  (2개월) - 실시간 감지, 다중 저장소
+0.5.0  (3개월) - 히스토리, 추가 리포트 형식
+1.0.0  (4개월) - 프로덕션 안정화
+2.0.0  (6개월) - 팀 협업, 통합 기능
+```
+
+---
+
+## ✅ 우선순위 정리표
+
+| 순위 | 기능 | 시간 | 우선도 | 영향도 | 복잡도 |
+|------|------|------|--------|--------|--------|
+| 1 | v0.0.9 배포 | 1-2h | 🔴 | 높음 | 낮음 |
+| 2 | 테스트 구축 | 20-30h | 🔴 | 높음 | 중간 |
+| 3 | i18n (기본) | 15-20h | 🟠 | 높음 | 중간 |
+| 4 | Marketplace 최적화 | 3-5h | 🟠 | 중간 | 낮음 |
+| 5 | 실시간 감지 | 4-6h | ⭐⭐ | 높음 | 중간 |
+| 6 | 다중 저장소 | 8-12h | ⭐⭐ | 높음 | 높음 |
+| 7 | 히스토리 분석 | 10-15h | 🟠 | 중간 | 중간 |
+| 8 | 추가 리포트 | 8-10h | 🟠 | 중간 | 중간 |
+| 9 | 파일 분할 | 8-10h | 🟡 | 중간 | 중간 |
+| 10 | 성능 최적화 | 5-8h | 🟡 | 중간 | 낮음 |
+
+---
+
+## 🎯 이번 주 실행 계획
+
+```
+월-화: v0.0.9 배포
+  - [ ] CHANGELOG.md 업데이트
+  - [ ] git tag v0.0.9
+  - [ ] npm run publish
+
+수-목: 테스트 프레임워크 설정
+  - [ ] Jest/Mocha 설정
+  - [ ] GitAnalyzer 초기 테스트 작성
+
+금: i18n 계획
+  - [ ] i18next 설치
+  - [ ] 번역 파일 구조 생성
+  - [ ] 영어 번역 시작
+```
+
+---
+
+## 📞 피드백
+
+마켓플레이스 리뷰 및 GitHub Issues를 정기적으로 확인하여 사용자 요청사항을 반영합니다.
+
+**주요 모니터링 대상:**
+- Marketplace 별점 및 리뷰
+- GitHub Issues
+- GitHub Discussions
+
+---
+
+**마지막 업데이트:** 2025-11-24
+**다음 검토:** 2025-12-24

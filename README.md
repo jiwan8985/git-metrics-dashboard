@@ -1,62 +1,70 @@
 # 📊 Git Metrics Dashboard
 
-![Version](https://img.shields.io/badge/version-0.0.7-blue.svg)
+> **Comprehensive Git Repository Analytics and Metrics Dashboard for VS Code**
+
+![Version](https://img.shields.io/badge/version-0.0.9-blue.svg)
 ![VS Code](https://img.shields.io/badge/VS%20Code-1.102.0+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-yellow.svg)
+![Language Support](https://img.shields.io/badge/languages-4-brightgreen.svg)
 
-Git 저장소의 커밋 통계와 메트릭을 시각적으로 분석하고, 다양한 형식으로 리포트를 내보낼 수 있는 VS Code 확장 프로그램입니다.
+A powerful VS Code extension that provides comprehensive Git repository analytics with beautiful visualizations and multi-format report exports.
 
-## ✨ 주요 기능
+**English** | [한국어](./README.ko.md) | [日本語](./README.ja.md) | [简体中文](./README.zh-CN.md)
 
-### 📈 대시보드 기능
-- **실시간 Git 통계**: 커밋 수, 파일 변경, 개발자별 기여도 등
-- **시각적 차트**: Chart.js를 활용한 인터랙티브 차트
-- **개발자별 분석**: 순위, 기여도, 활동 패턴 분석
-- **파일 타입별 분석**: **70+ 프로그래밍 언어** 지원
-- **시간대별 분석**: 시간별, 요일별 활동 패턴
-- **배지 시스템**: 개발 성취도를 추적하는 게이미피케이션 요소
-- **스마트 테마**: 다크/라이트 테마 완벽 지원
+## ✨ Key Features
 
-### 📄 리포트 내보내기
-- **다양한 포맷 지원**: HTML, JSON, CSV, Markdown
-- **테마 적용 리포트**: VS Code 테마를 리포트에 반영
-- **사용자 정의 옵션**: 기간, 포함 섹션 선택 가능
-- **배지 포함 리포트**: 개발 성취도 배지를 리포트에 포함
-- **프로페셔널 리포트**: 회사 보고서나 프로젝트 문서용
-- **자동화 친화적**: JSON/CSV 형식으로 추가 분석 가능
+### 📈 Dashboard Analytics
+- **Real-time Git Statistics**: Total commits, file changes, contributor metrics
+- **Real-time Change Detection**: Auto-refresh dashboard on Git changes (commits, branch switches, file staging)
+- **Interactive Charts**: Interactive visualization powered by Chart.js
+- **Contributor Analysis**: Rankings, contribution metrics, activity patterns
+- **File Analysis**: Support for **70+ programming languages**
+- **Time-based Analysis**: Hourly and daily activity patterns
+- **Achievement Badges**: Gamification system to track development achievements
+- **Smart Themes**: Full support for dark/light themes
 
-## 🚀 설치 방법
+### 📄 Report Export
+- **Multiple Formats**: HTML, JSON, CSV, Markdown
+- **Theme Integration**: VS Code theme automatically applied to HTML reports
+- **Customizable**: Select analysis period and report sections
+- **Badge Integration**: Include achievement badges in reports
+- **Professional Quality**: Perfect for company reports and documentation
+- **Automation-friendly**: JSON/CSV formats for programmatic analysis
 
-1. VS Code Marketplace에서 "Git Metrics Dashboard" 검색
-2. 설치 버튼 클릭
-3. Git 저장소가 있는 워크스페이스에서 사용
+## 🚀 Installation
 
-## 📋 사용 방법
+1. Search for "Git Metrics Dashboard" in VS Code Marketplace
+2. Click Install
+3. Open a Git repository in your workspace
 
-### 대시보드 사용
-1. **상태바에서 실행**: `📊 Git Stats` 버튼 클릭
-2. **명령 팔레트**: `Ctrl+Shift+P` → "Git Metrics Dashboard 열기"
-3. **키보드 단축키**: `Ctrl+Shift+G` → `Ctrl+Shift+D`
+## 📋 Usage
 
-### 테마 전환
-1. **상태바 버튼**: 테마 버튼 클릭 (🔄 자동/☀️ 라이트/🌙 다크)
-2. **키보드 단축키**: `Ctrl+Shift+G` → `Ctrl+Shift+T`
+### Open Dashboard
+1. **Status Bar**: Click the `📊 Git Stats` button
+2. **Command Palette**: `Ctrl+Shift+P` → "Git Metrics Dashboard: Open"
+3. **Keyboard Shortcut**: `Ctrl+Shift+G` → `Ctrl+Shift+D` (Windows/Linux) or `Cmd+Shift+G` → `Cmd+Shift+D` (Mac)
 
-### 리포트 내보내기
-1. **빠른 내보내기**:
-   - 상태바의 `📄 Export` 버튼 클릭
-   - 또는 `Ctrl+Shift+G` → `Ctrl+Shift+E`
-   
-2. **사용자 정의 내보내기**:
-   - 명령 팔레트 → "사용자 정의 리포트 내보내기"
-   - 분석 기간, 포맷, 포함 섹션 선택
+### Switch Theme
+1. **Status Bar Button**: Click theme button (🔄 Auto / ☀️ Light / 🌙 Dark)
+2. **Keyboard Shortcut**: `Ctrl+Shift+G` → `Ctrl+Shift+T`
 
-3. **대시보드에서 내보내기**:
-   - 대시보드 우상단 "📄 리포트 내보내기" 버튼## 📊 리포트 형식
+### Export Reports
+1. **Quick Export**:
+   - Click `📄 Export` button in status bar
+   - Or use `Ctrl+Shift+G` → `Ctrl+Shift+E`
 
-### HTML 리포트
-- 웹 브라우저에서 볼 수 있는 인터랙티브 리포트
-- **테마 적용**: VS Code 테마를 리포트에 반영
+2. **Custom Export**:
+   - Command Palette → "Git Metrics Dashboard: Custom Export"
+   - Choose analysis period, format, and sections
+
+3. **Dashboard Export**:
+   - Click "📄 Export Report" button in dashboard
+
+## 📊 Report Formats
+
+### HTML Report
+- Interactive report viewable in web browsers
+- **Theme Integration**: VS Code theme automatically applied
 - 프린트 친화적 디자인
 - 회사 프레젠테이션이나 문서화에 적합
 
@@ -82,6 +90,9 @@ Git 저장소의 커밋 통계와 메트릭을 시각적으로 분석하고, 다
   "gitMetrics.defaultPeriod": 30,                    // 기본 분석 기간 (일)
   "gitMetrics.maxTopFiles": 10,                      // 상위 파일 표시 개수
   "gitMetrics.theme": "auto",                        // 테마 설정 (auto/light/dark)
+  "gitMetrics.autoRefresh": false,                   // Git 변경 시 자동 새로고침 (0.0.9+)
+  "gitMetrics.autoRefreshInterval": 5000,            // 변경 감지 간격 (밀리초, 100-30000)
+  "gitMetrics.showChangeNotification": false,        // Git 변경 감지 알림 표시
   "gitMetrics.export.defaultFormat": "html",         // 기본 내보내기 형식
   "gitMetrics.export.useThemeInReports": true,       // 리포트에 테마 적용
   "gitMetrics.export.autoOpenAfterExport": false,    // 내보내기 후 자동 열기
