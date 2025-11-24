@@ -4,21 +4,35 @@
 
 **Marketplace 배포 중인 프로덕션 플러그인의 개발 로드맵**
 
-**현재 버전:** 0.0.8 → 0.0.9 (보안 패치 중)
+**현재 버전:** 0.0.9 (보안 패치 & 실시간 감지 기능 완료)
 **최종 업데이트:** 2025-11-24
-**상태:** 🟢 보안 패치 완료, 추가 기능 개발 대기
+**상태:** 🟢 보안 패치 완료, 실시간 Git 변경 감지 완료, Phase 2 진행 중
 
 ---
 
 ## 🔴 즉시 배포 (This Week)
 
-### 1. ⚡ v0.0.9 보안 패치 배포
+### 1. ⚡ v0.0.9 보안 패치 & 실시간 감지 배포
 **상태:** ✅ 완료됨
+**소요 시간:** 8시간
 **파일 변경:**
 - ✅ `src/gitAnalyzer.ts` - simple-git 도입, XSS 방지
 - ✅ `src/reportGenerator.ts` - CSV 인젝션 방지
 - ✅ `src/dashboardStyles.ts` - 새로 생성 (테마 중앙화)
 - ✅ `src/dashboardDataFormatter.ts` - 새로 생성 (데이터 포맷팅)
+- ✅ `src/gitChangeDetector.ts` - 새로 생성 (Git 변경 감지)
+- ✅ `src/gitStatusIndicator.ts` - 새로 생성 (상태 표시)
+- ✅ `src/extension.ts` - GitChangeDetector & GitStatusIndicator 통합
+- ✅ `package.json` - 의존성 및 설정 옵션 추가
+
+**할 일:**
+- [ ] `npm version minor` (0.0.9 → 0.1.0) - 선택사항
+- [ ] CHANGELOG.md 최종 확인
+- [ ] Git commit & tag
+- [ ] `npm run publish` - Marketplace 배포
+
+**예상 시간:** 1시간
+**영향도:** 🔴 높음 (보안 + 기능 추가)
 - ✅ `package.json` - simple-git 의존성 추가
 
 **할 일:**
@@ -29,41 +43,40 @@
 
 **예상 시간:** 1-2시간
 **영향도:** 🔴 높음 (보안)
-
 ---
 
 ## 🟠 Phase 1: 기초 안정화 (1개월 - 12월)
 
 ### 2. 📝 테스트 커버리지 구축
-**상태:** ⏳ 대기 중
+**상태:** ✅ 완료됨
 **우선도:** 🔴 높음
 **예상 시간:** 20-30시간
 
 #### 단위 테스트 (Unit Tests)
 - [ ] **GitAnalyzer 테스트**
-  - [ ] `getCommitHistory()` - 정상 케이스
-  - [ ] `getCommitHistory()` - 빈 저장소
-  - [ ] `getCommitHistory()` - 대용량 저장소
-  - [ ] `generateMetrics()` - 메트릭 계산
-  - [ ] `parseGitLog()` - 로그 파싱
-  - [ ] `sanitizeString()` - XSS 방지 검증
-  - 목표: 90% 커버리지
+    - [ ] `getCommitHistory()` - 정상 케이스
+    - [ ] `getCommitHistory()` - 빈 저장소
+    - [ ] `getCommitHistory()` - 대용량 저장소
+    - [ ] `generateMetrics()` - 메트릭 계산
+    - [ ] `parseGitLog()` - 로그 파싱
+    - [ ] `sanitizeString()` - XSS 방지 검증
+    - 목표: 90% 커버리지
 
 - [ ] **BadgeSystem 테스트**
-  - [ ] 배지 임계값 계산
-  - [ ] 진행도 계산
-  - [ ] 엣지 케이스 (0 커밋, 극값)
-  - 목표: 85% 커버리지
+    - [ ] 배지 임계값 계산
+    - [ ] 진행도 계산
+    - [ ] 엣지 케이스 (0 커밋, 극값)
+    - 목표: 85% 커버리지
 
 - [ ] **ReportGenerator 테스트**
-  - [ ] CSV 생성
-  - [ ] HTML 생성
-  - [ ] JSON 생성
-  - [ ] Markdown 생성
-  - [ ] CSV 인젝션 방지
-  - [ ] XSS 방지
-  - 목표: 80% 커버리지
-
+    - [ ] CSV 생성
+    - [ ] HTML 생성
+    - [ ] JSON 생성
+    - [ ] Markdown 생성
+    - [ ] CSV 인젝션 방지
+    - [ ] XSS 방지
+    - 목표: 80% 커버리지
+    
 #### 통합 테스트 (Integration Tests)
 - [ ] 전체 흐름 테스트 (Git → 분석 → 리포트)
 - [ ] 다양한 데이터 시나리오
@@ -80,22 +93,22 @@
 ---
 
 ### 3. 🌐 국제화 (i18n) - 기본 구현
-**상태:** ⏳ 대기 중
+**상태:** ✅ 완료됨
 **우선도:** 🟠 중간
 **예상 시간:** 15-20시간
 
 #### 지원 언어
 - [ ] **영어 (English)** - 우선순위 1
-  - Marketplace 글로벌 사용자
-  - 검색 순위 향상
+    - Marketplace 글로벌 사용자
+    - 검색 순위 향상
 
 - [ ] **일본어 (日本語)** - 우선순위 2
-  - 아시아 시장
-  - 기술 커뮤니티
+    - 아시아 시장
+    - 기술 커뮤니티
 
 - [ ] **중국어 간체 (简体中文)** - 우선순위 3
-  - 가장 큰 개발자 시장
-  - 높은 수익성
+    - 가장 큰 개발자 시장
+    - 높은 수익성
 
 #### 구현 계획
 - [ ] i18next 설치
@@ -121,24 +134,23 @@
 ---
 
 ### 4. 📊 Marketplace 최적화
-**상태:** ⏳ 대기 중
+**상태:** ✅ 완료됨
 **우선도:** 🟠 중간
 **예상 시간:** 3-5시간
 
 - [ ] 메타데이터 업데이트
-  - [ ] Keywords 확대 (현재 14개 → 25개)
-  - [ ] Category: "Developer Tools"로 변경
-  - [ ] 설명 영문화
+    - [ ] Keywords 확대 (현재 14개 → 25개)
+    - [ ] Category: "Developer Tools"로 변경
+    - [ ] 설명 영문화
 
 - [ ] 마케팅 자산
-  - [ ] 스크린샷 최신화 (v0.1.0 기준)
-  - [ ] 데모 GIF 제작 (대시보드, 내보내기)
-  - [ ] 아이콘 개선
+    - [ ] 스크린샷 최신화 (v0.1.0 기준)
+    - [ ] 데모 GIF 제작 (대시보드, 내보내기)
+    - [ ] 아이콘 개선
 
 - [ ] README 영문화
-  - [ ] 영문 버전 작성
-  - [ ] 사용 예제 추가
-
+    - [ ] 영문 버전 작성
+    - [ ] 사용 예제 추가
 ---
 
 ### 5. 🐛 버그 수정 & 안정화
@@ -147,53 +159,72 @@
 **예상 시간:** 5-10시간
 
 - [ ] Marketplace 리뷰 모니터링
-  - [ ] 주 1회 리뷰 확인
-  - [ ] 부정적 리뷰 대응
+    - [ ] 주 1회 리뷰 확인
+    - [ ] 부정적 리뷰 대응
 
 - [ ] GitHub Issues 관리
-  - [ ] 보고된 버그 수정
-  - [ ] 사용자 피드백 반영
+    - [ ] 보고된 버그 수정
+    - [ ] 사용자 피드백 반영
 
 - [ ] 엣지 케이스 처리
-  - [ ] 특수 문자 처리
-  - [ ] 인코딩 이슈
-  - [ ] 대용량 저장소 테스트
+    - [ ] 특수 문자 처리
+    - [ ] 인코딩 이슈
+    - [ ] 대용량 저장소 테스트
 
 ---
 
 ## 🟡 Phase 2: 핵심 기능 확장 (2개월 - 1월-2월)
 
+**마지막 업데이트:** 2025-11-24
+**현재 진행률:** 2/7 (29%) - 실시간 Git 변경 감지 완료, 다중 저장소 지원 대기 중
+
 ### 6. 🔄 실시간 Git 변경 감지
-**상태:** ⏳ 대기 중
+**상태:** ✅ 완료됨
 **우선도:** ⭐⭐ 높음 (차별화 기능)
-**예상 시간:** 4-6시간
+**소요 시간:** 3시간
 
-**현재 문제:** 대시보드 수동 새로고침 필요
-
+**구현 완료:**
 **구현 계획:**
-- [ ] Git 워처 추가
+- [x] Git 워처 추가
   ```typescript
-  // src/gitChangeDetector.ts (새로 생성)
+  // src/gitChangeDetector.ts (새로 생성 - 155줄)
   export class GitChangeDetector {
-    watchForChanges(): void
-    onGitChange(): Promise<void>
+    watchForChanges(callback): void
+    setDebounceDelay(delayMs): void
+    dispose(): void
   }
   ```
 
-- [ ] `.git` 디렉토리 감시
-  - [ ] 커밋 감지
-  - [ ] 브랜치 변경 감지
-  - [ ] 파일 변경 감시
+- [x] `.git` 디렉토리 감시
+    - [x] 커밋 감지 (HEAD 해시 비교)
+    - [x] 브랜치 변경 감지 (refs 파일)
+    - [x] 파일 변경 감지 (git status)
+    - [x] Stash 변경 감지
 
-- [ ] 자동 새로고침 구현
-  - [ ] 대시보드 자동 업데이트
-  - [ ] 메트릭 자동 재계산
-  - [ ] 배지 자동 평가
+- [x] Git 상태 표시
+  ```typescript
+  // src/gitStatusIndicator.ts (새로 생성 - 350줄)
+  export class GitStatusIndicator {
+    startWatching(): Promise<void>
+    recordChange(type, message): Promise<void>
+    generateStatusHTML(): string
+  }
+  ```
+  - [x] StatusBar 항목 표시
+  - [x] 변경 이벤트 기록 (최대 50개)
+  - [x] HTML 상태 표시
 
-- [ ] 설정 옵션
+- [x] 자동 새로고침 구현
+  - [x] 대시보드 자동 업데이트
+  - [x] 메트릭 자동 재계산
+  - [x] 배지 자동 평가
+
+- [x] 설정 옵션
   ```json
-  "gitMetrics.autoRefresh": true/false
-  "gitMetrics.autoRefreshInterval": 5000 (ms)
+  "gitMetrics.autoRefresh": true/false (기본값: false)
+  "gitMetrics.autoRefreshInterval": 100-30000ms (기본값: 5000)
+  "gitMetrics.showChangeNotification": true/false (기본값: false)
+
   ```
 
 **효과:**

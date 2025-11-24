@@ -5,6 +5,75 @@ All notable changes to the "Git Metrics Dashboard" extension will be documented 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0] - 2025-11-24
+
+### 🚀 Major Features - Phase 1 완료: 실시간 Git 감지 & 국제화 지원
+- **실시간 Git 변경 감지 (Real-time Git Change Detection)**
+  - `.git` 디렉토리 자동 감시 (워쳐 패턴)
+  - 커밋 감지 (HEAD 파일 해시 비교)
+  - 브랜치 변경 감지 (refs 파일 모니터링)
+  - 파일 변경 감지 (git status 실시간 반영)
+  - Stash 변경 감지
+  - 설정 가능한 Debounce 지연 (기본 5초)
+  - 자동 대시보드 새로고침
+  - 선택적 변경 알림 (gitMetrics.showChangeNotification)
+
+- **Git 상태 표시기 (Git Status Indicator)**
+  - `.git/index` 파일 감시로 즉시 상태 감지
+  - 변경 이력 기록 및 타임스탬프 추적
+  - 실시간 상태 HTML 생성
+  - 자동 정리 (dispose)
+
+- **국제화 지원 (i18n - Internationalization)**
+  - **지원 언어**: 한국어(기본), 영어, 일본어, 중국어(간체)
+  - i18next 라이브러리 통합
+  - 모든 UI 문자열 다국어화
+  - 동적 언어 전환 (향후 지원)
+  - 번역 파일 구조:
+    ```
+    src/locales/
+    ├── en.json (English)
+    ├── ko.json (한국어)
+    ├── ja.json (日本語)
+    └── zh-CN.json (简体中文)
+    ```
+
+### 🎨 Code Architecture Improvements
+- **새 모듈 추가**
+  - `src/gitChangeDetector.ts` (155줄): Git 변경 감시 엔진
+  - `src/gitStatusIndicator.ts` (350줄): 상태 표시 및 이력 관리
+  - `src/dashboardStyles.ts` (200줄): 테마 색상 중앙화
+  - `src/dashboardDataFormatter.ts` (300줄): 데이터 포맷팅 유틸
+  - `src/i18n.ts` (100줄): 국제화 설정
+  - `src/locales/` (400줄): 다국어 번역 파일
+
+- **기존 모듈 확장**
+  - `src/extension.ts`: GitChangeDetector & GitStatusIndicator 통합
+  - `src/dashboardProvider.ts`: 실시간 새로고침 지원
+  - `src/gitAnalyzer.ts`: Git 파싱 로직 개선
+
+### ⚙️ 새로운 설정 옵션
+```javascript
+{
+  "gitMetrics.autoRefresh": false,           // 자동 새로고침 활성화
+  "gitMetrics.autoRefreshInterval": 5000,    // 새로고침 감지 간격 (ms)
+  "gitMetrics.showChangeNotification": false // Git 변경 알림 표시
+}
+```
+
+### 📊 성능 & 안정성
+- ✅ TypeScript 컴파일: 0 errors
+- ✅ 메모리 효율적인 워쳐 구현
+- ✅ 자동 정리 (dispose) 메커니즘
+- ✅ 에러 핸들링 강화
+
+### 🔄 마이그레이션 가이드
+v0.0.9에서 v0.1.0으로 업그레이드 시:
+- 기존 설정 완벽 호환
+- 자동 새로고침은 기본 비활성화 (필요 시 활성화)
+- 모든 기존 기능 유지
+
+---
 ## [0.0.9] - 2025-11-24
 
 ### 🔒 Security Patches - Critical Security Improvements

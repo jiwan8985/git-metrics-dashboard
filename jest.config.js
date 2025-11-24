@@ -19,7 +19,6 @@ module.exports = {
     '!src/extension.ts',
     '!src/dashboardProvider.ts',
     '!src/__tests__/**',
-  ],
   coverageThreshold: {
     global: {
       branches: 30,
