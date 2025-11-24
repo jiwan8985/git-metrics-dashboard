@@ -61,7 +61,7 @@ export function activate(context: vscode.ExtensionContext) {
                 placeHolder: '내보내기 형식을 선택하세요'
             });
 
-            if (!format) return;
+            if (!format) {return;}
 
             const options: ReportOptions = {
                 format: format.detail as any,
@@ -114,7 +114,7 @@ export function activate(context: vscode.ExtensionContext) {
                 }
             });
 
-            if (!periodInput) return;
+            if (!periodInput) {return;}
             const period = parseInt(periodInput);
 
             vscode.window.showInformationMessage('📊 Git 데이터 수집 중...');
@@ -132,7 +132,7 @@ export function activate(context: vscode.ExtensionContext) {
                 placeHolder: '내보내기 형식을 선택하세요'
             });
 
-            if (!format) return;
+            if (!format) {return;}
 
             // 포함할 섹션 선택
             const sections = await vscode.window.showQuickPick([
@@ -145,7 +145,7 @@ export function activate(context: vscode.ExtensionContext) {
                 canPickMany: true
             });
 
-            if (!sections || sections.length === 0) return;
+            if (!sections || sections.length === 0) {return;}
 
             const options: ReportOptions = {
                 format: format.detail as any,
