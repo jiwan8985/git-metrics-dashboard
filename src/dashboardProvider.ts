@@ -2133,8 +2133,8 @@ export class DashboardProvider {
         const config = vscode.workspace.getConfiguration('gitMetrics');
         const themeConfig = config.get<string>('theme', 'auto');
         
-        if (themeConfig === 'light') return 'light';
-        if (themeConfig === 'dark') return 'dark';
+        if (themeConfig === 'light') {return 'light';}
+        if (themeConfig === 'dark') {return 'dark';}
         
         // auto인 경우 VS Code의 현재 테마 감지
         const colorTheme = vscode.window.activeColorTheme;
@@ -2179,7 +2179,7 @@ export class DashboardProvider {
     }
 
     private async updateContent(days?: number) {
-        if (!this.panel) return;
+        if (!this.panel) {return;}
 
         try {
             // 설정에서 기본값 읽기
@@ -2255,7 +2255,7 @@ export class DashboardProvider {
             placeHolder: '내보내기 형식을 선택하세요'
         });
 
-        if (!format) return;
+        if (!format) {return;}
 
         const includeOptions = await vscode.window.showQuickPick([
             { label: '📊 전체 리포트', description: '모든 섹션 포함', picked: true },
@@ -2265,7 +2265,7 @@ export class DashboardProvider {
             placeHolder: '포함할 내용을 선택하세요'
         });
 
-        if (!includeOptions) return;
+        if (!includeOptions) {return;}
 
         let reportOptions: ReportOptions = {
             format: format.detail as any,
@@ -2299,7 +2299,7 @@ export class DashboardProvider {
                 canPickMany: true
             });
 
-            if (!sections) return;
+            if (!sections) {return;}
 
             reportOptions.includeSummary = sections.some(s => s.detail === 'includeSummary');
             reportOptions.includeAuthorStats = sections.some(s => s.detail === 'includeAuthorStats');

@@ -1,0 +1,98 @@
+{
+  "common": {
+    "app_name": "Git 指标仪表板",
+    "version": "版本",
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功",
+    "warning": "警告",
+    "close": "关闭",
+    "cancel": "取消",
+    "save": "保存",
+    "delete": "删除",
+    "export": "导出",
+    "import": "导入"
+  },
+  "dashboard": {
+    "title": "Git 指标仪表板",
+    "subtitle": "分析您的 Git 仓库指标",
+    "last_updated": "最后更新",
+    "analysis_period": "分析周期",
+    "days": "天"
+  },
+  "metrics": {
+    "total_commits": "总提交数",
+    "total_authors": "总作者数",
+    "average_commit_size": "平均提交大小",
+    "files_changed": "更改的文件",
+    "active_days": "活跃天数",
+    "most_active_hour": "最活跃的小时",
+    "most_active_day": "最活跃的日期"
+  },
+  "authors": {
+    "title": "作者统计",
+    "author": "作者",
+    "commits": "提交数",
+    "percentage": "百分比",
+    "contribution": "贡献度"
+  },
+  "files": {
+    "title": "文件统计",
+    "filename": "文件名",
+    "changes": "更改",
+    "language": "语言",
+    "top_files": "最常更改的文件"
+  },
+  "time_analysis": {
+    "title": "时间分析",
+    "hourly": "按小时分布",
+    "daily": "按日期分布",
+    "hour": "小时",
+    "day": "日期",
+    "commits_per_hour": "每小时提交数",
+    "commits_per_day": "每日提交数"
+  },
+  "badges": {
+    "title": "成就徽章",
+    "no_badges": "还没有解锁任何徽章",
+    "unlocked": "已解锁",
+    "in_progress": "进行中",
+    "locked": "已锁定",
+    "progress": "进度",
+    "unlock_condition": "解锁条件"
+  },
+  "report": {
+    "title": "报告",
+    "quick_export": "快速导出",
+    "custom_export": "自定义导出",
+    "generate": "生成报告",
+    "format": "报告格式",
+    "period": "分析周期",
+    "include_summary": "包含摘要",
+    "include_author_stats": "包含作者统计",
+    "include_file_stats": "包含文件统计",
+    "include_time_analysis": "包含时间分析",
+    "include_badges": "包含徽章",
+    "export_folder": "打开报告文件夹"
+  },
+  "settings": {
+    "title": "设置",
+    "theme": "主题",
+    "language": "语言",
+    "auto_refresh": "自动刷新",
+    "refresh_interval": "刷新间隔",
+    "default_period": "默认分析周期"
+  },
+  "errors": {
+    "no_git_repo": "找不到 Git 仓库",
+    "invalid_period": "无效的周期（1-365 天）",
+    "invalid_date_format": "无效的日期格式",
+    "export_failed": "导出失败",
+    "analysis_failed": "分析失败",
+    "no_commits": "指定周期内没有提交"
+  },
+  "success": {
+    "exported": "报告导出成功",
+    "settings_saved": "设置已保存"
+  }
+}

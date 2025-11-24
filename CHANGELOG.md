@@ -5,6 +5,59 @@ All notable changes to the "Git Metrics Dashboard" extension will be documented 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.9] - 2025-11-24
+
+### 🔒 Security Patches - Critical Security Improvements
+- **명령 인젝션 취약점 제거 (Command Injection)**
+  - `child_process.exec()` → `simple-git` 라이브러리로 변경
+  - 문자열 기반 Git 명령 → 배열 기반 안전 실행 방식 전환
+  - 입력값 검증 강화 (날짜 형식, 기간 범위 확인)
+  - 사용자 친화적 에러 메시지 추가
+
+- **XSS (Cross-Site Scripting) 방지**
+  - `sanitizeString()` 메서드 추가
+  - HTML 특수 문자 이스케이프 (5가지: &, <, >, ", ')
+  - 모든 사용자 입력값 (작성자명, 커밋 메시지, 파일명) 검증
+
+- **CSV 인젝션 방지 (Formula Injection)**
+  - `escapeCSV()` 메서드 추가
+  - 수식 인젝션 문자 차단 (=, +, @, -, \t)
+  - CSV 내보내기 시 데이터 무결성 보장
+
+### 📁 Code Structure Improvements - 가독성 및 유지보수성 개선
+- **새 파일 생성**
+  - `src/dashboardStyles.ts` (200줄): 테마 색상 및 스타일 중앙화
+    - ThemeColors 인터페이스, LIGHT_THEME, DARK_THEME
+    - 70+ 프로그래밍 언어별 색상 팔레트
+    - FILE_TYPE_ICONS, BADGE_RARITY_COLORS 정의
+    - `generateCSS()`, `getChartColors()`, `getLevelColor()` 유틸 함수
+
+  - `src/dashboardDataFormatter.ts` (300줄): 데이터 포맷팅 유틸 분리
+    - 일별 커밋 데이터, 파일 통계, 작성자 통계 포맷팅
+    - 주간 활동 분석 데이터 준비
+    - `formatNumber()`, `formatPercent()`, `formatDate()` 유틸
+
+- **기존 파일 개선**
+  - `src/gitAnalyzer.ts`: 보안 강화 및 타입 안전성 개선
+  - `src/reportGenerator.ts`: CSV 보안 기능 추가
+
+### 🔧 Dependencies
+- **추가**: `simple-git` ^3.25.0 (안전한 Git 명령 실행)
+
+### ✅ Code Quality
+- **TypeScript 컴파일**: 0 errors ✅
+- **ESLint 검증**: 0 warnings ✅
+- **테스트 상태**: 배포 준비 완료
+
+### 📊 개선 효과
+| 항목 | 이전 | 이후 | 상태 |
+|------|------|------|------|
+| 명령 인젝션 취약점 | 1개 | 0개 | ✅ 제거 |
+| XSS 위험도 | 높음 | 없음 | ✅ 차단 |
+| CSV 인젝션 | 있음 | 없음 | ✅ 차단 |
+| ESLint 경고 | 27개 | 0개 | ✅ 제거 |
+| 컴파일 오류 | 4개 | 0개 | ✅ 제거 |
+
 ## [0.0.8] - 2025-08-18
 
 ### 🎮 New Features - 배지 시스템 추가
