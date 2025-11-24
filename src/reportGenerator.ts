@@ -787,8 +787,8 @@ export class ReportGenerator {
         const config = vscode.workspace.getConfiguration('gitMetrics');
         const themeConfig = config.get<string>('theme', 'auto');
         
-        if (themeConfig === 'light') return 'light';
-        if (themeConfig === 'dark') return 'dark';
+        if (themeConfig === 'light') {return 'light';}
+        if (themeConfig === 'dark') {return 'dark';}
         
         // auto인 경우 VS Code의 현재 테마 감지
         const colorTheme = vscode.window.activeColorTheme;
@@ -1685,7 +1685,16 @@ export class ReportGenerator {
             csv += '개발자별 통계\n';
             csv += '순위,개발자,커밋수,파일수,기여도(%),추가라인,삭제라인,일평균커밋\n';
             metrics.authorStats.forEach(author => {
-                csv += `${author.rank},"${author.name}",${author.commits},${author.files},${author.percentage},${author.insertions},${author.deletions},${author.averageCommitsPerDay}\n`;
+                csv += [
+                    author.rank,
+                    this.escapeCSV(author.name),
+                    author.commits,
+                    author.files,
+                    author.percentage,
+                    author.insertions,
+                    author.deletions,
+                    author.averageCommitsPerDay
+                ].join(',') + '\n';
             });
             csv += '\n';
         }
@@ -1694,7 +1703,15 @@ export class ReportGenerator {
             csv += '파일 타입별 통계\n';
             csv += '순위,확장자,언어,카테고리,커밋수,파일수,비율(%)\n';
             metrics.fileTypeStats.forEach((fileType, index) => {
-                csv += `${index + 1},"${fileType.extension}","${fileType.language}","${fileType.category}",${fileType.commits},${fileType.files},${fileType.percentage}\n`;
+                csv += [
+                    index + 1,
+                    this.escapeCSV(fileType.extension),
+                    this.escapeCSV(fileType.language),
+                    this.escapeCSV(fileType.category),
+                    fileType.commits,
+                    fileType.files,
+                    fileType.percentage
+                ].join(',') + '\n';
             });
             csv += '\n';
         }
@@ -1704,12 +1721,12 @@ export class ReportGenerator {
             csv += '요일별 활동\n';
             csv += '요일,커밋수\n';
             Object.entries(metrics.timeAnalysis.weeklyActivity).forEach(([day, commits]) => {
-                csv += `"${day}",${commits}\n`;
+                csv += `${this.escapeCSV(day)},${commits}\n`;
             });
             csv += '\n시간별 활동\n';
             csv += '시간,커밋수\n';
             Object.entries(metrics.timeAnalysis.hourlyActivity).forEach(([hour, commits]) => {
-                csv += `"${hour}시",${commits}\n`;
+                csv += `${this.escapeCSV(hour + '시')},${commits}\n`;
             });
         }
 
@@ -1717,25 +1734,36 @@ export class ReportGenerator {
             const badges = metrics.badges;
             const unlockedBadges = badges.filter(badge => badge.unlocked);
             const inProgressBadges = badges.filter(badge => !badge.unlocked && badge.progress > 0);
-            
+
             csv += '\n배지 시스템\n';
             csv += '전체 배지 수,획득한 배지,완료율\n';
             csv += `${badges.length},${unlockedBadges.length},${badges.length > 0 ? Math.round((unlockedBadges.length / badges.length) * 100) : 0}%\n`;
-            
+
             if (unlockedBadges.length > 0) {
                 csv += '\n획득한 배지\n';
                 csv += '이름,설명,희귀도,카테고리,획득일\n';
                 unlockedBadges.forEach(badge => {
                     const unlockedDate = badge.unlockedAt ? badge.unlockedAt.toLocaleDateString() : '';
-                    csv += `"${badge.name}","${badge.description}","${badge.rarity}","${badge.category}","${unlockedDate}"\n`;
+                    csv += [
+                        this.escapeCSV(badge.name),
+                        this.escapeCSV(badge.description),
+                        this.escapeCSV(badge.rarity),
+                        this.escapeCSV(badge.category),
+                        this.escapeCSV(unlockedDate)
+                    ].join(',') + '\n';
                 });
             }
-            
+
             if (inProgressBadges.length > 0) {
                 csv += '\n진행 중인 배지\n';
                 csv += '이름,설명,진행률,진행상태\n';
                 inProgressBadges.forEach(badge => {
-                    csv += `"${badge.name}","${badge.description}",${badge.progress}%,"${badge.progressDescription}"\n`;
+                    csv += [
+                        this.escapeCSV(badge.name),
+                        this.escapeCSV(badge.description),
+                        badge.progress + '%',
+                        this.escapeCSV(badge.progressDescription || '')
+                    ].join(',') + '\n';
                 });
             }
         }
@@ -1902,4 +1930,55 @@ export class ReportGenerator {
 
         return md;
     }
+
+    /**
+     * CSV 인젝션 공격 방지를 위한 문자열 이스케이프
+     * 수식 인젝션(=, +, @, -, 탭 등)을 방지합니다.
+     */
+    private escapeCSV(value: any): string {
+        if (value === null || value === undefined) {return '';}
+
+        const str = String(value).trim();
+
+        // 수식 인젝션 문자로 시작하면 단일 따옴표 추가
+        if (/^[=+@\-\t]/.test(str)) {
+            return `'${str}`;
+        }
+
+        // 큰따옴표 내부의 큰따옴표를 이스케이프
+        if (str.includes('"')) {
+            return `"${str.replace(/"/g, '""')}"`;
+        }
+
+        // 쉼표나 줄바꿈이 있으면 따옴표로 감싸기
+        if (str.includes(',') || str.includes('\n') || str.includes('\r')) {
+            return `"${str}"`;
+        }
+
+        return str;
+    }
+
+    /**
+     * HTML 특수 문자 이스케이프 (XSS 방지)
+     * 현재는 CSV 리포트에서 주로 사용되며, 향후 HTML 리포트 개선 시 더 광범위하게 활용 예정
+     */
+    // @ts-ignore - 향후 HTML 리포트에서 사용 예정
+     
+    private escapeHTML(value: any): string {
+        if (value === null || value === undefined) {return '';}
+
+        const str = String(value);
+        // 기본적인 HTML 이스케이프 (XSS 방지용)
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#x27;');
+    }
+
+    /**
+     * 주석: escapeHTML 메서드는 HTML 리포트에서 사용자 입력을 안전하게 처리하기 위해
+     * 유지되고 있습니다. 현재는 CSV에서 주로 사용 중이며, HTML 리포트 개선 시 활용됩니다.
+     */
 }

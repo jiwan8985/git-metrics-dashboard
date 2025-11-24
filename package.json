@@ -248,6 +248,9 @@
     "package": "vsce package",
     "publish": "vsce publish"
   },
+  "dependencies": {
+    "simple-git": "^3.25.0"
+  },
   "devDependencies": {
     "@types/vscode": "^1.102.0",
     "@types/mocha": "^10.0.10",
