@@ -1,0 +1,98 @@
+{
+  "common": {
+    "app_name": "Git メトリクスダッシュボード",
+    "version": "バージョン",
+    "loading": "読み込み中...",
+    "error": "エラー",
+    "success": "成功",
+    "warning": "警告",
+    "close": "閉じる",
+    "cancel": "キャンセル",
+    "save": "保存",
+    "delete": "削除",
+    "export": "エクスポート",
+    "import": "インポート"
+  },
+  "dashboard": {
+    "title": "Git メトリクスダッシュボード",
+    "subtitle": "Gitリポジトリメトリクスの分析",
+    "last_updated": "最終更新",
+    "analysis_period": "分析期間",
+    "days": "日間"
+  },
+  "metrics": {
+    "total_commits": "総コミット数",
+    "total_authors": "総貢献者数",
+    "average_commit_size": "平均コミットサイズ",
+    "files_changed": "変更ファイル数",
+    "active_days": "活動日数",
+    "most_active_hour": "最も活動的な時間",
+    "most_active_day": "最も活動的な曜日"
+  },
+  "authors": {
+    "title": "貢献者統計",
+    "author": "貢献者",
+    "commits": "コミット数",
+    "percentage": "パーセンテージ",
+    "contribution": "貢献度"
+  },
+  "files": {
+    "title": "ファイル統計",
+    "filename": "ファイル名",
+    "changes": "変更数",
+    "language": "言語",
+    "top_files": "最も変更されたファイル"
+  },
+  "time_analysis": {
+    "title": "時間分析",
+    "hourly": "時間別分布",
+    "daily": "曜日別分布",
+    "hour": "時間",
+    "day": "曜日",
+    "commits_per_hour": "時間あたりのコミット数",
+    "commits_per_day": "曜日別コミット数"
+  },
+  "badges": {
+    "title": "アチーブメントバッジ",
+    "no_badges": "まだバッジを獲得していません",
+    "unlocked": "獲得済み",
+    "in_progress": "進行中",
+    "locked": "ロック中",
+    "progress": "進捗",
+    "unlock_condition": "獲得条件"
+  },
+  "report": {
+    "title": "レポート",
+    "quick_export": "クイックエクスポート",
+    "custom_export": "カスタムエクスポート",
+    "generate": "レポート生成",
+    "format": "レポート形式",
+    "period": "分析期間",
+    "include_summary": "サマリーを含める",
+    "include_author_stats": "貢献者統計を含める",
+    "include_file_stats": "ファイル統計を含める",
+    "include_time_analysis": "時間分析を含める",
+    "include_badges": "バッジを含める",
+    "export_folder": "レポートフォルダを開く"
+  },
+  "settings": {
+    "title": "設定",
+    "theme": "テーマ",
+    "language": "言語",
+    "auto_refresh": "自動更新",
+    "refresh_interval": "更新間隔",
+    "default_period": "デフォルト分析期間"
+  },
+  "errors": {
+    "no_git_repo": "Gitリポジトリが見つかりません",
+    "invalid_period": "無効な期間です（1～365日）",
+    "invalid_date_format": "無効な日付形式です",
+    "export_failed": "エクスポートに失敗しました",
+    "analysis_failed": "分析に失敗しました",
+    "no_commits": "指定された期間にコミットがありません"
+  },
+  "success": {
+    "exported": "レポートが正常にエクスポートされました",
+    "settings_saved": "設定が保存されました"
+  }
+}

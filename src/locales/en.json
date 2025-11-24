@@ -1,0 +1,98 @@
+{
+  "common": {
+    "app_name": "Git Metrics Dashboard",
+    "version": "Version",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning",
+    "close": "Close",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "export": "Export",
+    "import": "Import"
+  },
+  "dashboard": {
+    "title": "Git Metrics Dashboard",
+    "subtitle": "Analyze your Git repository metrics",
+    "last_updated": "Last Updated",
+    "analysis_period": "Analysis Period",
+    "days": "days"
+  },
+  "metrics": {
+    "total_commits": "Total Commits",
+    "total_authors": "Total Authors",
+    "average_commit_size": "Average Commit Size",
+    "files_changed": "Files Changed",
+    "active_days": "Active Days",
+    "most_active_hour": "Most Active Hour",
+    "most_active_day": "Most Active Day"
+  },
+  "authors": {
+    "title": "Author Statistics",
+    "author": "Author",
+    "commits": "Commits",
+    "percentage": "Percentage",
+    "contribution": "Contribution"
+  },
+  "files": {
+    "title": "File Statistics",
+    "filename": "Filename",
+    "changes": "Changes",
+    "language": "Language",
+    "top_files": "Top Files Changed"
+  },
+  "time_analysis": {
+    "title": "Time Analysis",
+    "hourly": "Hourly Distribution",
+    "daily": "Daily Distribution",
+    "hour": "Hour",
+    "day": "Day",
+    "commits_per_hour": "Commits per Hour",
+    "commits_per_day": "Commits per Day"
+  },
+  "badges": {
+    "title": "Achievement Badges",
+    "no_badges": "No badges unlocked yet",
+    "unlocked": "Unlocked",
+    "in_progress": "In Progress",
+    "locked": "Locked",
+    "progress": "Progress",
+    "unlock_condition": "Unlock Condition"
+  },
+  "report": {
+    "title": "Reports",
+    "quick_export": "Quick Export",
+    "custom_export": "Custom Export",
+    "generate": "Generate Report",
+    "format": "Report Format",
+    "period": "Analysis Period",
+    "include_summary": "Include Summary",
+    "include_author_stats": "Include Author Stats",
+    "include_file_stats": "Include File Stats",
+    "include_time_analysis": "Include Time Analysis",
+    "include_badges": "Include Badges",
+    "export_folder": "Open Reports Folder"
+  },
+  "settings": {
+    "title": "Settings",
+    "theme": "Theme",
+    "language": "Language",
+    "auto_refresh": "Auto Refresh",
+    "refresh_interval": "Refresh Interval",
+    "default_period": "Default Period"
+  },
+  "errors": {
+    "no_git_repo": "No Git repository found",
+    "invalid_period": "Invalid period (1-365 days)",
+    "invalid_date_format": "Invalid date format",
+    "export_failed": "Export failed",
+    "analysis_failed": "Analysis failed",
+    "no_commits": "No commits found in the specified period"
+  },
+  "success": {
+    "exported": "Report exported successfully",
+    "settings_saved": "Settings saved"
+  }
+}

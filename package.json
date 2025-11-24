@@ -1,7 +1,7 @@
 {
   "name": "git-metrics-dashboard",
   "displayName": "Git Metrics Dashboard",
-  "description": "개발자별 Git 커밋 통계 및 메트릭 대시보드",
+  "description": "Comprehensive Git repository analytics and metrics dashboard. Analyze commits, contributors, file changes, and time patterns with beautiful visualizations and detailed reports.",
   "version": "0.0.9",
   "publisher": "jiwan-dev",
   "repository": {
@@ -22,24 +22,36 @@
     "git",
     "metrics",
     "dashboard",
+    "analytics",
     "statistics",
     "commits",
-    "analytics",
+    "contributors",
+    "analysis",
     "report",
     "export",
-    "html",
-    "json",
     "csv",
+    "json",
+    "html",
     "markdown",
-    "theme",
-    "dark",
-    "light"
+    "visualization",
+    "github",
+    "git-log",
+    "repository",
+    "productivity",
+    "team-metrics",
+    "code-review",
+    "badges",
+    "achievements",
+    "dark-theme",
+    "light-theme"
   ],
   "engines": {
     "vscode": "^1.102.0"
   },
   "categories": [
-    "Other"
+    "Other",
+    "Visualization",
+    "SCM Providers"
   ],
   "activationEvents": [
     "onCommand:gitMetrics.showDashboard",
@@ -244,23 +256,31 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
-    "test": "vscode-test",
+    "test:unit": "jest --coverage",
+    "test:unit:watch": "jest --watch",
+    "test:integration": "vscode-test",
+    "test": "npm run test:unit",
     "package": "vsce package",
     "publish": "vsce publish"
   },
   "dependencies": {
+    "i18next": "^25.6.3",
+    "i18next-node-fs-backend": "^2.1.3",
     "simple-git": "^3.25.0"
   },
   "devDependencies": {
-    "@types/vscode": "^1.102.0",
+    "@types/jest": "^30.0.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
+    "@types/vscode": "^1.102.0",
     "@typescript-eslint/eslint-plugin": "^8.31.1",
     "@typescript-eslint/parser": "^8.31.1",
-    "eslint": "^9.25.1",
-    "typescript": "^5.8.3",
     "@vscode/test-cli": "^0.0.11",
     "@vscode/test-electron": "^2.5.2",
-    "@vscode/vsce": "^2.19.0"
+    "@vscode/vsce": "^2.19.0",
+    "eslint": "^9.25.1",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.5",
+    "typescript": "^5.8.3"
   }
 }
