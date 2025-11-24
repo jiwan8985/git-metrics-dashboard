@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 import { GitAnalyzer } from './gitAnalyzer';
 import { DashboardProvider } from './dashboardProvider';
 import { ReportGenerator, ReportOptions } from './reportGenerator';
+import { GitChangeDetector } from './gitChangeDetector';
+import { GitStatusIndicator } from './gitStatusIndicator';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Git Metrics Dashboard 활성화됨!');
@@ -10,9 +12,92 @@ export function activate(context: vscode.ExtensionContext) {
     const dashboardProvider = new DashboardProvider(context, gitAnalyzer);
     const reportGenerator = new ReportGenerator(context);
 
+    // 실시간 Git 변경 감지 초기화
+    let changeDetector: GitChangeDetector | null = null;
+    let statusIndicator: GitStatusIndicator | null = null;
+
+    const initializeGitChangeDetector = () => {
+        // 기존 감지기 및 상태 표시기 정리
+        if (changeDetector) {
+            changeDetector.dispose();
+            changeDetector = null;
+        }
+        if (statusIndicator) {
+            statusIndicator.dispose();
+            statusIndicator = null;
+        }
+
+        // 워크스페이스 폴더 확인
+        if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {
+            return;
+        }
+
+        const workspacePath = vscode.workspace.workspaceFolders[0].uri.fsPath;
+
+        // 설정 확인
+        const config = vscode.workspace.getConfiguration('gitMetrics');
+        const autoRefresh = config.get<boolean>('autoRefresh', false);
+        const refreshInterval = config.get<number>('autoRefreshInterval', 5000);
+
+        if (autoRefresh) {
+            try {
+                // 상태 표시기 초기화
+                statusIndicator = new GitStatusIndicator(workspacePath);
+                statusIndicator.startWatching();
+
+                // 변경 감지기 초기화
+                changeDetector = new GitChangeDetector(workspacePath);
+
+                // 변경 감지 시 대시보드 새로고침 및 상태 업데이트
+                changeDetector.watchForChanges((event) => {
+                    console.log(`📡 Git 변경 감지: ${event.type} - ${event.message}`);
+
+                    // 상태 표시기에 변경 기록
+                    if (statusIndicator) {
+                        statusIndicator.recordChange(event.type, event.message);
+                    }
+
+                    // 대시보드 자동 새로고침
+                    dashboardProvider.refreshDashboard();
+
+                    // 사용자 알림 (선택사항)
+                    if (config.get<boolean>('showChangeNotification', false)) {
+                        vscode.window.showInformationMessage(
+                            `🔄 ${event.message}`,
+                            '확인'
+                        );
+                    }
+                });
+
+                changeDetector.setDebounceDelay(refreshInterval);
+                console.log(`✅ 실시간 Git 변경 감지 활성화 (${refreshInterval}ms)`);
+                console.log(`✅ Git 상태 표시 활성화`);
+            } catch (error) {
+                console.error('Git 변경 감지 초기화 실패:', error);
+                changeDetector = null;
+                statusIndicator = null;
+            }
+        } else {
+            console.log('ℹ️ 실시간 Git 변경 감지 비활성화');
+        }
+    };
+
+    // 초기 설정
+    initializeGitChangeDetector();
+
+    // 설정 변경 감지
+    const configChangeDisposable = vscode.workspace.onDidChangeConfiguration((event) => {
+        if (event.affectsConfiguration('gitMetrics.autoRefresh') ||
+            event.affectsConfiguration('gitMetrics.autoRefreshInterval')) {
+            console.log('⚙️ Git 변경 감지 설정 업데이트');
+            initializeGitChangeDetector();
+        }
+    });
+    context.subscriptions.push(configChangeDisposable);
+
     // 대시보드 열기 명령어 등록
-    const showDashboardDisposable = vscode.commands.registerCommand('gitMetrics.showDashboard', () => {
-        dashboardProvider.showDashboard();
+    const showDashboardDisposable = vscode.commands.registerCommand('gitMetrics.showDashboard', async () => {
+        await dashboardProvider.showDashboard();
     });
 
     // 테마 전환 명령어 등록
@@ -322,14 +407,14 @@ export function activate(context: vscode.ExtensionContext) {
     const hasShownWelcome = context.globalState.get('gitMetrics.hasShownWelcome', false);
     if (!hasShownWelcome) {
         const isWindows = process.platform === 'win32';
-        const welcomeMessage = isWindows 
+        const welcomeMessage = isWindows
             ? '🎉 Git Metrics Dashboard가 설치되었습니다! Windows 사용자라면 문제 발생시 "윈도우 문제 해결" 명령어를 사용해보세요.'
             : '🎉 Git Metrics Dashboard가 설치되었습니다! 상태바의 "📊 Git Stats" 버튼을 클릭하여 시작하세요.';
-            
-        const buttons = isWindows 
+
+        const buttons = isWindows
             ? ['대시보드 열기', '윈도우 문제 해결', '테마 설정', '더 이상 보지 않기']
             : ['대시보드 열기', '테마 설정', '더 이상 보지 않기'];
-            
+
         vscode.window.showInformationMessage(welcomeMessage, ...buttons).then(action => {
             if (action === '대시보드 열기') {
                 vscode.commands.executeCommand('gitMetrics.showDashboard');
@@ -346,4 +431,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 export function deactivate() {
     console.log('Git Metrics Dashboard 비활성화됨');
+
+    // 참고: changeDetector와 statusIndicator는 context.subscriptions를 통해 자동으로 정리됩니다.
+    // extension.ts의 전역 변수가 가비지 컬렉션되면서 dispose()가 호출됩니다.
 }

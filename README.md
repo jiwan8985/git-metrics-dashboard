@@ -15,6 +15,7 @@ A powerful VS Code extension that provides comprehensive Git repository analytic
 
 ### 📈 Dashboard Analytics
 - **Real-time Git Statistics**: Total commits, file changes, contributor metrics
+- **Real-time Change Detection**: Auto-refresh dashboard on Git changes (commits, branch switches, file staging)
 - **Interactive Charts**: Interactive visualization powered by Chart.js
 - **Contributor Analysis**: Rankings, contribution metrics, activity patterns
 - **File Analysis**: Support for **70+ programming languages**
@@ -89,6 +90,9 @@ A powerful VS Code extension that provides comprehensive Git repository analytic
   "gitMetrics.defaultPeriod": 30,                    // 기본 분석 기간 (일)
   "gitMetrics.maxTopFiles": 10,                      // 상위 파일 표시 개수
   "gitMetrics.theme": "auto",                        // 테마 설정 (auto/light/dark)
+  "gitMetrics.autoRefresh": false,                   // Git 변경 시 자동 새로고침 (0.0.9+)
+  "gitMetrics.autoRefreshInterval": 5000,            // 변경 감지 간격 (밀리초, 100-30000)
+  "gitMetrics.showChangeNotification": false,        // Git 변경 감지 알림 표시
   "gitMetrics.export.defaultFormat": "html",         // 기본 내보내기 형식
   "gitMetrics.export.useThemeInReports": true,       // 리포트에 테마 적용
   "gitMetrics.export.autoOpenAfterExport": false,    // 내보내기 후 자동 열기
