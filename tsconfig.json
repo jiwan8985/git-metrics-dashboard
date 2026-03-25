@@ -23,7 +23,8 @@
         "noPropertyAccessFromIndexSignature": false,
         "noUncheckedIndexedAccess": false,
         "resolveJsonModule": true,
-        "allowSyntheticDefaultImports": true
+        "allowSyntheticDefaultImports": true,
+        "types": ["node"]
     },
     "include": [
         "src/**/*"
