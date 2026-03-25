@@ -4,13 +4,28 @@ import { DashboardProvider } from './dashboardProvider';
 import { ReportGenerator, ReportOptions } from './reportGenerator';
 import { GitChangeDetector } from './gitChangeDetector';
 import { GitStatusIndicator } from './gitStatusIndicator';
+import { GitMetricsTreeProvider } from './gitMetricsTreeProvider';
+import { initializeI18n, changeLanguage, SUPPORTED_LANGUAGES } from './i18n';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Git Metrics Dashboard 활성화됨!');
 
+    // i18n 초기화
+    initializeI18n();
+
     const gitAnalyzer = new GitAnalyzer();
     const dashboardProvider = new DashboardProvider(context, gitAnalyzer);
     const reportGenerator = new ReportGenerator(context);
+
+    // 사이드바 TreeView 등록
+    const treeProvider = new GitMetricsTreeProvider(gitAnalyzer);
+    const treeView = vscode.window.createTreeView('gitMetrics', {
+        treeDataProvider: treeProvider,
+        showCollapseAll: true
+    });
+
+    // TreeView 최초 데이터 로드
+    treeProvider.refresh().catch(console.error);
 
     // 실시간 Git 변경 감지 초기화
     let changeDetector: GitChangeDetector | null = null;
@@ -57,8 +72,14 @@ export function activate(context: vscode.ExtensionContext) {
                         statusIndicator.recordChange(event.type, event.message);
                     }
 
-                    // 대시보드 자동 새로고침
+                    // 새 커밋 감지 시 캐시 무효화 (최신 데이터 보장)
+                    if (event.type === 'commit') {
+                        gitAnalyzer.invalidateCache();
+                    }
+
+                    // 대시보드 및 사이드바 자동 새로고침
                     dashboardProvider.refreshDashboard();
+                    treeProvider.refresh().catch(console.error);
 
                     // 사용자 알림 (선택사항)
                     if (config.get<boolean>('showChangeNotification', false)) {
@@ -317,6 +338,32 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
+    // TreeView 새로고침 명령어
+    const refreshTreeViewDisposable = vscode.commands.registerCommand('gitMetrics.refreshTreeView', async () => {
+        await treeProvider.refresh();
+        vscode.window.showInformationMessage('🔄 Git 메트릭 새로고침 완료!');
+    });
+
+    // 언어 변경 명령어
+    const changeLanguageDisposable = vscode.commands.registerCommand('gitMetrics.changeLanguage', async () => {
+        const items = SUPPORTED_LANGUAGES.map(lang => ({
+            label: `${lang.flag} ${lang.name}`,
+            description: lang.code,
+            value: lang.code
+        }));
+
+        const selected = await vscode.window.showQuickPick(items, {
+            placeHolder: '대시보드 언어를 선택하세요'
+        });
+
+        if (selected) {
+            await changeLanguage(selected.value);
+            const config = vscode.workspace.getConfiguration('gitMetrics');
+            await config.update('language', selected.value, vscode.ConfigurationTarget.Global);
+            vscode.window.showInformationMessage(`🌐 언어가 '${selected.label}'으로 변경되었습니다. 대시보드를 다시 열어주세요.`);
+        }
+    });
+
     // 상태바 아이템 추가
     const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
     statusBarItem.command = 'gitMetrics.showDashboard';
@@ -398,9 +445,12 @@ export function activate(context: vscode.ExtensionContext) {
         customExportDisposable,
         openReportsFolderDisposable,
         windowsTroubleshootDisposable,
+        refreshTreeViewDisposable,
+        changeLanguageDisposable,
         statusBarItem,
         exportStatusBarItem,
-        themeStatusBarItem
+        themeStatusBarItem,
+        treeView
     );
 
     // 웰컴 메시지 (첫 설치 시에만)

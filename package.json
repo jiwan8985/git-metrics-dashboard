@@ -54,15 +54,29 @@
     "SCM Providers"
   ],
   "activationEvents": [
-    "onCommand:gitMetrics.showDashboard",
-    "onCommand:gitMetrics.quickExport",
-    "onCommand:gitMetrics.customExport",
-    "onCommand:gitMetrics.openReportsFolder",
-    "onCommand:gitMetrics.toggleTheme",
     "workspaceContains:.git"
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "gitMetricsContainer",
+          "title": "Git Metrics",
+          "icon": "images/icon-sidebar.svg"
+        }
+      ]
+    },
+    "views": {
+      "gitMetricsContainer": [
+        {
+          "id": "gitMetrics",
+          "name": "Git Metrics",
+          "icon": "images/icon-sidebar.svg",
+          "contextualTitle": "Git Metrics Dashboard"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "gitMetrics.showDashboard",
@@ -87,6 +101,17 @@
       {
         "command": "gitMetrics.toggleTheme",
         "title": "🎨 테마 전환",
+        "category": "Git Metrics"
+      },
+      {
+        "command": "gitMetrics.refreshTreeView",
+        "title": "🔄 새로고침",
+        "category": "Git Metrics",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "gitMetrics.changeLanguage",
+        "title": "🌐 언어 변경",
         "category": "Git Metrics"
       }
     ],
@@ -116,7 +141,12 @@
       "view/title": [
         {
           "command": "gitMetrics.showDashboard",
-          "when": "view == explorer",
+          "when": "view == gitMetrics",
+          "group": "navigation"
+        },
+        {
+          "command": "gitMetrics.refreshTreeView",
+          "when": "view == gitMetrics",
           "group": "navigation"
         }
       ],
@@ -226,6 +256,37 @@
           "type": "boolean",
           "default": true,
           "description": "리포트 생성 시 현재 테마 적용"
+        },
+        "gitMetrics.autoRefreshInterval": {
+          "type": "number",
+          "default": 5000,
+          "minimum": 1000,
+          "maximum": 60000,
+          "description": "실시간 Git 변경 감지 간격 (밀리초, autoRefresh 활성화 시 적용)"
+        },
+        "gitMetrics.showChangeNotification": {
+          "type": "boolean",
+          "default": false,
+          "description": "Git 변경 감지 시 알림 메시지 표시"
+        },
+        "gitMetrics.language": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "en",
+            "ko",
+            "ja",
+            "zh-CN"
+          ],
+          "default": "auto",
+          "description": "대시보드 표시 언어 (auto: VS Code 언어 따라감)",
+          "enumDescriptions": [
+            "VS Code 언어 설정 자동 감지",
+            "English",
+            "한국어",
+            "日本語",
+            "简体中文"
+          ]
         }
       }
     },
@@ -266,7 +327,7 @@
   "dependencies": {
     "i18next": "^25.6.3",
     "i18next-node-fs-backend": "^2.1.3",
-    "simple-git": "^3.25.0"
+    "simple-git": "^3.33.0"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
