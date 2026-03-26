@@ -2,7 +2,7 @@
   "name": "git-metrics-dashboard",
   "displayName": "Git Metrics Dashboard",
   "description": "Comprehensive Git repository analytics and metrics dashboard. Analyze commits, contributors, file changes, and time patterns with beautiful visualizations and detailed reports.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "publisher": "jiwan-dev",
   "repository": {
     "type": "git",
@@ -46,7 +46,7 @@
     "light-theme"
   ],
   "engines": {
-    "vscode": "^1.102.0"
+    "vscode": "^1.85.0"
   },
   "categories": [
     "Other",
@@ -80,38 +80,38 @@
     "commands": [
       {
         "command": "gitMetrics.showDashboard",
-        "title": "📊 Git Metrics Dashboard 열기",
+        "title": "Open Dashboard",
         "category": "Git Metrics"
       },
       {
         "command": "gitMetrics.quickExport",
-        "title": "📄 빠른 리포트 내보내기",
+        "title": "Quick Export Report",
         "category": "Git Metrics"
       },
       {
         "command": "gitMetrics.customExport",
-        "title": "🎯 사용자 정의 리포트 내보내기",
+        "title": "Custom Export Report",
         "category": "Git Metrics"
       },
       {
         "command": "gitMetrics.openReportsFolder",
-        "title": "📁 리포트 폴더 열기",
+        "title": "Open Reports Folder",
         "category": "Git Metrics"
       },
       {
         "command": "gitMetrics.toggleTheme",
-        "title": "🎨 테마 전환",
+        "title": "Toggle Theme",
         "category": "Git Metrics"
       },
       {
         "command": "gitMetrics.refreshTreeView",
-        "title": "🔄 새로고침",
+        "title": "Refresh",
         "category": "Git Metrics",
         "icon": "$(refresh)"
       },
       {
         "command": "gitMetrics.changeLanguage",
-        "title": "🌐 언어 변경",
+        "title": "Change Language",
         "category": "Git Metrics"
       }
     ],
@@ -175,24 +175,24 @@
         "gitMetrics.defaultPeriod": {
           "type": "number",
           "default": 30,
-          "description": "기본 분석 기간 (일)",
+          "description": "Default analysis period in days",
           "minimum": 1,
           "maximum": 365
         },
         "gitMetrics.autoRefresh": {
           "type": "boolean",
           "default": false,
-          "description": "자동 새로고침 활성화"
+          "description": "Enable real-time Git change detection and auto-refresh"
         },
         "gitMetrics.showAuthorStats": {
           "type": "boolean",
           "default": true,
-          "description": "작성자별 통계 표시"
+          "description": "Show per-author statistics in the dashboard"
         },
         "gitMetrics.maxTopFiles": {
           "type": "number",
           "default": 10,
-          "description": "상위 파일 표시 개수",
+          "description": "Number of top files to display",
           "minimum": 5,
           "maximum": 50
         },
@@ -204,11 +204,11 @@
             "dark"
           ],
           "default": "auto",
-          "description": "대시보드 테마 설정",
+          "description": "Dashboard theme",
           "enumDescriptions": [
-            "VS Code 테마를 따름",
-            "라이트 테마 강제 적용",
-            "다크 테마 강제 적용"
+            "Follow VS Code theme automatically",
+            "Force light theme",
+            "Force dark theme"
           ]
         },
         "gitMetrics.export.defaultFormat": {
@@ -220,54 +220,54 @@
             "markdown"
           ],
           "default": "html",
-          "description": "기본 리포트 내보내기 형식"
+          "description": "Default report export format"
         },
         "gitMetrics.export.includeSummary": {
           "type": "boolean",
           "default": true,
-          "description": "리포트에 요약 통계 포함"
+          "description": "Include summary statistics in reports"
         },
         "gitMetrics.export.includeAuthorStats": {
           "type": "boolean",
           "default": true,
-          "description": "리포트에 개발자별 통계 포함"
+          "description": "Include per-author statistics in reports"
         },
         "gitMetrics.export.includeFileStats": {
           "type": "boolean",
           "default": true,
-          "description": "리포트에 파일 타입별 분석 포함"
+          "description": "Include file type analysis in reports"
         },
         "gitMetrics.export.includeTimeAnalysis": {
           "type": "boolean",
           "default": true,
-          "description": "리포트에 시간대별 분석 포함"
+          "description": "Include time pattern analysis in reports"
         },
         "gitMetrics.export.autoOpenAfterExport": {
           "type": "boolean",
           "default": false,
-          "description": "내보내기 후 자동으로 파일 열기"
+          "description": "Automatically open the file after export"
         },
         "gitMetrics.export.customReportsPath": {
           "type": "string",
           "default": "",
-          "description": "사용자 정의 리포트 저장 경로 (비어있으면 프로젝트 루트/git-metrics-reports 사용)"
+          "description": "Custom path for saving reports (defaults to <workspace>/git-metrics-reports)"
         },
         "gitMetrics.export.useThemeInReports": {
           "type": "boolean",
           "default": true,
-          "description": "리포트 생성 시 현재 테마 적용"
+          "description": "Apply current VS Code theme to HTML reports"
         },
         "gitMetrics.autoRefreshInterval": {
           "type": "number",
           "default": 5000,
           "minimum": 1000,
           "maximum": 60000,
-          "description": "실시간 Git 변경 감지 간격 (밀리초, autoRefresh 활성화 시 적용)"
+          "description": "Git change detection interval in milliseconds (requires autoRefresh enabled)"
         },
         "gitMetrics.showChangeNotification": {
           "type": "boolean",
           "default": false,
-          "description": "Git 변경 감지 시 알림 메시지 표시"
+          "description": "Show notification message when Git changes are detected"
         },
         "gitMetrics.language": {
           "type": "string",
@@ -279,9 +279,9 @@
             "zh-CN"
           ],
           "default": "auto",
-          "description": "대시보드 표시 언어 (auto: VS Code 언어 따라감)",
+          "description": "Dashboard display language (auto follows VS Code language setting)",
           "enumDescriptions": [
-            "VS Code 언어 설정 자동 감지",
+            "Auto-detect from VS Code language setting",
             "English",
             "한국어",
             "日本語",
@@ -331,7 +331,7 @@
     "@types/jest": "^30.0.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
-    "@types/vscode": "^1.102.0",
+    "@types/vscode": "^1.85.0",
     "@typescript-eslint/eslint-plugin": "^8.31.1",
     "@typescript-eslint/parser": "^8.31.1",
     "@vscode/test-cli": "^0.0.11",
