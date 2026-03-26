@@ -7,11 +7,12 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [0.2.1] - 2026-03-26
+## [0.2.2] - 2026-03-26
 
 ### Fixed
 - Lowered `engines.vscode` minimum from `^1.102.0` to `^1.85.0` — dramatically increases the addressable user base on the Marketplace
 - Translated all command titles and configuration descriptions in `package.json` from Korean to English for global discoverability
+- Rewrote README and CHANGELOG in English for global Marketplace visibility
 
 ---
 
