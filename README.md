@@ -2,188 +2,193 @@
 
 > **Comprehensive Git Repository Analytics and Metrics Dashboard for VS Code**
 
-![Version](https://img.shields.io/badge/version-0.0.9-blue.svg)
-![VS Code](https://img.shields.io/badge/VS%20Code-1.102.0+-green.svg)
+![Version](https://img.shields.io/badge/version-0.2.1-blue.svg)
+![VS Code](https://img.shields.io/badge/VS%20Code-1.85.0+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-yellow.svg)
-![Language Support](https://img.shields.io/badge/languages-4-brightgreen.svg)
+![Languages](https://img.shields.io/badge/UI%20languages-4-brightgreen.svg)
 
-A powerful VS Code extension that provides comprehensive Git repository analytics with beautiful visualizations and multi-format report exports.
+A powerful VS Code extension that provides comprehensive Git repository analytics with beautiful visualizations, achievement badges, and multi-format report exports.
 
 **English** | [한국어](./README.ko.md) | [日本語](./README.ja.md) | [简体中文](./README.zh-CN.md)
+
+---
 
 ## ✨ Key Features
 
 ### 📈 Dashboard Analytics
-- **Real-time Git Statistics**: Total commits, file changes, contributor metrics
-- **Real-time Change Detection**: Auto-refresh dashboard on Git changes (commits, branch switches, file staging)
-- **Interactive Charts**: Interactive visualization powered by Chart.js
-- **Contributor Analysis**: Rankings, contribution metrics, activity patterns
-- **File Analysis**: Support for **70+ programming languages**
-- **Time-based Analysis**: Hourly and daily activity patterns
-- **Achievement Badges**: Gamification system to track development achievements
-- **Smart Themes**: Full support for dark/light themes
+- **Commit Streak** — current and longest consecutive commit streak with activity rate
+- **Week-over-Week Trend** — compare commit volume between first and second half of the period (▲▼ indicator)
+- **Conventional Commits Analysis** — compliance rate for feat/fix/chore/docs/etc. with donut chart
+- **Branch Status** — current branch name, total and active branch counts
+- **Real-time Git Statistics** — total commits, file changes, contributor metrics
+- **Real-time Change Detection** — auto-refresh dashboard on commits, branch switches, and file staging
+- **Interactive Charts** — Chart.js-powered visualizations
+- **Contributor Rankings** — contribution metrics and activity patterns per author
+- **File Type Analysis** — support for 70+ programming languages
+- **Time-based Analysis** — hourly and daily activity heatmaps
+- **Achievement Badges** — gamification system to track development milestones
+- **Smart Themes** — full dark / light / auto theme support
 
 ### 📄 Report Export
 - **Multiple Formats**: HTML, JSON, CSV, Markdown
 - **Theme Integration**: VS Code theme automatically applied to HTML reports
-- **Customizable**: Select analysis period and report sections
-- **Badge Integration**: Include achievement badges in reports
-- **Professional Quality**: Perfect for company reports and documentation
-- **Automation-friendly**: JSON/CSV formats for programmatic analysis
+- **Customizable**: choose analysis period, format, and which sections to include
+- **Badge Integration**: achievement badges included in reports
+- **Professional Quality**: suitable for team presentations and documentation
+
+---
 
 ## 🚀 Installation
 
-1. Search for "Git Metrics Dashboard" in VS Code Marketplace
-2. Click Install
-3. Open a Git repository in your workspace
+1. Open VS Code
+2. Search **"Git Metrics Dashboard"** in the Extensions Marketplace (`Ctrl+Shift+X`)
+3. Click **Install**
+4. Open any Git repository in your workspace
+
+---
 
 ## 📋 Usage
 
 ### Open Dashboard
-1. **Status Bar**: Click the `📊 Git Stats` button
-2. **Command Palette**: `Ctrl+Shift+P` → "Git Metrics Dashboard: Open"
-3. **Keyboard Shortcut**: `Ctrl+Shift+G` → `Ctrl+Shift+D` (Windows/Linux) or `Cmd+Shift+G` → `Cmd+Shift+D` (Mac)
-
-### Switch Theme
-1. **Status Bar Button**: Click theme button (🔄 Auto / ☀️ Light / 🌙 Dark)
-2. **Keyboard Shortcut**: `Ctrl+Shift+G` → `Ctrl+Shift+T`
+| Method | Action |
+|--------|--------|
+| Status Bar | Click the `📊 Git Stats` button |
+| Command Palette | `Ctrl+Shift+P` → **Git Metrics: Open Dashboard** |
+| Keyboard Shortcut | `Ctrl+Shift+G` → `Ctrl+Shift+D` (Win/Linux) / `Cmd+Shift+G` → `Cmd+Shift+D` (Mac) |
 
 ### Export Reports
-1. **Quick Export**:
-   - Click `📄 Export` button in status bar
-   - Or use `Ctrl+Shift+G` → `Ctrl+Shift+E`
+| Method | Action |
+|--------|--------|
+| Quick Export | `Ctrl+Shift+G` → `Ctrl+Shift+E` |
+| Custom Export | Command Palette → **Git Metrics: Custom Export Report** |
+| Dashboard button | Click **📄 Export Report** inside the dashboard |
 
-2. **Custom Export**:
-   - Command Palette → "Git Metrics Dashboard: Custom Export"
-   - Choose analysis period, format, and sections
-
-3. **Dashboard Export**:
-   - Click "📄 Export Report" button in dashboard
-
-## 📊 Report Formats
-
-### HTML Report
-- Interactive report viewable in web browsers
-- **Theme Integration**: VS Code theme automatically applied
-- 프린트 친화적 디자인
-- 회사 프레젠테이션이나 문서화에 적합
-
-### JSON 리포트
-- 프로그래밍적 처리를 위한 구조화된 데이터
-- API 연동이나 추가 분석 도구와 연계 가능
-- 자동화된 리포팅 시스템에 적합
-
-### CSV 리포트
-- Excel이나 Google Sheets에서 열기 가능
-- 표 형식의 데이터 분석에 적합
-- 통계 소프트웨어와 연동 가능
-
-### Markdown 리포트
-- GitHub README 스타일 문서
-- 프로젝트 문서화에 적합
-- 버전 관리 시스템에 포함 가능
-
-## ⚙️ 설정 옵션
-
-```json
-{
-  "gitMetrics.defaultPeriod": 30,                    // 기본 분석 기간 (일)
-  "gitMetrics.maxTopFiles": 10,                      // 상위 파일 표시 개수
-  "gitMetrics.theme": "auto",                        // 테마 설정 (auto/light/dark)
-  "gitMetrics.autoRefresh": false,                   // Git 변경 시 자동 새로고침 (0.0.9+)
-  "gitMetrics.autoRefreshInterval": 5000,            // 변경 감지 간격 (밀리초, 100-30000)
-  "gitMetrics.showChangeNotification": false,        // Git 변경 감지 알림 표시
-  "gitMetrics.export.defaultFormat": "html",         // 기본 내보내기 형식
-  "gitMetrics.export.useThemeInReports": true,       // 리포트에 테마 적용
-  "gitMetrics.export.autoOpenAfterExport": false,    // 내보내기 후 자동 열기
-  "gitMetrics.export.customReportsPath": ""          // 사용자 정의 저장 경로
-}
-```
-## 📁 리포트 저장 위치
-
-리포트는 기본적으로 다음 위치에 저장됩니다:
-```
-프로젝트루트/
-├── git-metrics-reports/
-│   ├── git-metrics-report-2025-01-15-30days.html
-│   ├── git-metrics-report-2025-01-15-30days.json
-│   └── ...
-```
-
-## 🎯 사용 사례
-
-### 팀 리더/매니저
-- 팀원별 기여도 분석
-- 프로젝트 진행 상황 모니터링
-- 월별/분기별 리포트 생성
-
-### 개발자
-- 개인 개발 활동 추적
-- 기술 스택 분석
-- 작업 패턴 최적화
-
-### 프로젝트 관리
-- 코드베이스 건강도 체크
-- 기술 부채 파악
-- 리소스 배분 최적화
-
-## 🔧 명령어
-
-| 명령어 | 단축키 | 설명 |
-|--------|--------|------|
-| `gitMetrics.showDashboard` | `Ctrl+Shift+G` `D` | 대시보드 열기 |
-| `gitMetrics.quickExport` | `Ctrl+Shift+G` `E` | 빠른 리포트 내보내기 |
-| `gitMetrics.customExport` | - | 사용자 정의 리포트 내보내기 |
-| `gitMetrics.openReportsFolder` | - | 리포트 폴더 열기 |
-
-## 📸 스크린샷
-
-### 대시보드
-
-![Dashboard](images/dashboard-screenshot.png)
-![Dashboard](images/dashboard-screenshot-2.png)
-![Dashboard](images/dashboard-screenshot-3.png)
-![Dashboard](images/dashboard-screenshot-4.png)
-
-### HTML 리포트
-![HTML Report](images/html-report-screenshot.png)
-
-## 🤝 기여하기
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 🛠️ 문제 해결
-
-### 일반적인 문제
-리포트 내보내기가 작동하지 않는 경우:
-1. Git 저장소인지 확인 (`git status` 명령어 실행)
-2. 폴더 쓰기 권한 확인
-3. VS Code를 관리자/sudo 권한으로 재시작
-4. 설정에서 다른 저장 경로로 변경 시도
-
-### 자주 묻는 질문
-1. Git 저장소인지 확인
-2. 분석 기간에 커밋이 있는지 확인
-3. 파일 쓰기 권한 확인
-
-### 차트가 표시되지 않을 때
-1. 브라우저에서 JavaScript 활성화 확인
-2. VS Code 재시작
-
-## 📄 라이선스
-
-MIT License - 자세한 내용은 [LICENSE](LICENSE) 파일을 확인하세요.
-
-## 🙋‍♂️ 지원
-
-- 🐛 **버그 리포트**: [GitHub Issues](https://github.com/jiwan8985/git-metrics-dashboard/issues)
-- 💡 **기능 요청**: [GitHub Issues](https://github.com/jiwan8985/git-metrics-dashboard/issues)
-- 📧 **문의**: jiwan8985@gmail.com
+### Switch Theme
+- Status bar theme button: 🔄 Auto / ☀️ Light / 🌙 Dark
+- Keyboard: `Ctrl+Shift+G` → `Ctrl+Shift+T`
 
 ---
 
-⭐ 이 확장 프로그램이 유용하다면 [GitHub](https://github.com/jiwan8985/git-metrics-dashboard)에서 스타를 눌러주세요!
+## 📊 Report Formats
+
+| Format | Best For |
+|--------|----------|
+| **HTML** | Interactive browser view, team presentations, print-friendly |
+| **JSON** | Programmatic processing, API integration, automation |
+| **CSV** | Excel / Google Sheets analysis, statistical tools |
+| **Markdown** | GitHub README inclusion, project documentation |
+
+Reports are saved to `<workspace>/git-metrics-reports/` by default (configurable).
+
+---
+
+## ⚙️ Configuration
+
+```json
+{
+  "gitMetrics.defaultPeriod": 30,
+  "gitMetrics.maxTopFiles": 10,
+  "gitMetrics.theme": "auto",
+  "gitMetrics.language": "auto",
+  "gitMetrics.autoRefresh": false,
+  "gitMetrics.autoRefreshInterval": 5000,
+  "gitMetrics.showChangeNotification": false,
+  "gitMetrics.export.defaultFormat": "html",
+  "gitMetrics.export.useThemeInReports": true,
+  "gitMetrics.export.autoOpenAfterExport": false,
+  "gitMetrics.export.customReportsPath": ""
+}
+```
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `defaultPeriod` | `30` | Analysis period in days (1–365) |
+| `theme` | `"auto"` | Dashboard theme: `auto` / `light` / `dark` |
+| `language` | `"auto"` | UI language: `auto` / `en` / `ko` / `ja` / `zh-CN` |
+| `autoRefresh` | `false` | Auto-refresh on Git changes |
+| `autoRefreshInterval` | `5000` | Change detection interval in ms |
+
+---
+
+## 📸 Screenshots
+
+### Dashboard
+![Dashboard Overview](images/dashboard-screenshot.png)
+![Dashboard Charts](images/dashboard-screenshot-2.png)
+![Dashboard Contributors](images/dashboard-screenshot-3.png)
+![Dashboard Badges](images/dashboard-screenshot-4.png)
+
+### HTML Report
+![HTML Report](images/html-report-screenshot.png)
+
+---
+
+## 🎯 Use Cases
+
+**Team Leads / Managers**
+- Analyze per-contributor metrics and velocity
+- Generate monthly / quarterly reports
+- Monitor project progress and code health
+
+**Individual Developers**
+- Track personal coding activity and streaks
+- Analyze your technology stack usage
+- Understand your commit patterns and productivity peaks
+
+**Project Management**
+- Codebase health overview
+- Identify technical debt hotspots
+- Optimize resource allocation
+
+---
+
+## 🔧 Commands
+
+| Command | Shortcut | Description |
+|---------|----------|-------------|
+| `gitMetrics.showDashboard` | `Ctrl+Shift+G D` | Open analytics dashboard |
+| `gitMetrics.quickExport` | `Ctrl+Shift+G E` | Quick export with defaults |
+| `gitMetrics.customExport` | — | Export with custom options |
+| `gitMetrics.toggleTheme` | `Ctrl+Shift+G T` | Toggle dashboard theme |
+| `gitMetrics.openReportsFolder` | — | Open reports output folder |
+| `gitMetrics.changeLanguage` | — | Change UI language |
+
+---
+
+## 🛠️ Troubleshooting
+
+**Dashboard shows no data**
+1. Confirm the workspace contains a Git repository (`git status`)
+2. Check that commits exist within the selected period
+3. Try increasing `gitMetrics.defaultPeriod`
+
+**Report export fails**
+1. Verify write permissions on the workspace folder
+2. Try setting a custom path via `gitMetrics.export.customReportsPath`
+3. Restart VS Code with administrator privileges if needed
+
+**Charts not rendering**
+1. Restart VS Code (`Developer: Reload Window`)
+2. Check VS Code version ≥ 1.85.0
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/my-feature`
+3. Commit your changes: `git commit -m 'feat: add my feature'`
+4. Push: `git push origin feature/my-feature`
+5. Open a Pull Request
+
+Bug reports and feature requests: [GitHub Issues](https://github.com/jiwan8985/git-metrics-dashboard/issues)
+
+---
+
+## 📄 License
+
+MIT License — see [LICENSE](LICENSE) for details.
+
+---
+
+⭐ If this extension is useful, please [star it on GitHub](https://github.com/jiwan8985/git-metrics-dashboard) and leave a review on the Marketplace!
