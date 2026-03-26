@@ -199,18 +199,10 @@ export function prepareWeeklyActivityData(weeklyActivity: { [day: string]: numbe
     datasets: any[];
 } {
     const labels = WEEKDAY_NAMES;
-    const dayMap: { [key: string]: number } = {
-        '월요일': 0, '화요일': 0, '수요일': 0, '목요일': 0,
-        '금요일': 0, '토요일': 0, '일요일': 0
-    };
-
-    Object.entries(weeklyActivity).forEach(([day, count]) => {
-        if (dayMap.hasOwnProperty(day)) {
-            dayMap[day] = count;
-        }
-    });
-
-    const data = labels.map(day => dayMap[day]);
+    // weeklyActivity keys are '0' (Sun) ~ '6' (Sat)
+    // WEEKDAY_NAMES order: Mon(1), Tue(2), Wed(3), Thu(4), Fri(5), Sat(6), Sun(0)
+    const dayIndexOrder = [1, 2, 3, 4, 5, 6, 0]; // Mon-first order
+    const data = dayIndexOrder.map(idx => weeklyActivity[idx.toString()] || 0);
 
     return {
         labels,

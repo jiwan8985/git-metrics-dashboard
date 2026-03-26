@@ -160,27 +160,33 @@ export class DashboardProvider {
     private async updateContent(days?: number) {
         if (!this.panel) {return;}
 
-        try {
-            // 설정에서 기본값 읽기
-            const config = vscode.workspace.getConfiguration('gitMetrics');
-            const defaultPeriod = days || config.get<number>('defaultPeriod', 30);
-            const maxTopFiles = config.get<number>('maxTopFiles', 10);
-            
-            this.currentPeriod = defaultPeriod;
-            
-            vscode.window.showInformationMessage('📊 Git 데이터 분석 중...');
-            
-            const commits = await this.gitAnalyzer.getCommitHistory(defaultPeriod);
-            const metrics = await this.gitAnalyzer.generateMetrics(commits);
-            
-            this.currentMetrics = metrics; // 현재 메트릭 저장
+        const config = vscode.workspace.getConfiguration('gitMetrics');
+        const defaultPeriod = days || config.get<number>('defaultPeriod', 30);
+        const maxTopFiles = config.get<number>('maxTopFiles', 10);
+        this.currentPeriod = defaultPeriod;
 
-            this.panel.webview.html = this.generateAdvancedHTML(metrics, defaultPeriod, maxTopFiles);
-            
-            vscode.window.showInformationMessage('✅ Git 메트릭 대시보드 업데이트 완료!');
-        } catch (error) {
-            vscode.window.showErrorMessage(`오류: ${error}`);
-        }
+        await vscode.window.withProgress(
+            {
+                location: vscode.ProgressLocation.Notification,
+                title: `Git Metrics: analyzing last ${defaultPeriod} days...`,
+                cancellable: false
+            },
+            async (progress) => {
+                try {
+                    progress.report({ increment: 20, message: 'Reading git log...' });
+                    const commits = await this.gitAnalyzer.getCommitHistory(defaultPeriod);
+
+                    progress.report({ increment: 60, message: 'Calculating metrics...' });
+                    const metrics = await this.gitAnalyzer.generateMetrics(commits);
+
+                    this.currentMetrics = metrics;
+                    progress.report({ increment: 20, message: 'Rendering dashboard...' });
+                    this.panel!.webview.html = this.generateAdvancedHTML(metrics, defaultPeriod, maxTopFiles);
+                } catch (error) {
+                    vscode.window.showErrorMessage(`Git Metrics error: ${error}`);
+                }
+            }
+        );
     }
 
     private async handleExportReport(options: ReportOptions) {
@@ -1102,6 +1108,36 @@ export class DashboardProvider {
             <div class="metric-value stats-highlight" style="color: var(--error-color);">-${(metrics.totalDeletions || 0).toLocaleString()}</div>
             <div class="metric-subtitle">총 삭제 라인 수</div>
         </div>
+
+        <div class="metric-card">
+            <div class="metric-title">🔥 커밋 스트릭</div>
+            <div class="metric-value stats-highlight" style="color: var(--warning-color);">${metrics.commitStreak?.currentStreak ?? 0}<span style="font-size:18px;">일</span></div>
+            <div class="metric-subtitle">최장 ${metrics.commitStreak?.longestStreak ?? 0}일 • 활동률 ${metrics.commitStreak?.activityRate ?? 0}%</div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-title">📈 기간 대비 변화</div>
+            ${(() => {
+                const wow = metrics.weekOverWeekChange;
+                const arrow = !wow ? '' : wow.trend === 'up' ? '▲' : wow.trend === 'down' ? '▼' : '→';
+                const color = !wow ? 'var(--text-color)' : wow.trend === 'up' ? 'var(--success-color)' : wow.trend === 'down' ? 'var(--error-color)' : 'var(--text-muted)';
+                const pct = wow?.changePercent ?? 0;
+                return `<div class="metric-value stats-highlight" style="color:${color};">${arrow} ${Math.abs(pct)}%</div>
+            <div class="metric-subtitle">전반기 대비 후반기 커밋 변화</div>`;
+            })()}
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-title">✅ Conventional Commits</div>
+            <div class="metric-value stats-highlight">${metrics.conventionalCommits?.conventionalPercentage ?? 0}%</div>
+            <div class="metric-subtitle">규격 준수 • 주요 타입: ${metrics.conventionalCommits?.topType ?? 'N/A'}</div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-title">🌿 브랜치 현황</div>
+            <div class="metric-value stats-highlight">${metrics.branchStats?.totalBranches ?? 0}</div>
+            <div class="metric-subtitle">현재: <code>${metrics.branchStats?.currentBranch ?? 'N/A'}</code> • 활성 ${metrics.branchStats?.recentBranches?.length ?? 0}개</div>
+        </div>
     </div>
 
     <div class="metric-card large-chart">
@@ -1110,6 +1146,48 @@ export class DashboardProvider {
             <canvas id="dailyCommitsChart"></canvas>
         </div>
     </div>
+
+    <div class="metric-card large-chart">
+        <div class="metric-title">📊 코드 변경량 트렌드 (추가 vs 삭제)</div>
+        <div class="chart-container">
+            <canvas id="dailyChangesChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Conventional Commits 분포 -->
+    ${metrics.conventionalCommits && metrics.conventionalCommits.conventionalCount > 0 ? `
+    <div class="metric-card large-chart">
+        <div class="metric-title">✅ Conventional Commits 타입 분포</div>
+        <div class="dashboard-grid" style="margin-bottom: 0;">
+            <div class="chart-container" style="height: 280px;">
+                <canvas id="conventionalChart"></canvas>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px; justify-content: center;">
+                ${Object.entries(metrics.conventionalCommits.types)
+                    .sort(([,a],[,b]) => b - a)
+                    .map(([type, count]) => {
+                        const total = metrics.conventionalCommits.conventionalCount;
+                        const pct = Math.round((count / total) * 100);
+                        const colors: {[k:string]:string} = {
+                            feat: '#3fb950', fix: '#f85149', chore: '#8b949e',
+                            docs: '#58a6ff', test: '#a5a5ff', refactor: '#ffa657',
+                            style: '#ff7b72', perf: '#d2a8ff', ci: '#79c0ff', build: '#56d364'
+                        };
+                        const c = colors[type] || '#8b949e';
+                        return `<div style="display:flex; align-items:center; gap:8px;">
+                            <span style="background:${c};color:#fff;padding:2px 8px;border-radius:12px;font-size:12px;font-weight:600;min-width:70px;text-align:center;">${type}</span>
+                            <div style="flex:1;background:var(--border-color);border-radius:4px;height:8px;">
+                                <div style="background:${c};height:8px;border-radius:4px;width:${pct}%"></div>
+                            </div>
+                            <span style="font-size:12px;color:var(--text-muted);min-width:40px;">${count} (${pct}%)</span>
+                        </div>`;
+                    }).join('')}
+                <div style="margin-top:12px; font-size:13px; color:var(--text-muted);">
+                    전체 커밋 중 <strong style="color:var(--success-color);">${metrics.conventionalCommits.conventionalPercentage}%</strong> 규격 준수
+                </div>
+            </div>
+        </div>
+    </div>` : ''}
 
     <!-- 작성자별 통계 섹션 -->
     <div class="metric-card large-chart">
@@ -1452,6 +1530,100 @@ export class DashboardProvider {
 
         // 일별 커밋 라인 차트
         const dailyData = ${JSON.stringify(dailyCommitsData)};
+        // 코드 변경량 트렌드 차트 (insertions vs deletions)
+        const dailyChangesData = ${JSON.stringify(metrics.dailyChanges || [])};
+        if (dailyChangesData.length > 0 && document.getElementById('dailyChangesChart')) {
+            const ctxChanges = document.getElementById('dailyChangesChart').getContext('2d');
+            const changeLabels = dailyChangesData.map(d => {
+                const dt = new Date(d.date);
+                return dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+            });
+            new Chart(ctxChanges, {
+                type: 'bar',
+                data: {
+                    labels: changeLabels,
+                    datasets: [
+                        {
+                            label: '추가 라인',
+                            data: dailyChangesData.map(d => d.insertions),
+                            backgroundColor: chartColors.success + '99',
+                            borderColor: chartColors.success,
+                            borderWidth: 1,
+                            borderRadius: 4
+                        },
+                        {
+                            label: '삭제 라인',
+                            data: dailyChangesData.map(d => -d.deletions),
+                            backgroundColor: chartColors.error + '99',
+                            borderColor: chartColors.error,
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: chartColors.text } },
+                        tooltip: getTooltipConfig({
+                            callbacks: {
+                                label: function(item) {
+                                    const v = Math.abs(item.parsed.y);
+                                    return \`\${item.dataset.label}: \${v.toLocaleString()}\`;
+                                }
+                            }
+                        })
+                    },
+                    scales: {
+                        x: { ticks: { color: chartColors.text, maxTicksLimit: 15, font: { size: 11 } }, grid: { display: false } },
+                        y: {
+                            ticks: { color: chartColors.text, precision: 0 },
+                            grid: { color: chartColors.border },
+                            stacked: false
+                        }
+                    },
+                    animation: { duration: 1000 }
+                }
+            });
+        }
+
+        // Conventional Commits 도넛 차트
+        const convData = ${JSON.stringify(
+            metrics.conventionalCommits && metrics.conventionalCommits.conventionalCount > 0
+                ? Object.entries(metrics.conventionalCommits.types).sort(([,a],[,b]) => b - a)
+                : []
+        )};
+        if (convData.length > 0 && document.getElementById('conventionalChart')) {
+            const ctxConv = document.getElementById('conventionalChart').getContext('2d');
+            const convColors = {
+                feat: '#3fb950', fix: '#f85149', chore: '#8b949e', docs: '#58a6ff',
+                test: '#a5a5ff', refactor: '#ffa657', style: '#ff7b72', perf: '#d2a8ff',
+                ci: '#79c0ff', build: '#56d364'
+            };
+            new Chart(ctxConv, {
+                type: 'doughnut',
+                data: {
+                    labels: convData.map(([t]) => t),
+                    datasets: [{
+                        data: convData.map(([,v]) => v),
+                        backgroundColor: convData.map(([t]) => (convColors[t] || '#8b949e') + 'CC'),
+                        borderColor: convData.map(([t]) => convColors[t] || '#8b949e'),
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { color: chartColors.text, font: { size: 12 } } },
+                        tooltip: getTooltipConfig({})
+                    },
+                    cutout: '55%',
+                    animation: { animateRotate: true, duration: 1500 }
+                }
+            });
+        }
+
         const ctx1 = document.getElementById('dailyCommitsChart').getContext('2d');
         
         const gradient = ctx1.createLinearGradient(0, 0, 0, 300);
@@ -1941,8 +2113,8 @@ export class DashboardProvider {
             date.setDate(date.getDate() - i);
             const dateStr = date.toISOString().split('T')[0];
             
-            labels.push(date.toLocaleDateString('ko-KR', { 
-                month: 'short', 
+            labels.push(date.toLocaleDateString(undefined, {
+                month: 'short',
                 day: 'numeric',
                 weekday: 'short'
             }));

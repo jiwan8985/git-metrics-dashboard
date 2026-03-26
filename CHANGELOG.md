@@ -5,6 +5,27 @@ All notable changes to the "Git Metrics Dashboard" extension will be documented 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-03-26
+
+### Added
+- 🔥 **커밋 스트릭** - 현재/최장 연속 커밋 일수 및 활동률 카드 + 사이드바 트리뷰
+- 📊 **코드 변경량 트렌드 차트** - 일별 추가(+)/삭제(-) 라인 수 막대 차트
+- ✅ **Conventional Commits 분석** - feat/fix/chore 등 규격 준수율 및 타입별 도넛 차트
+- 📈 **기간 비교 (WoW)** - 전반기 대비 후반기 커밋 증감률 + ▲▼ 트렌드 지표
+- 🌿 **브랜치 현황 카드** - 현재 브랜치명, 전체/활성 브랜치 수
+
+### Fixed
+- 🐛 `weeklyActivity` 키가 `'일','월','화'`로 한국어 고정 → 숫자 키(`'0'~'6'`) 변경으로 다국어 사용자 데이터 오류 수정
+- 🔧 `dashboardDataFormatter` 요일 맵이 `weeklyActivity`와 불일치하던 버그 수정
+- 🌐 날짜 표시 `'ko-KR'` 강제 로케일 → 시스템 로케일 사용
+- 🧹 확장 비활성화 시 `changeDetector` / `statusIndicator` 메모리 누수 수정
+
+### Improved
+- 🚀 분석 중 알림 3회 spam → `withProgress` 단일 진행 표시줄로 개선
+- 🔒 `exec()` shell injection 위험 → `execFile()` 배열 인수 방식으로 보안 강화
+- 📦 미사용 의존성 `simple-git`, `i18next-node-fs-backend` 제거
+- 사이드바에 현재 스트릭, 브랜치명 항목 추가
+
 ## [0.1.0] - 2025-11-24
 
 ### 🚀 Major Features - Phase 1 완료: 실시간 Git 감지 & 국제화 지원

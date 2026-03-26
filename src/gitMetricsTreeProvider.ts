@@ -159,7 +159,9 @@ export class GitMetricsTreeProvider implements vscode.TreeDataProvider<GitMetric
             new GitMetricsTreeItem('삭제 라인', vscode.TreeItemCollapsibleState.None, `-${m.totalDeletions.toLocaleString()}`, undefined, new vscode.ThemeIcon('diff-removed')),
             new GitMetricsTreeItem('상위 기여자', vscode.TreeItemCollapsibleState.None, m.topAuthor, undefined, new vscode.ThemeIcon('star')),
             new GitMetricsTreeItem('가장 활발한 요일', vscode.TreeItemCollapsibleState.None, m.timeAnalysis.peakDay, undefined, new vscode.ThemeIcon('flame')),
-            new GitMetricsTreeItem('피크 시간', vscode.TreeItemCollapsibleState.None, m.timeAnalysis.peakHour, undefined, new vscode.ThemeIcon('clock'))
+            new GitMetricsTreeItem('피크 시간', vscode.TreeItemCollapsibleState.None, m.timeAnalysis.peakHour, undefined, new vscode.ThemeIcon('clock')),
+            new GitMetricsTreeItem('현재 스트릭', vscode.TreeItemCollapsibleState.None, `${m.commitStreak?.currentStreak ?? 0}일 연속`, undefined, new vscode.ThemeIcon('flame')),
+            new GitMetricsTreeItem('현재 브랜치', vscode.TreeItemCollapsibleState.None, m.branchStats?.currentBranch ?? 'N/A', undefined, new vscode.ThemeIcon('git-branch'))
         ];
     }
 

@@ -438,6 +438,8 @@ export function activate(context: vscode.ExtensionContext) {
     // 워크스페이스 변경 시 다시 체크
     vscode.workspace.onDidChangeWorkspaceFolders(checkGitRepo);
 
+    // changeDetector / statusIndicator는 여기서 등록하지 않고
+    // initializeGitChangeDetector 내부에서 직접 관리 (재초기화 필요)
     context.subscriptions.push(
         showDashboardDisposable,
         toggleThemeDisposable,
@@ -450,7 +452,8 @@ export function activate(context: vscode.ExtensionContext) {
         statusBarItem,
         exportStatusBarItem,
         themeStatusBarItem,
-        treeView
+        treeView,
+        { dispose: () => { changeDetector?.dispose(); statusIndicator?.dispose(); } }
     );
 
     // 웰컴 메시지 (첫 설치 시에만)
