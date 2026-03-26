@@ -1,10 +1,10 @@
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import { promisify } from 'util';
 import * as vscode from 'vscode';
 import { BadgeSystem, Badge } from './badgeSystem';
 import { CacheManager } from './cacheManager';
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 export interface CommitData {
     hash: string;
@@ -61,6 +61,42 @@ export interface FileChurnStats {
     lastModified: Date | null;
 }
 
+export interface CommitStreak {
+    currentStreak: number;   // 현재 연속 커밋 일수
+    longestStreak: number;   // 기간 내 최장 연속 커밋
+    activeDays: number;      // 커밋이 있는 날 수
+    totalDays: number;       // 전체 분석 기간 일수
+    activityRate: number;    // activeDays / totalDays * 100
+}
+
+export interface ConventionalCommitStats {
+    types: { [type: string]: number };   // feat, fix, chore, docs, test, refactor, style, perf ...
+    conventionalCount: number;           // Conventional Commit 형식을 따르는 커밋 수
+    conventionalPercentage: number;      // 전체 대비 비율
+    topType: string;                     // 가장 많은 커밋 타입
+}
+
+export interface BranchStats {
+    currentBranch: string;
+    totalBranches: number;
+    recentBranches: string[];    // 최근 30일 이내 커밋이 있는 브랜치
+    staleBranches: string[];     // 30일 이상 커밋 없는 브랜치
+}
+
+export interface DailyChanges {
+    date: string;
+    insertions: number;
+    deletions: number;
+    commits: number;
+}
+
+export interface WeekOverWeekChange {
+    currentPeriodCommits: number;
+    previousPeriodCommits: number;
+    changePercent: number;   // 양수 = 증가, 음수 = 감소
+    trend: 'up' | 'down' | 'stable';
+}
+
 export interface MetricsData {
     dailyCommits: { [date: string]: number };
     fileStats: { [file: string]: number };
@@ -82,6 +118,16 @@ export interface MetricsData {
     timeAnalysis: TimeAnalysis;
     // 파일 Churn 분석 (가장 많이 변경된 파일)
     fileChurnStats: FileChurnStats[];
+    // 커밋 스트릭
+    commitStreak: CommitStreak;
+    // Conventional Commits 분석
+    conventionalCommits: ConventionalCommitStats;
+    // 주간 비교 (WoW)
+    weekOverWeekChange: WeekOverWeekChange;
+    // 일별 코드 변경량
+    dailyChanges: DailyChanges[];
+    // 브랜치 통계
+    branchStats: BranchStats;
     // 배지 시스템
     badges: Badge[];
 }
@@ -288,11 +334,14 @@ export class GitAnalyzer {
         }
 
         try {
-            // --numstat으로 실제 삽입/삭제 라인 수 수집
-            const { stdout } = await execAsync(
-                `git log --since="${sinceStr}" --pretty=format:"%H|%an|%ad|%s" --date=iso --numstat`,
-                { cwd: this.workspaceRoot }
-            );
+            // execFile로 shell injection 방지 (인수를 배열로 전달)
+            const { stdout } = await execFileAsync('git', [
+                'log',
+                `--since=${sinceStr}`,
+                '--pretty=format:%H|%an|%ad|%s',
+                '--date=iso',
+                '--numstat'
+            ], { cwd: this.workspaceRoot, maxBuffer: 50 * 1024 * 1024 });
 
             console.log('📝 Git log 조회 완료 (numstat)');
             console.log(`📊 Raw output length: ${stdout.length}`);
@@ -481,6 +530,11 @@ export class GitAnalyzer {
         const topFileType = fileTypeStats[0]?.extension || 'N/A';
         const timeAnalysis = this.calculateTimeAnalysis(commits);
         const fileChurnStats = this.calculateFileChurnStats(commits);
+        const commitStreak = this.calculateCommitStreak(dailyCommits, 30);
+        const conventionalCommits = this.calculateConventionalCommits(commits);
+        const weekOverWeekChange = this.calculateWeekOverWeekChange(dailyCommits, 30);
+        const dailyChanges = this.calculateDailyChanges(commits, 30);
+        const branchStats = await this.getBranchStats();
 
         const metricsData = {
             dailyCommits,
@@ -499,6 +553,11 @@ export class GitAnalyzer {
             programmingLanguages,
             timeAnalysis,
             fileChurnStats,
+            commitStreak,
+            conventionalCommits,
+            weekOverWeekChange,
+            dailyChanges,
+            branchStats,
             badges: [] as Badge[]
         };
 
@@ -647,12 +706,12 @@ export class GitAnalyzer {
     }
 
     private calculateWeeklyActivity(commits: CommitData[]): { [day: string]: number } {
-        const days = ['일', '월', '화', '수', '목', '금', '토'];
+        // 0=Sun, 1=Mon, ..., 6=Sat (locale-neutral numeric keys)
         const weeklyStats: { [day: string]: number } = {};
-        days.forEach(day => weeklyStats[day] = 0);
+        for (let i = 0; i < 7; i++) { weeklyStats[i.toString()] = 0; }
         for (const commit of commits) {
-            const dayName = days[commit.date.getDay()];
-            weeklyStats[dayName]++;
+            const dayIndex = commit.date.getDay().toString();
+            weeklyStats[dayIndex]++;
         }
         return weeklyStats;
     }
@@ -722,7 +781,7 @@ export class GitAnalyzer {
             nightCommits += hourlyActivity[hour.toString()] || 0;
         }
 
-        const weekendCommits = (weeklyActivity['토'] || 0) + (weeklyActivity['일'] || 0);
+        const weekendCommits = (weeklyActivity['6'] || 0) + (weeklyActivity['0'] || 0); // 6=Sat, 0=Sun
         const workdayCommits = commits.length - weekendCommits;
         const totalCommits = commits.length;
         const nightPercentage = totalCommits > 0 ? Math.round((nightCommits / totalCommits) * 100) : 0;
@@ -790,14 +849,199 @@ export class GitAnalyzer {
     }
 
     private getMostActiveDay(weeklyActivity: { [day: string]: number }): string {
-        return Object.entries(weeklyActivity)
-            .sort(([, a], [, b]) => b - a)[0]?.[0] || '데이터 없음';
+        const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const topEntry = Object.entries(weeklyActivity).sort(([, a], [, b]) => b - a)[0];
+        if (!topEntry) { return 'N/A'; }
+        return DAY_NAMES[parseInt(topEntry[0])] || topEntry[0];
     }
 
     private getMostActiveHour(hourlyActivity: { [hour: string]: number }): string {
         const hour = Object.entries(hourlyActivity)
             .sort(([, a], [, b]) => b - a)[0]?.[0] || '0';
         return `${hour}시`;
+    }
+
+    /**
+     * 커밋 스트릭 계산 (연속 커밋 일수)
+     */
+    private calculateCommitStreak(dailyCommits: { [date: string]: number }, days: number): CommitStreak {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const activeDays = Object.keys(dailyCommits).filter(d => dailyCommits[d] > 0).length;
+        const totalDays = days;
+        const activityRate = totalDays > 0 ? Math.round((activeDays / totalDays) * 100) : 0;
+
+        // 현재 스트릭: 오늘부터 역순으로 연속 커밋 일수 계산
+        let currentStreak = 0;
+        let checkDate = new Date(today);
+        // 오늘 커밋이 없으면 어제부터 체크
+        const todayStr = checkDate.toISOString().split('T')[0];
+        if (!dailyCommits[todayStr]) {
+            checkDate.setDate(checkDate.getDate() - 1);
+        }
+        for (let i = 0; i < totalDays; i++) {
+            const dateStr = checkDate.toISOString().split('T')[0];
+            if (dailyCommits[dateStr] && dailyCommits[dateStr] > 0) {
+                currentStreak++;
+                checkDate.setDate(checkDate.getDate() - 1);
+            } else {
+                break;
+            }
+        }
+
+        // 최장 스트릭: 전체 기간에서 계산
+        let longestStreak = 0;
+        let tempStreak = 0;
+        for (let i = days - 1; i >= 0; i--) {
+            const d = new Date(today);
+            d.setDate(today.getDate() - i);
+            const ds = d.toISOString().split('T')[0];
+            if (dailyCommits[ds] && dailyCommits[ds] > 0) {
+                tempStreak++;
+                longestStreak = Math.max(longestStreak, tempStreak);
+            } else {
+                tempStreak = 0;
+            }
+        }
+
+        return { currentStreak, longestStreak, activeDays, totalDays, activityRate };
+    }
+
+    /**
+     * Conventional Commits 패턴 감지
+     * https://www.conventionalcommits.org/
+     */
+    private calculateConventionalCommits(commits: CommitData[]): ConventionalCommitStats {
+        const CONVENTIONAL_REGEX = /^(feat|fix|chore|docs|test|refactor|style|perf|ci|build|revert)(\(.+\))?!?:/i;
+        const types: { [type: string]: number } = {};
+
+        let conventionalCount = 0;
+        for (const commit of commits) {
+            const match = commit.message.match(CONVENTIONAL_REGEX);
+            if (match) {
+                conventionalCount++;
+                const type = match[1].toLowerCase();
+                types[type] = (types[type] || 0) + 1;
+            }
+        }
+
+        const conventionalPercentage = commits.length > 0
+            ? Math.round((conventionalCount / commits.length) * 100)
+            : 0;
+
+        const topType = Object.entries(types).sort(([, a], [, b]) => b - a)[0]?.[0] || 'N/A';
+
+        return { types, conventionalCount, conventionalPercentage, topType };
+    }
+
+    /**
+     * 주간 비교 (Week-over-Week) 변화율 계산
+     */
+    private calculateWeekOverWeekChange(dailyCommits: { [date: string]: number }, days: number): WeekOverWeekChange {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // 현재 기간 (최근 절반 기간)
+        const halfPeriod = Math.ceil(days / 2);
+        let currentPeriodCommits = 0;
+        let previousPeriodCommits = 0;
+
+        for (let i = 0; i < halfPeriod; i++) {
+            const d = new Date(today);
+            d.setDate(today.getDate() - i);
+            const ds = d.toISOString().split('T')[0];
+            currentPeriodCommits += dailyCommits[ds] || 0;
+        }
+
+        for (let i = halfPeriod; i < days; i++) {
+            const d = new Date(today);
+            d.setDate(today.getDate() - i);
+            const ds = d.toISOString().split('T')[0];
+            previousPeriodCommits += dailyCommits[ds] || 0;
+        }
+
+        let changePercent = 0;
+        if (previousPeriodCommits > 0) {
+            changePercent = Math.round(((currentPeriodCommits - previousPeriodCommits) / previousPeriodCommits) * 100);
+        } else if (currentPeriodCommits > 0) {
+            changePercent = 100;
+        }
+
+        const trend: 'up' | 'down' | 'stable' =
+            changePercent > 5 ? 'up' : changePercent < -5 ? 'down' : 'stable';
+
+        return { currentPeriodCommits, previousPeriodCommits, changePercent, trend };
+    }
+
+    /**
+     * 일별 코드 변경량 계산 (insertions/deletions 트렌드)
+     */
+    private calculateDailyChanges(commits: CommitData[], days: number): DailyChanges[] {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const changeMap: { [date: string]: { insertions: number; deletions: number; commits: number } } = {};
+
+        for (const commit of commits) {
+            const ds = commit.date.toISOString().split('T')[0];
+            if (!changeMap[ds]) { changeMap[ds] = { insertions: 0, deletions: 0, commits: 0 }; }
+            changeMap[ds].insertions += commit.insertions || 0;
+            changeMap[ds].deletions += commit.deletions || 0;
+            changeMap[ds].commits++;
+        }
+
+        const result: DailyChanges[] = [];
+        for (let i = days - 1; i >= 0; i--) {
+            const d = new Date(today);
+            d.setDate(today.getDate() - i);
+            const ds = d.toISOString().split('T')[0];
+            result.push({
+                date: ds,
+                insertions: changeMap[ds]?.insertions || 0,
+                deletions: changeMap[ds]?.deletions || 0,
+                commits: changeMap[ds]?.commits || 0
+            });
+        }
+        return result;
+    }
+
+    /**
+     * 브랜치 현황 조회
+     */
+    async getBranchStats(): Promise<BranchStats> {
+        if (!this.workspaceRoot) {
+            return { currentBranch: 'N/A', totalBranches: 0, recentBranches: [], staleBranches: [] };
+        }
+
+        try {
+            const [currentResult, allResult] = await Promise.all([
+                execFileAsync('git', ['branch', '--show-current'], { cwd: this.workspaceRoot }),
+                execFileAsync('git', ['branch', '--format=%(refname:short)|%(committerdate:iso)'], { cwd: this.workspaceRoot })
+            ]);
+
+            const currentBranch = currentResult.stdout.trim();
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+            const recentBranches: string[] = [];
+            const staleBranches: string[] = [];
+
+            allResult.stdout.trim().split('\n').forEach(line => {
+                const [name, dateStr] = line.split('|');
+                if (!name) { return; }
+                const branchDate = new Date(dateStr);
+                if (!isNaN(branchDate.getTime()) && branchDate >= thirtyDaysAgo) {
+                    recentBranches.push(name.trim());
+                } else {
+                    staleBranches.push(name.trim());
+                }
+            });
+
+            const totalBranches = recentBranches.length + staleBranches.length;
+            return { currentBranch, totalBranches, recentBranches, staleBranches };
+        } catch {
+            return { currentBranch: 'N/A', totalBranches: 0, recentBranches: [], staleBranches: [] };
+        }
     }
 
     getBadgeSystem(): BadgeSystem {

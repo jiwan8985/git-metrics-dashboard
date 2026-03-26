@@ -1,11 +1,50 @@
+# Development tools
 .vscode/**
 .vscode-test/**
+.vscode-test/
+
+# Source TypeScript (compiled output in out/ is included)
 src/**
+
+# Test & coverage
+coverage/**
+**/__tests__/**
+**/test/**
+jest.config.js
+.nycrc
+
+# Node modules (not needed in extension bundle)
+node_modules/**
+
+# Build artifacts to exclude
+**/*.map
+**/*.ts
+!out/**/*.js
+
+# Reports generated during development
+git-metrics-reports/**
+
+# Lock files
+package-lock.json
+yarn.lock
+
+# Config files not needed at runtime
+**/tsconfig.json
+**/eslint.config.mjs
+**/.eslintrc.json
 .gitignore
 .yarnrc
 vsc-extension-quickstart.md
-**/tsconfig.json
-**/eslint.config.mjs
-**/*.map
-**/*.ts
 **/.vscode-test.*
+
+# Internal development docs (not for end users)
+TODO.md
+REFACTORING_SUMMARY.md
+DEVELOPMENT_GUIDE.md
+MARKETPLACE_STRATEGY.md
+PHASE_1_COMPLETE.md
+DEPLOYMENT_GUIDE.md
+CLAUDE.md
+
+# VSIX artifacts
+*.vsix
