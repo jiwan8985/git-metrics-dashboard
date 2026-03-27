@@ -258,6 +258,42 @@ export class BadgeSystem {
                 unlocked: false,
                 progress: 0,
                 progressDescription: ''
+            },
+            {
+                id: 'conventional_master',
+                name: '커밋 규격 마스터',
+                description: 'Conventional commit 70% 이상 준수',
+                icon: '📐',
+                category: BadgeCategory.CONSISTENCY,
+                rarity: BadgeRarity.EPIC,
+                criteria: { type: 'percentage', threshold: 70, field: 'conventional_percentage' },
+                unlocked: false,
+                progress: 0,
+                progressDescription: ''
+            },
+            {
+                id: 'polyglot_expert',
+                name: '폴리글랏 전문가',
+                description: '10개 이상의 프로그래밍 언어로 작업',
+                icon: '🌍',
+                category: BadgeCategory.COLLABORATOR,
+                rarity: BadgeRarity.EPIC,
+                criteria: { type: 'count', threshold: 10, field: 'programming_languages' },
+                unlocked: false,
+                progress: 0,
+                progressDescription: ''
+            },
+            {
+                id: 'code_marathon',
+                name: '코드 마라토너',
+                description: '60일 연속 커밋 달성',
+                icon: '🏃',
+                category: BadgeCategory.COMMIT_MASTER,
+                rarity: BadgeRarity.EPIC,
+                criteria: { type: 'streak', threshold: 60 },
+                unlocked: false,
+                progress: 0,
+                progressDescription: ''
             }
         ];
     }
@@ -331,7 +367,19 @@ export class BadgeSystem {
                 
             case 'balanced_developer':
                 return this.calculateBalancedFileTypesProgress(metrics, criteria.threshold);
-                
+
+            case 'conventional_master': {
+                const convPct = metrics.conventionalCommits?.conventionalPercentage ?? 0;
+                const eligible = metrics.totalCommits >= 20;
+                return { current: eligible ? convPct : 0, required: 70, unit: '%', description: 'Conventional commit %' };
+            }
+
+            case 'polyglot_expert':
+                return this.calculateProgrammingLanguagesProgress(metrics, 10);
+
+            case 'code_marathon':
+                return this.calculateStreakProgress(commits, 60);
+
             default:
                 return { current: 0, required: criteria.threshold, unit: 'units', description: 'Unknown badge' };
         }
