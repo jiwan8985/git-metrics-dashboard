@@ -2,7 +2,7 @@
 
 > **Comprehensive Git Repository Analytics and Metrics Dashboard for VS Code**
 
-![Version](https://img.shields.io/badge/version-0.2.2-blue.svg)
+![Version](https://img.shields.io/badge/version-0.2.3-blue.svg)
 ![VS Code](https://img.shields.io/badge/VS%20Code-1.85.0+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-yellow.svg)
 ![Languages](https://img.shields.io/badge/UI%20languages-4-brightgreen.svg)
@@ -16,6 +16,9 @@ A powerful VS Code extension that provides comprehensive Git repository analytic
 ## ✨ Key Features
 
 ### 📈 Dashboard Analytics
+- **📅 Commit Calendar Heatmap** *(v0.2.3)* — GitHub-style 16-week activity grid with 5 color intensity levels
+- **🏆 Top 3 Contributor Podium** *(v0.2.3)* — Gold/Silver/Bronze podium above the author ranking list
+- **📋 Copy Summary** *(v0.2.3)* — One-click clipboard copy of a formatted stats summary
 - **Commit Streak** — current and longest consecutive commit streak with activity rate
 - **Week-over-Week Trend** — compare commit volume between first and second half of the period (▲▼ indicator)
 - **Conventional Commits Analysis** — compliance rate for feat/fix/chore/docs/etc. with donut chart
@@ -26,7 +29,7 @@ A powerful VS Code extension that provides comprehensive Git repository analytic
 - **Contributor Rankings** — contribution metrics and activity patterns per author
 - **File Type Analysis** — support for 70+ programming languages
 - **Time-based Analysis** — hourly and daily activity heatmaps
-- **Achievement Badges** — gamification system to track development milestones
+- **Achievement Badges** — gamification system with 20+ badges across 5 rarity tiers (including 3 new EPIC badges in v0.2.3)
 - **Smart Themes** — full dark / light / auto theme support
 
 ### 📄 Report Export
@@ -110,19 +113,6 @@ Reports are saved to `<workspace>/git-metrics-reports/` by default (configurable
 
 ---
 
-## 📸 Screenshots
-
-### Dashboard
-![Dashboard Overview](images/dashboard-screenshot.png)
-![Dashboard Charts](images/dashboard-screenshot-2.png)
-![Dashboard Contributors](images/dashboard-screenshot-3.png)
-![Dashboard Badges](images/dashboard-screenshot-4.png)
-
-### HTML Report
-![HTML Report](images/html-report-screenshot.png)
-
----
-
 ## 🎯 Use Cases
 
 **Team Leads / Managers**
@@ -157,10 +147,19 @@ Reports are saved to `<workspace>/git-metrics-reports/` by default (configurable
 
 ## 🛠️ Troubleshooting
 
+**Sidebar shows "There is no data provider" or commands are not found**
+1. Ensure you are on VS Code 1.85.0 or later
+2. Run `Developer: Reload Window` from the Command Palette
+3. If the issue persists, open a folder (`File → Open Folder`) containing a Git repository
+
 **Dashboard shows no data**
 1. Confirm the workspace contains a Git repository (`git status`)
 2. Check that commits exist within the selected period
 3. Try increasing `gitMetrics.defaultPeriod`
+
+**Copy Summary button does nothing**
+1. Check that the VS Code clipboard API is available (some restricted environments block it)
+2. Verify clipboard permissions on your OS
 
 **Report export fails**
 1. Verify write permissions on the workspace folder

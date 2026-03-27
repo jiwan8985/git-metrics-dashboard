@@ -56,6 +56,10 @@ export class DashboardProvider {
                     case 'toggleTheme':
                         await this.handleToggleTheme();
                         break;
+                    case 'copyStats':
+                        await vscode.env.clipboard.writeText(message.text);
+                        vscode.window.showInformationMessage('📋 통계가 클립보드에 복사되었습니다!');
+                        break;
                 }
             },
             undefined,
@@ -1039,6 +1043,62 @@ export class DashboardProvider {
             color: var(--text-muted);
             font-style: italic;
         }
+
+        /* Calendar Heatmap */
+        .calendar-grid {
+            display: grid;
+            grid-auto-flow: column;
+            grid-template-rows: repeat(7, 1fr);
+            gap: 3px;
+            padding: 12px;
+        }
+        .cal-cell {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+        }
+        .cal-cell.level-0 { background: var(--border-color); }
+        .cal-cell.level-1 { background: #0e4429; }
+        .cal-cell.level-2 { background: #006d32; }
+        .cal-cell.level-3 { background: #26a641; }
+        .cal-cell.level-4 { background: #39d353; }
+
+        /* Top 3 Podium */
+        .podium-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px 20px 0;
+            align-items: flex-end;
+        }
+        .podium-place {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .podium-medal { font-size: 32px; }
+        .podium-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-color);
+            text-align: center;
+            max-width: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .podium-commits { font-size: 12px; color: var(--text-muted); }
+        .podium-bar {
+            border-radius: 4px 4px 0 0;
+            width: 60px;
+        }
+        .podium-bar.gold   { background: #FFD700; height: 120px; }
+        .podium-bar.silver { background: #C0C0C0; height: 80px; }
+        .podium-bar.bronze { background: #CD7F32; height: 60px; }
+
+        /* Copy button */
+        .btn.copy { background: var(--secondary-background); }
     </style>
 </head>
 <body class="${currentTheme}-theme">
@@ -1051,6 +1111,7 @@ export class DashboardProvider {
             <button class="btn refresh" onclick="refresh()">🔄 새로고침</button>
             <button class="btn theme" onclick="toggleTheme()">${themeButtonText}</button>
             <button class="btn export" onclick="exportReport()">📄 리포트 내보내기</button>
+            <button class="btn copy" onclick="copyStats()">📋 복사</button>
         </div>
     </div>
     
@@ -1140,6 +1201,12 @@ export class DashboardProvider {
         </div>
     </div>
 
+    <!-- GitHub-style Commit Calendar (16-week heatmap) -->
+    <div class="metric-card">
+        <div class="metric-title">📅 커밋 캘린더 (최근 16주)</div>
+        <div id="commit-calendar" class="calendar-grid"></div>
+    </div>
+
     <div class="metric-card large-chart">
         <div class="metric-title">📈 일별 커밋 추이 - 최근 ${days}일</div>
         <div class="chart-container">
@@ -1219,6 +1286,34 @@ export class DashboardProvider {
             </div>
         </div>
     </div>
+
+    <!-- Top 3 Contributor Podium -->
+    ${metrics.authorStats.length >= 2 ? `
+    <div class="metric-card">
+        <div class="metric-title">🏆 TOP 3 기여자</div>
+        <div class="podium-container">
+            ${metrics.authorStats.length >= 2 ? `
+            <div class="podium-place">
+                <div class="podium-medal">🥈</div>
+                <div class="podium-name">${metrics.authorStats[1].name}</div>
+                <div class="podium-commits">${metrics.authorStats[1].commits} commits</div>
+                <div class="podium-bar silver"></div>
+            </div>` : ''}
+            <div class="podium-place">
+                <div class="podium-medal">🥇</div>
+                <div class="podium-name">${metrics.authorStats[0].name}</div>
+                <div class="podium-commits">${metrics.authorStats[0].commits} commits</div>
+                <div class="podium-bar gold"></div>
+            </div>
+            ${metrics.authorStats.length >= 3 ? `
+            <div class="podium-place">
+                <div class="podium-medal">🥉</div>
+                <div class="podium-name">${metrics.authorStats[2].name}</div>
+                <div class="podium-commits">${metrics.authorStats[2].commits} commits</div>
+                <div class="podium-bar bronze"></div>
+            </div>` : ''}
+        </div>
+    </div>` : ''}
 
     <div class="dashboard-grid">
         <div class="metric-card">
@@ -1527,6 +1622,33 @@ export class DashboardProvider {
                 command: 'toggleTheme'
             });
         }
+
+        function copyStats() {
+            const text = '📊 Git Stats [${days}일]: 커밋 ${metrics.totalCommits}개 | 파일 ${metrics.totalFiles}개 | +${(metrics.totalInsertions || 0).toLocaleString()}/-${(metrics.totalDeletions || 0).toLocaleString()} | 기여자 ${metrics.totalAuthors}명 | 스트릭 ${metrics.commitStreak?.currentStreak ?? 0}일';
+            vscode.postMessage({ command: 'copyStats', text: text });
+        }
+
+        // Commit calendar heatmap
+        (function renderCalendar() {
+            const dailyCommits = ${JSON.stringify(metrics.dailyCommits)};
+            const grid = document.getElementById('commit-calendar');
+            if (!grid) { return; }
+            const today = new Date();
+            const cells = [];
+            for (let i = 111; i >= 0; i--) {
+                const d = new Date(today);
+                d.setDate(d.getDate() - i);
+                const key = d.toISOString().split('T')[0];
+                const count = dailyCommits[key] || 0;
+                let level = 0;
+                if (count >= 1) { level = 1; }
+                if (count >= 3) { level = 2; }
+                if (count >= 5) { level = 3; }
+                if (count >= 8) { level = 4; }
+                cells.push('<div class="cal-cell level-' + level + '" title="' + key + ': ' + count + '커밋"></div>');
+            }
+            grid.innerHTML = cells.join('');
+        })();
 
         // 일별 커밋 라인 차트
         const dailyData = ${JSON.stringify(dailyCommitsData)};

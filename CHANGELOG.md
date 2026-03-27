@@ -7,6 +7,21 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [0.2.3] - 2026-03-28
+
+### Added
+- 📅 **Commit Calendar Heatmap** — GitHub-style 16-week (7×16) commit activity grid with 5 color intensity levels, displayed below summary cards
+- 🏆 **Top 3 Contributor Podium** — Gold/Silver/Bronze podium with visual bars above the author ranking list (shown when ≥ 2 contributors)
+- 📋 **Copy Summary Button** — One-click copy of formatted stats to clipboard (`📊 Git Stats [30일]: 커밋 N개 | ...`)
+- 📐 **New EPIC Badge: Conventional Master** — Awarded for ≥ 70% Conventional Commit compliance (requires ≥ 20 total commits)
+- 🌍 **New EPIC Badge: Polyglot Expert** — Awarded for working across ≥ 10 programming languages
+- 🏃 **New EPIC Badge: Code Marathoner** — Awarded for achieving a 60-day consecutive commit streak
+
+### Fixed
+- **Extension not activating** — Added `onView:gitMetrics` and key `onCommand:*` activation events so the sidebar panel and commands work immediately without needing a `.git` workspace scan first
+
+---
+
 ## [0.2.2] - 2026-03-26
 
 ### Fixed

@@ -2,7 +2,7 @@
   "name": "git-metrics-dashboard",
   "displayName": "Git Metrics Dashboard",
   "description": "Comprehensive Git repository analytics and metrics dashboard. Analyze commits, contributors, file changes, and time patterns with beautiful visualizations and detailed reports.",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "publisher": "jiwan-dev",
   "repository": {
     "type": "git",
@@ -54,6 +54,9 @@
     "SCM Providers"
   ],
   "activationEvents": [
+    "onView:gitMetrics",
+    "onCommand:gitMetrics.showDashboard",
+    "onCommand:gitMetrics.refreshTreeView",
     "workspaceContains:.git"
   ],
   "main": "./out/extension.js",

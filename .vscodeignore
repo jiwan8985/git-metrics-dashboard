@@ -2,6 +2,7 @@
 .vscode/**
 .vscode-test/**
 .vscode-test/
+.idea/**
 
 # Source TypeScript (compiled output in out/ is included)
 src/**
@@ -12,9 +13,6 @@ coverage/**
 **/test/**
 jest.config.js
 .nycrc
-
-# Node modules (not needed in extension bundle)
-node_modules/**
 
 # Build artifacts to exclude
 **/*.map
