@@ -2,12 +2,20 @@ import * as vscode from 'vscode';
 import { GitAnalyzer, MetricsData } from './gitAnalyzer';
 import { ReportGenerator, ReportOptions } from './reportGenerator';
 import { Badge, BadgeCategory, BadgeRarity } from './badgeSystem';
+import {
+    buildExecutiveBrief,
+    getPriorityColor,
+    getToneColor,
+    prepareRepositoryIntelligence
+} from './repositoryIntelligence';
 
 export class DashboardProvider {
     private panel: vscode.WebviewPanel | undefined;
     private reportGenerator: ReportGenerator;
     private currentMetrics: MetricsData | undefined;
     private currentPeriod: number = 30;
+    private currentBranch: string | undefined;
+    private availableBranches: string[] = [];
 
     constructor(
         private context: vscode.ExtensionContext,
@@ -45,7 +53,10 @@ export class DashboardProvider {
                         await this.updateContent();
                         break;
                     case 'changeRange':
-                        await this.updateContent(message.days);
+                        await this.updateContent(message.days, this.currentBranch);
+                        break;
+                    case 'changeBranch':
+                        await this.updateContent(this.currentPeriod, message.branch);
                         break;
                     case 'exportReport':
                         await this.handleExportReport(message.options);
@@ -72,7 +83,7 @@ export class DashboardProvider {
     // 대시보드 새로고침 (실시간 변경 감지용)
     async refreshDashboard() {
         if (!this.panel) {return;}
-        await this.updateContent(this.currentPeriod);
+        await this.updateContent(this.currentPeriod, this.currentBranch);
     }
 
     // 테마 새로고침 기능
@@ -80,7 +91,7 @@ export class DashboardProvider {
         if (this.panel && this.currentMetrics) {
             const config = vscode.workspace.getConfiguration('gitMetrics');
             const maxTopFiles = config.get<number>('maxTopFiles', 10);
-            this.panel.webview.html = this.generateAdvancedHTML(this.currentMetrics, this.currentPeriod, maxTopFiles);
+            this.panel.webview.html = this.generateAdvancedHTML(this.currentMetrics, this.currentPeriod, maxTopFiles, this.availableBranches, this.currentBranch);
         }
     }
 
@@ -161,31 +172,36 @@ export class DashboardProvider {
         }
     }
 
-    private async updateContent(days?: number) {
+    private async updateContent(days?: number, branch?: string) {
         if (!this.panel) {return;}
 
         const config = vscode.workspace.getConfiguration('gitMetrics');
         const defaultPeriod = days || config.get<number>('defaultPeriod', 30);
         const maxTopFiles = config.get<number>('maxTopFiles', 10);
         this.currentPeriod = defaultPeriod;
+        this.availableBranches = await this.gitAnalyzer.getBranches();
+        const requestedBranch = branch?.trim();
+        this.currentBranch = requestedBranch && this.availableBranches.includes(requestedBranch)
+            ? requestedBranch
+            : undefined;
 
         await vscode.window.withProgress(
             {
                 location: vscode.ProgressLocation.Notification,
-                title: `Git Metrics: analyzing last ${defaultPeriod} days...`,
+                title: `Git Metrics: analyzing ${this.currentBranch || 'current branch'} for last ${defaultPeriod} days...`,
                 cancellable: false
             },
             async (progress) => {
                 try {
                     progress.report({ increment: 20, message: 'Reading git log...' });
-                    const commits = await this.gitAnalyzer.getCommitHistory(defaultPeriod);
+                    const commits = await this.gitAnalyzer.getCommitHistory(defaultPeriod, this.currentBranch);
 
                     progress.report({ increment: 60, message: 'Calculating metrics...' });
-                    const metrics = await this.gitAnalyzer.generateMetrics(commits);
+                    const metrics = await this.gitAnalyzer.generateMetrics(commits, this.currentBranch);
 
                     this.currentMetrics = metrics;
                     progress.report({ increment: 20, message: 'Rendering dashboard...' });
-                    this.panel!.webview.html = this.generateAdvancedHTML(metrics, defaultPeriod, maxTopFiles);
+                    this.panel!.webview.html = this.generateAdvancedHTML(metrics, defaultPeriod, maxTopFiles, this.availableBranches, this.currentBranch);
                 } catch (error) {
                     vscode.window.showErrorMessage(`Git Metrics error: ${error}`);
                 }
@@ -300,13 +316,14 @@ export class DashboardProvider {
         await this.handleExportReport(reportOptions);
     }
 
-    private generateAdvancedHTML(metrics: MetricsData, days: number, maxTopFiles: number): string {
+    private generateAdvancedHTML(metrics: MetricsData, days: number, maxTopFiles: number, branches: string[] = [], selectedBranch?: string): string {
         const dailyCommitsData = this.prepareDailyCommitsData(metrics.dailyCommits, days);
         const fileStatsData = this.prepareFileStatsData(metrics.fileStats);
         const authorStatsData = this.prepareAuthorStatsData(metrics.authorStats);
         const languageData = this.prepareLanguageData(metrics.programmingLanguages);
         const categoryData = this.prepareCategoryData(metrics.fileTypeStats);
         const badgeData = this.prepareBadgeData(metrics.badges || []);
+        const intelligence = prepareRepositoryIntelligence(metrics, days);
         
         // 현재 테마 가져오기
         const currentTheme = this.getCurrentTheme();
@@ -319,6 +336,12 @@ export class DashboardProvider {
             'light': '☀️ 라이트',
             'dark': '🌙 다크'
         }[themeConfig] || '🔄 자동';
+        const branchOptions = [
+            `<option value="" ${!selectedBranch ? 'selected' : ''}>Current branch (${metrics.branchStats?.currentBranch || 'auto'})</option>`,
+            ...branches.map(branch =>
+                `<option value="${this.escapeHtml(branch)}" ${branch === selectedBranch ? 'selected' : ''}>${this.escapeHtml(branch)}</option>`
+            )
+        ].join('');
 
         return `<!DOCTYPE html>
 <html>
@@ -341,6 +364,11 @@ export class DashboardProvider {
             --card-shadow: ${colors.cardShadow};
             --text-muted: ${colors.textMuted};
             --panel-border: ${colors.panelBorder};
+            --accent-blue: #2f81f7;
+            --accent-green: #2ea043;
+            --accent-orange: #f0883e;
+            --accent-red: #da3633;
+            --accent-violet: #8957e5;
         }
 
         body {
@@ -357,9 +385,217 @@ export class DashboardProvider {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
+            margin-bottom: 18px;
             padding-bottom: 20px;
             border-bottom: 2px solid var(--primary-color);
+        }
+
+        .command-center {
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 26px;
+            background: linear-gradient(135deg, var(--secondary-bg), var(--bg-color));
+            box-shadow: 0 8px 28px var(--card-shadow);
+        }
+
+        .intelligence-hero {
+            display: grid;
+            grid-template-columns: minmax(220px, 300px) 1fr;
+            gap: 20px;
+            align-items: stretch;
+            margin-bottom: 18px;
+        }
+
+        .health-panel {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 22px;
+        }
+
+        .health-ring {
+            width: 168px;
+            height: 168px;
+            border-radius: 50%;
+            margin: 10px auto 18px;
+            display: grid;
+            place-items: center;
+            background: conic-gradient(var(--health-color) var(--score), var(--border-color) 0);
+            position: relative;
+        }
+
+        .health-ring::after {
+            content: '';
+            position: absolute;
+            inset: 14px;
+            border-radius: 50%;
+            background: var(--bg-color);
+        }
+
+        .health-score {
+            position: relative;
+            z-index: 1;
+            font-size: 42px;
+            font-weight: 900;
+            color: var(--text-color);
+        }
+
+        .health-label {
+            text-align: center;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--health-color);
+        }
+
+        .intelligence-copy {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .insight-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 14px;
+            height: 100%;
+        }
+
+        .insight-card,
+        .action-card,
+        .focus-file {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px;
+        }
+
+        .insight-card {
+            border-left: 4px solid var(--tone-color);
+        }
+
+        .insight-title {
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0;
+        }
+
+        .insight-value {
+            margin-top: 8px;
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--text-color);
+        }
+
+        .insight-detail {
+            margin-top: 6px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .section-header {
+            margin: 26px 0 14px;
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: end;
+        }
+
+        .section-title {
+            margin: 0;
+            font-size: 20px;
+            color: var(--text-color);
+        }
+
+        .section-subtitle {
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .action-grid,
+        .focus-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .command-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 14px 0 18px;
+        }
+
+        .ghost-btn {
+            background: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .ghost-btn:hover {
+            border-color: var(--primary-color);
+            background: var(--hover-bg);
+        }
+
+        .priority {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 800;
+            background: var(--tone-color);
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .action-title,
+        .focus-title {
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--text-color);
+            margin-bottom: 6px;
+        }
+
+        .action-detail,
+        .focus-reason {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .focus-score {
+            font-size: 20px;
+            font-weight: 900;
+            color: var(--accent-orange);
+            margin-bottom: 6px;
+        }
+
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .stats-table th,
+        .stats-table td {
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            padding: 10px;
+        }
+
+        .stats-table th {
+            color: var(--text-muted);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0;
         }
         
         .title {
@@ -374,6 +610,30 @@ export class DashboardProvider {
             gap: 8px;
             align-items: center;
             flex-wrap: wrap;
+        }
+
+        .branch-select {
+            background: var(--secondary-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px 12px;
+            font-size: 14px;
+            max-width: 260px;
+        }
+
+        .branch-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            padding: 6px 10px;
+            color: var(--text-muted);
+            background: var(--secondary-bg);
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 10px;
         }
         
         .btn {
@@ -440,6 +700,61 @@ export class DashboardProvider {
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 10px;
+        }
+
+        .compact-summary {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 26px;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: var(--secondary-bg);
+        }
+
+        .summary-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 30px;
+            padding: 6px 9px;
+            border-radius: 999px;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+
+        .summary-chip strong {
+            color: var(--text-color);
+            font-weight: 800;
+        }
+
+        .kpi-card {
+            min-height: 126px;
+            padding: 18px;
+        }
+
+        .kpi-card .metric-title {
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .kpi-card .metric-value {
+            font-size: 34px;
+            line-height: 1.1;
+        }
+
+        .kpi-card .metric-subtitle {
+            font-size: 12px;
         }
         
         .metric-card {
@@ -1098,7 +1413,33 @@ export class DashboardProvider {
         .podium-bar.bronze { background: #CD7F32; height: 60px; }
 
         /* Copy button */
-        .btn.copy { background: var(--secondary-background); }
+        .btn.copy { background: var(--secondary-bg); }
+
+        @media (max-width: 780px) {
+            body {
+                padding: 14px;
+            }
+
+            .header,
+            .section-header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .intelligence-hero {
+                grid-template-columns: 1fr;
+            }
+
+            .kpi-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 520px) {
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body class="${currentTheme}-theme">
@@ -1109,96 +1450,117 @@ export class DashboardProvider {
             <button class="btn ${days === 30 ? 'active' : ''}" onclick="changePeriod(30)">30일</button>
             <button class="btn ${days === 90 ? 'active' : ''}" onclick="changePeriod(90)">90일</button>
             <button class="btn refresh" onclick="refresh()">🔄 새로고침</button>
+            <select class="branch-select" onchange="changeBranch(this.value)" title="Analyze a specific local branch">
+                ${branchOptions}
+            </select>
             <button class="btn theme" onclick="toggleTheme()">${themeButtonText}</button>
             <button class="btn export" onclick="exportReport()">📄 리포트 내보내기</button>
             <button class="btn copy" onclick="copyStats()">📋 복사</button>
         </div>
     </div>
+
+    <div class="command-center" id="command-center">
+        <div class="intelligence-hero">
+            <div class="health-panel" style="--score:${intelligence.healthScore}%; --health-color:${getToneColor(intelligence.healthTone)};">
+                <div class="branch-pill">🌿 ${selectedBranch ? this.escapeHtml(selectedBranch) : `Current: ${this.escapeHtml(metrics.branchStats?.currentBranch || 'N/A')}`}</div>
+                <div class="metric-title">🧠 Repository Command Center</div>
+                <div class="health-ring">
+                    <div class="health-score">${intelligence.healthScore}</div>
+                </div>
+                <div class="health-label">${intelligence.healthLabel}</div>
+                <div class="intelligence-copy">${intelligence.summary}</div>
+            </div>
+            <div class="insight-grid">
+                ${intelligence.signals.map(signal => `
+                <div class="insight-card" style="--tone-color:${getToneColor(signal.tone)};">
+                    <div class="insight-title">${signal.title}</div>
+                    <div class="insight-value">${signal.value}</div>
+                    <div class="insight-detail">${signal.detail}</div>
+                </div>
+                `).join('')}
+            </div>
+        </div>
+
+        <div class="command-actions">
+            <button class="ghost-btn" onclick="copyBrief()">Copy Brief</button>
+            <button class="ghost-btn" onclick="scrollToSection('refactor-radar')">Refactor Radar</button>
+            <button class="ghost-btn" onclick="scrollToSection('activity-section')">Activity</button>
+            <button class="ghost-btn" onclick="scrollToSection('contributors-section')">Contributors</button>
+            <button class="ghost-btn" onclick="scrollToSection('badges-section')">Badges</button>
+        </div>
+
+        <div class="section-header" style="margin-top: 0;">
+            <div>
+                <h2 class="section-title">🎯 Recommended Next Moves</h2>
+                <div class="section-subtitle">커밋 패턴, 변경량, 브랜치 상태를 합쳐 만든 실행 우선순위입니다.</div>
+            </div>
+        </div>
+        <div class="action-grid" style="margin-bottom: 0;">
+            ${intelligence.actions.map(action => `
+            <div class="action-card" style="--tone-color:${getPriorityColor(action.priority)};">
+                <span class="priority">${action.priority}</span>
+                <div class="action-title">${action.title}</div>
+                <div class="action-detail">${action.detail}</div>
+            </div>
+            `).join('')}
+        </div>
+    </div>
+
+    ${intelligence.focusFiles.length > 0 ? `
+    <div class="section-header" id="refactor-radar">
+        <div>
+            <h2 class="section-title">🔥 Refactor Radar</h2>
+            <div class="section-subtitle">변경 빈도와 churn을 함께 본 리스크 높은 파일 후보입니다.</div>
+        </div>
+    </div>
+    <div class="focus-grid">
+        ${intelligence.focusFiles.map(file => `
+        <div class="focus-file">
+            <div class="focus-score">Risk ${file.score}</div>
+            <div class="focus-title"><code>${file.file}</code></div>
+            <div class="focus-reason">${file.reason}</div>
+        </div>
+        `).join('')}
+    </div>` : ''}
     
-    <div class="dashboard-grid">
-        <div class="metric-card">
+    <div class="kpi-grid">
+        <div class="metric-card kpi-card">
             <div class="metric-title">🔥 총 커밋 수</div>
             <div class="metric-value stats-highlight">${metrics.totalCommits}</div>
             <div class="metric-subtitle">최근 ${days}일 동안</div>
         </div>
         
-        <div class="metric-card">
+        <div class="metric-card kpi-card">
             <div class="metric-title">📁 수정된 파일</div>
             <div class="metric-value stats-highlight">${metrics.totalFiles}</div>
             <div class="metric-subtitle">고유 파일 수</div>
         </div>
         
-        <div class="metric-card">
+        <div class="metric-card kpi-card">
             <div class="metric-title">📊 일평균 커밋</div>
             <div class="metric-value stats-highlight">${(metrics.totalCommits / days).toFixed(1)}</div>
             <div class="metric-subtitle">commits/day</div>
         </div>
-        
-        <div class="metric-card">
-            <div class="metric-title">🏆 최고 기록</div>
-            <div class="metric-value stats-highlight">${Math.max(...Object.values(metrics.dailyCommits), 0)}</div>
-            <div class="metric-subtitle">하루 최대 커밋</div>
-        </div>
-        
-        <div class="metric-card">
+
+        <div class="metric-card kpi-card">
             <div class="metric-title">👥 활성 개발자</div>
             <div class="metric-value stats-highlight">${metrics.totalAuthors}</div>
             <div class="metric-subtitle">참여 인원</div>
         </div>
-        
-        <div class="metric-card">
-            <div class="metric-title">🥇 TOP 기여자</div>
-            <div class="metric-value stats-highlight" style="font-size: 24px;">${metrics.topAuthor}</div>
-            <div class="metric-subtitle">${metrics.authorStats[0]?.commits || 0} commits</div>
-        </div>
-        
-        <div class="metric-card">
-            <div class="metric-title">📁 주력 언어</div>
-            <div class="metric-value stats-highlight" style="font-size: 24px;">${metrics.topFileType}</div>
-            <div class="metric-subtitle">${metrics.fileTypeStats[0]?.commits || 0} commits</div>
-        </div>
+    </div>
 
-        <div class="metric-card">
-            <div class="metric-title">➕ 추가 라인</div>
-            <div class="metric-value stats-highlight" style="color: var(--success-color);">+${(metrics.totalInsertions || 0).toLocaleString()}</div>
-            <div class="metric-subtitle">총 삽입 라인 수</div>
-        </div>
-
-        <div class="metric-card">
-            <div class="metric-title">➖ 삭제 라인</div>
-            <div class="metric-value stats-highlight" style="color: var(--error-color);">-${(metrics.totalDeletions || 0).toLocaleString()}</div>
-            <div class="metric-subtitle">총 삭제 라인 수</div>
-        </div>
-
-        <div class="metric-card">
-            <div class="metric-title">🔥 커밋 스트릭</div>
-            <div class="metric-value stats-highlight" style="color: var(--warning-color);">${metrics.commitStreak?.currentStreak ?? 0}<span style="font-size:18px;">일</span></div>
-            <div class="metric-subtitle">최장 ${metrics.commitStreak?.longestStreak ?? 0}일 • 활동률 ${metrics.commitStreak?.activityRate ?? 0}%</div>
-        </div>
-
-        <div class="metric-card">
-            <div class="metric-title">📈 기간 대비 변화</div>
-            ${(() => {
-                const wow = metrics.weekOverWeekChange;
-                const arrow = !wow ? '' : wow.trend === 'up' ? '▲' : wow.trend === 'down' ? '▼' : '→';
-                const color = !wow ? 'var(--text-color)' : wow.trend === 'up' ? 'var(--success-color)' : wow.trend === 'down' ? 'var(--error-color)' : 'var(--text-muted)';
-                const pct = wow?.changePercent ?? 0;
-                return `<div class="metric-value stats-highlight" style="color:${color};">${arrow} ${Math.abs(pct)}%</div>
-            <div class="metric-subtitle">전반기 대비 후반기 커밋 변화</div>`;
-            })()}
-        </div>
-
-        <div class="metric-card">
-            <div class="metric-title">✅ Conventional Commits</div>
-            <div class="metric-value stats-highlight">${metrics.conventionalCommits?.conventionalPercentage ?? 0}%</div>
-            <div class="metric-subtitle">규격 준수 • 주요 타입: ${metrics.conventionalCommits?.topType ?? 'N/A'}</div>
-        </div>
-
-        <div class="metric-card">
-            <div class="metric-title">🌿 브랜치 현황</div>
-            <div class="metric-value stats-highlight">${metrics.branchStats?.totalBranches ?? 0}</div>
-            <div class="metric-subtitle">현재: <code>${metrics.branchStats?.currentBranch ?? 'N/A'}</code> • 활성 ${metrics.branchStats?.recentBranches?.length ?? 0}개</div>
-        </div>
+    <div class="compact-summary">
+        <div class="summary-chip"><span>🏆 최고 기록</span><strong>${Math.max(...Object.values(metrics.dailyCommits), 0)} / day</strong></div>
+        <div class="summary-chip"><span>🥇 TOP 기여자</span><strong>${metrics.topAuthor} (${metrics.authorStats[0]?.commits || 0})</strong></div>
+        <div class="summary-chip"><span>📁 주력 언어</span><strong>${metrics.topFileType}</strong></div>
+        <div class="summary-chip"><span>➕ 추가 라인</span><strong>+${(metrics.totalInsertions || 0).toLocaleString()}</strong></div>
+        <div class="summary-chip"><span>➖ 삭제 라인</span><strong>-${(metrics.totalDeletions || 0).toLocaleString()}</strong></div>
+        <div class="summary-chip"><span>🔥 스트릭</span><strong>${metrics.commitStreak?.currentStreak ?? 0}일 / ${metrics.commitStreak?.activityRate ?? 0}%</strong></div>
+        <div class="summary-chip"><span>📈 변화</span><strong>${metrics.weekOverWeekChange?.changePercent ?? 0}%</strong></div>
+        <div class="summary-chip"><span>✅ Commit 규격</span><strong>${metrics.conventionalCommits?.conventionalPercentage ?? 0}%</strong></div>
+        <div class="summary-chip"><span>🌿 브랜치</span><strong>${metrics.branchStats?.currentBranch ?? 'N/A'}</strong></div>
+        ${metrics.branchComparison ? `<div class="summary-chip"><span>🔀 Base 비교</span><strong>${metrics.branchComparison.baseBranch}: +${metrics.branchComparison.ahead}/-${metrics.branchComparison.behind}</strong></div>` : ''}
+        ${metrics.branchComparison ? `<div class="summary-chip"><span>📦 PR 규모</span><strong>${metrics.branchComparison.filesChanged} files, +${metrics.branchComparison.insertions}/-${metrics.branchComparison.deletions}</strong></div>` : ''}
     </div>
 
     <!-- GitHub-style Commit Calendar (16-week heatmap) -->
@@ -1207,7 +1569,7 @@ export class DashboardProvider {
         <div id="commit-calendar" class="calendar-grid"></div>
     </div>
 
-    <div class="metric-card large-chart">
+    <div class="metric-card large-chart" id="activity-section">
         <div class="metric-title">📈 일별 커밋 추이 - 최근 ${days}일</div>
         <div class="chart-container">
             <canvas id="dailyCommitsChart"></canvas>
@@ -1257,7 +1619,7 @@ export class DashboardProvider {
     </div>` : ''}
 
     <!-- 작성자별 통계 섹션 -->
-    <div class="metric-card large-chart">
+    <div class="metric-card large-chart" id="contributors-section">
         <div class="metric-title">👥 작성자별 기여도 분석</div>
         <div class="dashboard-grid" style="margin-bottom: 0;">
             <div style="grid-column: 1 / -1;">
@@ -1453,50 +1815,42 @@ export class DashboardProvider {
     </div>
 
     <!-- 배지 시스템 섹션 -->
-    <div class="metric-card large-chart">
-        <div class="metric-title">🏆 개발자 뱃지 시스템</div>
-        <div class="dashboard-grid" style="margin-bottom: 20px;">
-            <div class="metric-card" style="margin: 0;">
-                <div class="metric-title">📈 진행 상황</div>
+    <div class="metric-card large-chart" id="badges-section">
+        <div class="metric-title">🏆 Achievement Snapshot</div>
+        <div class="dashboard-grid" style="margin-bottom: 0;">
+            <div>
                 <div class="metric-value stats-highlight">${badgeData.totalUnlocked}/${badgeData.totalBadges}</div>
-                <div class="metric-subtitle">${badgeData.completionPercentage}% 완료</div>
+                <div class="metric-subtitle">${badgeData.completionPercentage}% 완료 • 획득 배지만 간결하게 표시합니다</div>
                 <div class="progress-bar">
                     <div class="progress-fill" style="width: ${badgeData.completionPercentage}%"></div>
                 </div>
             </div>
-            <div class="metric-card" style="margin: 0;">
-                <div class="metric-title">⭐ 희귀도 통계</div>
-                <div class="rarity-stats">
-                    <div class="rarity-item">
-                        <span class="rarity-badge common">Common</span>
-                        <span>${badgeData.rarityStats.common}</span>
-                    </div>
-                    <div class="rarity-item">
-                        <span class="rarity-badge uncommon">Uncommon</span>
-                        <span>${badgeData.rarityStats.uncommon}</span>
-                    </div>
-                    <div class="rarity-item">
-                        <span class="rarity-badge rare">Rare</span>
-                        <span>${badgeData.rarityStats.rare}</span>
-                    </div>
-                    <div class="rarity-item">
-                        <span class="rarity-badge epic">Epic</span>
-                        <span>${badgeData.rarityStats.epic}</span>
-                    </div>
-                    <div class="rarity-item">
-                        <span class="rarity-badge legendary">Legendary</span>
-                        <span>${badgeData.rarityStats.legendary}</span>
-                    </div>
-                </div>
+            <div>
+                ${badgeData.inProgress.length > 0 ? (() => {
+                    const nextBadge = badgeData.inProgress[0];
+                    return `
+                    <div class="metric-title">🎯 다음 목표</div>
+                    <div class="badge-card in-progress ${nextBadge.rarity}" style="text-align:left;">
+                        <div class="badge-name">${nextBadge.icon} ${nextBadge.name}</div>
+                        <div class="badge-description">${nextBadge.description}</div>
+                        <div class="badge-progress-bar">
+                            <div class="progress-fill" style="width: ${nextBadge.progress}%"></div>
+                            <span class="progress-text">${nextBadge.progress}%</span>
+                        </div>
+                        <div class="badge-progress-desc">${nextBadge.progressDescription}</div>
+                    </div>`;
+                })() : `
+                    <div class="metric-title">🎯 다음 목표</div>
+                    <div class="empty-state" style="padding: 18px;">진행 중인 배지가 없습니다</div>
+                `}
             </div>
         </div>
-        
-        <!-- 언락된 배지들 -->
+
         ${badgeData.unlocked.length > 0 ? `
         <div class="badge-section">
-            <h3 class="badge-section-title">🏆 획득한 배지</h3>
+            <h3 class="badge-section-title">🏆 대표 획득 배지</h3>
             <div class="badge-grid">
-                ${badgeData.unlocked.map(badge => `
+                ${badgeData.unlocked.slice(0, 6).map(badge => `
                 <div class="badge-card unlocked ${badge.rarity}">
                     <div class="badge-icon">${badge.icon}</div>
                     <div class="badge-name">${badge.name}</div>
@@ -1506,47 +1860,9 @@ export class DashboardProvider {
                 </div>
                 `).join('')}
             </div>
+            ${badgeData.unlocked.length > 6 ? `<div class="more-badges">+${badgeData.unlocked.length - 6}개 배지 더 획득</div>` : ''}
         </div>
-        ` : ''}
-        
-        <!-- 진행중인 배지들 -->
-        ${badgeData.inProgress.length > 0 ? `
-        <div class="badge-section">
-            <h3 class="badge-section-title">⏳ 진행 중인 배지</h3>
-            <div class="badge-grid">
-                ${badgeData.inProgress.map(badge => `
-                <div class="badge-card in-progress ${badge.rarity}">
-                    <div class="badge-icon">${badge.icon}</div>
-                    <div class="badge-name">${badge.name}</div>
-                    <div class="badge-description">${badge.description}</div>
-                    <div class="badge-progress-bar">
-                        <div class="progress-fill" style="width: ${badge.progress}%"></div>
-                        <span class="progress-text">${badge.progress}%</span>
-                    </div>
-                    <div class="badge-progress-desc">${badge.progressDescription}</div>
-                </div>
-                `).join('')}
-            </div>
-        </div>
-        ` : ''}
-        
-        <!-- 잠긴 배지들 (일부만 표시) -->
-        ${badgeData.locked.length > 0 ? `
-        <div class="badge-section">
-            <h3 class="badge-section-title">🔒 미획득 배지 (일부)</h3>
-            <div class="badge-grid">
-                ${badgeData.locked.slice(0, 6).map(badge => `
-                <div class="badge-card locked ${badge.rarity}">
-                    <div class="badge-icon grayscale">❓</div>
-                    <div class="badge-name">???</div>
-                    <div class="badge-description">조건을 만족하면 획득할 수 있습니다</div>
-                    <div class="badge-rarity ${badge.rarity}">${badge.rarity.toUpperCase()}</div>
-                </div>
-                `).join('')}
-            </div>
-            ${badgeData.locked.length > 6 ? `<div class="more-badges">... 그리고 ${badgeData.locked.length - 6}개 더</div>` : ''}
-        </div>
-        ` : ''}
+        ` : '<div class="empty-state"><div class="empty-icon">🏆</div><div>아직 획득한 배지가 없습니다</div></div>'}
     </div>
 
     <script>
@@ -1611,6 +1927,13 @@ export class DashboardProvider {
             });
         }
 
+        function changeBranch(branch) {
+            vscode.postMessage({
+                command: 'changeBranch',
+                branch: branch || undefined
+            });
+        }
+
         function exportReport() {
             vscode.postMessage({
                 command: 'showExportDialog'
@@ -1624,8 +1947,20 @@ export class DashboardProvider {
         }
 
         function copyStats() {
-            const text = '📊 Git Stats [${days}일]: 커밋 ${metrics.totalCommits}개 | 파일 ${metrics.totalFiles}개 | +${(metrics.totalInsertions || 0).toLocaleString()}/-${(metrics.totalDeletions || 0).toLocaleString()} | 기여자 ${metrics.totalAuthors}명 | 스트릭 ${metrics.commitStreak?.currentStreak ?? 0}일';
+            const text = '📊 Git Stats [${days}일]: 건강도 ${intelligence.healthScore}/100 | 커밋 ${metrics.totalCommits}개 | 파일 ${metrics.totalFiles}개 | +${(metrics.totalInsertions || 0).toLocaleString()}/-${(metrics.totalDeletions || 0).toLocaleString()} | 기여자 ${metrics.totalAuthors}명 | 스트릭 ${metrics.commitStreak?.currentStreak ?? 0}일';
             vscode.postMessage({ command: 'copyStats', text: text });
+        }
+
+        function copyBrief() {
+            const brief = ${JSON.stringify(buildExecutiveBrief(metrics, intelligence, days))};
+            vscode.postMessage({ command: 'copyStats', text: brief });
+        }
+
+        function scrollToSection(id) {
+            const target = document.getElementById(id);
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
         }
 
         // Commit calendar heatmap
@@ -2244,6 +2579,15 @@ export class DashboardProvider {
         }
         
         return { labels, data };
+    }
+
+    private escapeHtml(value: string): string {
+        return value
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#x27;');
     }
 
     private prepareFileStatsData(fileStats: { [file: string]: number }) {

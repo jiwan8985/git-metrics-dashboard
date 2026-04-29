@@ -1,21 +1,23 @@
 /**
  * i18n 초기화 및 설정
- * 다국어 지원을 위한 i18next 설정 (VS Code Extension)
+ * 다국어 지원을 위한 경량 로컬 번역 모듈 (VS Code Extension)
  */
 
-import i18next from 'i18next';
 import * as vscode from 'vscode';
 import enTranslation from './locales/en.json';
 import koTranslation from './locales/ko.json';
 import jaTranslation from './locales/ja.json';
 import zhCNTranslation from './locales/zh-CN.json';
 
-const resources = {
-    en: { translation: enTranslation },
-    ko: { translation: koTranslation },
-    ja: { translation: jaTranslation },
-    'zh-CN': { translation: zhCNTranslation }
+const resources: Record<string, Record<string, any>> = {
+    en: enTranslation,
+    ko: koTranslation,
+    ja: jaTranslation,
+    'zh-CN': zhCNTranslation
 };
+
+let currentLanguage = 'en';
+let initialized = false;
 
 /**
  * VS Code 설정에서 언어 결정
@@ -41,34 +43,26 @@ function resolveLanguage(): string {
  * i18n 초기화
  */
 export function initializeI18n(): void {
-    if (i18next.isInitialized) {
+    if (initialized) {
         return;
     }
 
-    const language = resolveLanguage();
-
-    i18next.init({
-        resources,
-        lng: language,
-        fallbackLng: 'en',
-        interpolation: {
-            escapeValue: false
-        }
-    });
+    currentLanguage = resolveLanguage();
+    initialized = true;
 }
 
 /**
  * 언어 변경 (설정 변경 시 호출)
  */
 export async function changeLanguage(language: string): Promise<void> {
-    await i18next.changeLanguage(language);
+    currentLanguage = isValidLanguage(language) ? language : 'en';
 }
 
 /**
  * 현재 언어 조회
  */
 export function getCurrentLanguage(): string {
-    return i18next.language;
+    return currentLanguage;
 }
 
 /**
@@ -94,11 +88,18 @@ export function isValidLanguage(language: string): boolean {
  * @param defaultValue 기본값
  */
 export function t(key: string, defaultValue?: string): string {
-    const result = i18next.t(key);
-    if (result === key && defaultValue) {
-        return defaultValue;
-    }
-    return result;
+    const localized = lookupTranslation(resources[currentLanguage], key);
+    const fallback = lookupTranslation(resources.en, key);
+    return localized ?? fallback ?? defaultValue ?? key;
 }
 
-export default i18next;
+function lookupTranslation(source: Record<string, any> | undefined, key: string): string | undefined {
+    if (!source) { return undefined; }
+
+    const value = key.split('.').reduce<any>((current, part) => {
+        if (!current || typeof current !== 'object') { return undefined; }
+        return current[part];
+    }, source);
+
+    return typeof value === 'string' ? value : undefined;
+}

@@ -2,12 +2,12 @@
 
 > **Comprehensive Git Repository Analytics and Metrics Dashboard for VS Code**
 
-![Version](https://img.shields.io/badge/version-0.2.3-blue.svg)
+![Version](https://img.shields.io/badge/version-0.2.4-blue.svg)
 ![VS Code](https://img.shields.io/badge/VS%20Code-1.85.0+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-yellow.svg)
 ![Languages](https://img.shields.io/badge/UI%20languages-4-brightgreen.svg)
 
-A powerful VS Code extension that provides comprehensive Git repository analytics with beautiful visualizations, achievement badges, and multi-format report exports.
+A powerful VS Code extension that turns Git history into an executive-ready repository intelligence dashboard with beautiful visualizations, health scoring, risk detection, achievement badges, and multi-format report exports.
 
 **English** | [한국어](./README.ko.md) | [日本語](./README.ja.md) | [简体中文](./README.zh-CN.md)
 
@@ -16,6 +16,12 @@ A powerful VS Code extension that provides comprehensive Git repository analytic
 ## ✨ Key Features
 
 ### 📈 Dashboard Analytics
+- **🧠 Repository Command Center** *(v0.2.4)* — one-screen repository health score based on momentum, churn, commit quality, collaboration, and branch hygiene
+- **🌿 Branch-scoped analytics** *(v0.2.4)* — select a local branch and recalculate health, churn, contributors, and reports for that branch
+- **🔀 Base Branch Comparison** *(v0.2.4)* — see ahead/behind commits and PR-sized diff stats against `main`, `master`, or `develop`
+- **🎯 Recommended Next Moves** *(v0.2.4)* — prioritized, actionable suggestions generated from real repository signals
+- **🔥 Refactor Radar** *(v0.2.4)* — highlights high-risk files by combining churn, commit frequency, and change volume
+- **📋 Copy Brief** *(v0.2.4)* — copy a standup-ready health summary with next actions and refactor candidates
 - **📅 Commit Calendar Heatmap** *(v0.2.3)* — GitHub-style 16-week activity grid with 5 color intensity levels
 - **🏆 Top 3 Contributor Podium** *(v0.2.3)* — Gold/Silver/Bronze podium above the author ranking list
 - **📋 Copy Summary** *(v0.2.3)* — One-click clipboard copy of a formatted stats summary
@@ -31,13 +37,23 @@ A powerful VS Code extension that provides comprehensive Git repository analytic
 - **Time-based Analysis** — hourly and daily activity heatmaps
 - **Achievement Badges** — gamification system with 20+ badges across 5 rarity tiers (including 3 new EPIC badges in v0.2.3)
 - **Smart Themes** — full dark / light / auto theme support
+- **Polished Responsive UI** — modern command center, insight cards, quick navigation, and mobile-friendly dashboard layout
 
 ### 📄 Report Export
 - **Multiple Formats**: HTML, JSON, CSV, Markdown
+- **Command Center Reports**: health score, risk signals, next moves, and refactor candidates are included in exported reports
+- **Branch-aware Reports**: quick and custom exports can target a selected branch
 - **Theme Integration**: VS Code theme automatically applied to HTML reports
 - **Customizable**: choose analysis period, format, and which sections to include
 - **Badge Integration**: achievement badges included in reports
 - **Professional Quality**: suitable for team presentations and documentation
+
+### 🏢 Commercial Readiness
+- **Local-first privacy model**: repository data is analyzed locally and is not uploaded by the extension
+- **Security-aware exports**: CSV formula injection mitigation and local report output paths
+- **Adoption documents**: bundled Privacy, Security, and Support guides available from the Command Palette
+- **Executive reporting**: Command Center insights are exportable for standups, reviews, and stakeholder updates
+- **Lean package**: no runtime `node_modules` payload in the VSIX after dependency cleanup
 
 ---
 
@@ -116,16 +132,21 @@ Reports are saved to `<workspace>/git-metrics-reports/` by default (configurable
 ## 🎯 Use Cases
 
 **Team Leads / Managers**
+- Get an instant repository health score before standups or reviews
+- Spot delivery, ownership, and branch hygiene risks without reading raw Git logs
 - Analyze per-contributor metrics and velocity
 - Generate monthly / quarterly reports
 - Monitor project progress and code health
 
 **Individual Developers**
+- Identify refactoring candidates from the Refactor Radar
+- Use Recommended Next Moves to decide what to clean up next
 - Track personal coding activity and streaks
 - Analyze your technology stack usage
 - Understand your commit patterns and productivity peaks
 
 **Project Management**
+- Convert Git activity into clear health and risk signals
 - Codebase health overview
 - Identify technical debt hotspots
 - Optimize resource allocation
@@ -142,6 +163,8 @@ Reports are saved to `<workspace>/git-metrics-reports/` by default (configurable
 | `gitMetrics.toggleTheme` | `Ctrl+Shift+G T` | Toggle dashboard theme |
 | `gitMetrics.openReportsFolder` | — | Open reports output folder |
 | `gitMetrics.changeLanguage` | — | Change UI language |
+| `gitMetrics.openPrivacySecurity` | — | Open privacy notes |
+| `gitMetrics.openSupport` | — | Open support guide |
 
 ---
 

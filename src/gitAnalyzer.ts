@@ -83,6 +83,16 @@ export interface BranchStats {
     staleBranches: string[];     // 30일 이상 커밋 없는 브랜치
 }
 
+export interface BranchComparison {
+    baseBranch: string;
+    targetBranch: string;
+    ahead: number;
+    behind: number;
+    filesChanged: number;
+    insertions: number;
+    deletions: number;
+}
+
 export interface DailyChanges {
     date: string;
     insertions: number;
@@ -128,6 +138,7 @@ export interface MetricsData {
     dailyChanges: DailyChanges[];
     // 브랜치 통계
     branchStats: BranchStats;
+    branchComparison?: BranchComparison;
     // 배지 시스템
     badges: Badge[];
 }
@@ -306,7 +317,7 @@ export class GitAnalyzer {
         this.cacheManager = new CacheManager();
     }
 
-    async getCommitHistory(days: number = 30): Promise<CommitData[]> {
+    async getCommitHistory(days: number = 30, branch?: string): Promise<CommitData[]> {
         if (!this.workspaceRoot) {
             throw new Error('워크스페이스가 열려있지 않습니다.');
         }
@@ -317,7 +328,8 @@ export class GitAnalyzer {
         }
 
         // 캐시 확인
-        const cacheKey = `commits_${days}`;
+        const normalizedBranch = branch?.trim();
+        const cacheKey = `commits_${days}_${normalizedBranch || 'current'}`;
         const cached = this.cacheManager.get(cacheKey);
         if (cached) {
             console.log('📦 캐시에서 커밋 데이터 로드');
@@ -335,13 +347,15 @@ export class GitAnalyzer {
 
         try {
             // execFile로 shell injection 방지 (인수를 배열로 전달)
-            const { stdout } = await execFileAsync('git', [
+            const gitArgs = [
                 'log',
+                ...(normalizedBranch ? [normalizedBranch] : []),
                 `--since=${sinceStr}`,
                 '--pretty=format:%H|%an|%ad|%s',
                 '--date=iso',
                 '--numstat'
-            ], { cwd: this.workspaceRoot, maxBuffer: 50 * 1024 * 1024 });
+            ];
+            const { stdout } = await execFileAsync('git', gitArgs, { cwd: this.workspaceRoot, maxBuffer: 50 * 1024 * 1024 });
 
             console.log('📝 Git log 조회 완료 (numstat)');
             console.log(`📊 Raw output length: ${stdout.length}`);
@@ -478,7 +492,7 @@ export class GitAnalyzer {
             .trim();
     }
 
-    async generateMetrics(commits: CommitData[]): Promise<MetricsData> {
+    async generateMetrics(commits: CommitData[], selectedBranch?: string): Promise<MetricsData> {
         const dailyCommits: { [date: string]: number } = {};
         const fileStats: { [file: string]: number } = {};
 
@@ -534,9 +548,10 @@ export class GitAnalyzer {
         const conventionalCommits = this.calculateConventionalCommits(commits);
         const weekOverWeekChange = this.calculateWeekOverWeekChange(dailyCommits, 30);
         const dailyChanges = this.calculateDailyChanges(commits, 30);
-        const branchStats = await this.getBranchStats();
+        const branchStats = await this.getBranchStats(selectedBranch);
+        const branchComparison = await this.getBranchComparison(branchStats.currentBranch);
 
-        const metricsData = {
+        const metricsData: MetricsData = {
             dailyCommits,
             fileStats,
             thisWeekTopFiles,
@@ -561,15 +576,19 @@ export class GitAnalyzer {
             badges: [] as Badge[]
         };
 
+        if (branchComparison) {
+            metricsData.branchComparison = branchComparison;
+        }
+
         const badges = this.badgeSystem.calculateBadges(metricsData, commits, 30);
         metricsData.badges = badges;
 
         return metricsData;
     }
 
-    async getDetailedCommitStats(days: number = 30): Promise<ExtendedMetricsData> {
-        const commits = await this.getCommitHistory(days);
-        const basicMetrics = await this.generateMetrics(commits);
+    async getDetailedCommitStats(days: number = 30, branch?: string): Promise<ExtendedMetricsData> {
+        const commits = await this.getCommitHistory(days, branch);
+        const basicMetrics = await this.generateMetrics(commits, branch);
 
         const averageCommitsPerDay = commits.length / days;
         const mostActiveDay = this.getMostActiveDay(basicMetrics.timeAnalysis.weeklyActivity);
@@ -1008,7 +1027,7 @@ export class GitAnalyzer {
     /**
      * 브랜치 현황 조회
      */
-    async getBranchStats(): Promise<BranchStats> {
+    async getBranchStats(selectedBranch?: string): Promise<BranchStats> {
         if (!this.workspaceRoot) {
             return { currentBranch: 'N/A', totalBranches: 0, recentBranches: [], staleBranches: [] };
         }
@@ -1019,7 +1038,7 @@ export class GitAnalyzer {
                 execFileAsync('git', ['branch', '--format=%(refname:short)|%(committerdate:iso)'], { cwd: this.workspaceRoot })
             ]);
 
-            const currentBranch = currentResult.stdout.trim();
+            const currentBranch = selectedBranch || currentResult.stdout.trim();
             const thirtyDaysAgo = new Date();
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -1042,6 +1061,75 @@ export class GitAnalyzer {
         } catch {
             return { currentBranch: 'N/A', totalBranches: 0, recentBranches: [], staleBranches: [] };
         }
+    }
+
+    async getBranches(): Promise<string[]> {
+        if (!this.workspaceRoot) {
+            return [];
+        }
+
+        try {
+            const { stdout } = await execFileAsync('git', [
+                'branch',
+                '--format=%(refname:short)'
+            ], { cwd: this.workspaceRoot });
+
+            return stdout
+                .split('\n')
+                .map(branch => branch.trim())
+                .filter(Boolean)
+                .filter((branch, index, branches) => branches.indexOf(branch) === index)
+                .sort((a, b) => a.localeCompare(b));
+        } catch {
+            return [];
+        }
+    }
+
+    async getBranchComparison(targetBranch?: string): Promise<BranchComparison | undefined> {
+        if (!this.workspaceRoot || !targetBranch || targetBranch === 'N/A') {
+            return undefined;
+        }
+
+        const branches = await this.getBranches();
+        const baseBranch = this.pickBaseBranch(branches, targetBranch);
+        if (!baseBranch || baseBranch === targetBranch) {
+            return undefined;
+        }
+
+        try {
+            const [aheadBehindResult, diffResult] = await Promise.all([
+                execFileAsync('git', ['rev-list', '--left-right', '--count', `${baseBranch}...${targetBranch}`], { cwd: this.workspaceRoot }),
+                execFileAsync('git', ['diff', '--shortstat', `${baseBranch}...${targetBranch}`], { cwd: this.workspaceRoot })
+            ]);
+
+            const [behindRaw, aheadRaw] = aheadBehindResult.stdout.trim().split(/\s+/);
+            const diff = this.parseShortStat(diffResult.stdout);
+
+            return {
+                baseBranch,
+                targetBranch,
+                ahead: parseInt(aheadRaw || '0', 10),
+                behind: parseInt(behindRaw || '0', 10),
+                filesChanged: diff.filesChanged,
+                insertions: diff.insertions,
+                deletions: diff.deletions
+            };
+        } catch {
+            return undefined;
+        }
+    }
+
+    private pickBaseBranch(branches: string[], targetBranch: string): string | undefined {
+        const preferredBases = ['main', 'master', 'develop', 'dev'];
+        return preferredBases.find(branch => branches.includes(branch) && branch !== targetBranch);
+    }
+
+    private parseShortStat(shortStat: string): { filesChanged: number; insertions: number; deletions: number } {
+        return {
+            filesChanged: parseInt(shortStat.match(/(\d+)\s+files?\s+changed/)?.[1] || '0', 10),
+            insertions: parseInt(shortStat.match(/(\d+)\s+insertions?\(\+\)/)?.[1] || '0', 10),
+            deletions: parseInt(shortStat.match(/(\d+)\s+deletions?\(-\)/)?.[1] || '0', 10)
+        };
     }
 
     getBadgeSystem(): BadgeSystem {
