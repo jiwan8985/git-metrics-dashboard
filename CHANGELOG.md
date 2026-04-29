@@ -7,6 +7,29 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [0.2.4] - 2026-04-29
+
+### Added
+- 🧠 **Repository Command Center** — new premium dashboard layer that calculates a repository health score from delivery momentum, churn concentration, Conventional Commit quality, contributor balance, and branch hygiene
+- 🌿 **Branch-scoped analytics** — dashboard and report exports can analyze a selected local branch instead of only the checked-out branch
+- 🔀 **Base Branch Comparison** — selected branches show ahead/behind commits and diff size against `main`, `master`, or `develop`
+- 🎯 **Recommended Next Moves** — actionable, priority-ranked suggestions that tell users what to fix next instead of only showing raw charts
+- 🔥 **Refactor Radar** — high-risk file cards that combine commit frequency and churn to identify refactoring or test-coverage candidates
+- ✨ **Modern command-center UI** — responsive health ring, signal cards, action cards, quick section navigation, and cleaner risk panels designed to make the dashboard more marketplace-friendly and presentation-ready
+- 📋 **Copy Brief** — copied summary now includes health score, next actions, and refactor candidates for standups and reports
+- 📄 **Command Center exports** — HTML, Markdown, JSON, and CSV reports now include health score, signals, recommended actions, and refactor candidates
+- 🏢 **Commercial readiness docs** — bundled Privacy, Security, and Support guides for team adoption reviews
+- 🔎 **Trust-center commands** — Command Palette entries for opening privacy/security notes and support guidance
+
+### Improved
+- Dashboard now emphasizes decision-making, code health, and user convenience in addition to visual analytics
+- Added responsive layout refinements for smaller VS Code webview widths
+- Extracted repository intelligence scoring into a dedicated tested module so dashboard and report exports share the same logic
+- Marketplace metadata now emphasizes repository health, engineering intelligence, technical debt, and executive reporting use cases
+- Removed the runtime `i18next` dependency and replaced it with a lightweight local translator, reducing the packaged VSIX from about 4.75 MB / 467 files to about 482 KB / 33 files
+
+---
+
 ## [0.2.3] - 2026-03-28
 
 ### Added

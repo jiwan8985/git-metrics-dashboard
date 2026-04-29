@@ -1,8 +1,8 @@
 {
   "name": "git-metrics-dashboard",
   "displayName": "Git Metrics Dashboard",
-  "description": "Comprehensive Git repository analytics and metrics dashboard. Analyze commits, contributors, file changes, and time patterns with beautiful visualizations and detailed reports.",
-  "version": "0.2.3",
+  "description": "Repository intelligence for VS Code: Git health score, risk detection, refactor radar, contributor analytics, and shareable executive reports.",
+  "version": "0.2.4",
   "publisher": "jiwan-dev",
   "repository": {
     "type": "git",
@@ -40,6 +40,12 @@
     "productivity",
     "team-metrics",
     "code-review",
+    "repository-health",
+    "engineering-intelligence",
+    "technical-debt",
+    "refactor",
+    "churn",
+    "manager-report",
     "badges",
     "achievements",
     "dark-theme",
@@ -57,6 +63,11 @@
     "onView:gitMetrics",
     "onCommand:gitMetrics.showDashboard",
     "onCommand:gitMetrics.refreshTreeView",
+    "onCommand:gitMetrics.quickExport",
+    "onCommand:gitMetrics.customExport",
+    "onCommand:gitMetrics.openPrivacySecurity",
+    "onCommand:gitMetrics.openSupport",
+    "onCommand:gitMetrics.windowsTroubleshoot",
     "workspaceContains:.git"
   ],
   "main": "./out/extension.js",
@@ -116,6 +127,21 @@
         "command": "gitMetrics.changeLanguage",
         "title": "Change Language",
         "category": "Git Metrics"
+      },
+      {
+        "command": "gitMetrics.openPrivacySecurity",
+        "title": "Open Privacy & Security Notes",
+        "category": "Git Metrics"
+      },
+      {
+        "command": "gitMetrics.openSupport",
+        "title": "Open Support Guide",
+        "category": "Git Metrics"
+      },
+      {
+        "command": "gitMetrics.windowsTroubleshoot",
+        "title": "Run Windows Troubleshooter",
+        "category": "Git Metrics"
       }
     ],
     "menus": {
@@ -139,6 +165,12 @@
         {
           "command": "gitMetrics.toggleTheme",
           "when": "workspaceFolderCount > 0"
+        },
+        {
+          "command": "gitMetrics.openPrivacySecurity"
+        },
+        {
+          "command": "gitMetrics.openSupport"
         }
       ],
       "view/title": [
@@ -319,16 +351,13 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
-    "lint": "eslint src",
+    "lint": "node node_modules/eslint/bin/eslint.js src",
     "test:unit": "jest --coverage",
     "test:unit:watch": "jest --watch",
     "test:integration": "vscode-test",
     "test": "npm run test:unit",
     "package": "vsce package",
     "publish": "vsce publish"
-  },
-  "dependencies": {
-    "i18next": "^25.6.3"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",

@@ -17,6 +17,32 @@ export function activate(context: vscode.ExtensionContext) {
     const dashboardProvider = new DashboardProvider(context, gitAnalyzer);
     const reportGenerator = new ReportGenerator(context);
 
+    const openBundledDocument = async (fileName: string, missingMessage: string) => {
+        const documentUri = vscode.Uri.joinPath(context.extensionUri, fileName);
+        try {
+            const doc = await vscode.workspace.openTextDocument(documentUri);
+            await vscode.window.showTextDocument(doc, { preview: true });
+        } catch {
+            vscode.window.showWarningMessage(missingMessage);
+        }
+    };
+
+    const pickAnalysisBranch = async (): Promise<string | undefined> => {
+        const branches = await gitAnalyzer.getBranches();
+        if (branches.length === 0) {
+            return undefined;
+        }
+
+        const selected = await vscode.window.showQuickPick([
+            { label: 'Current branch', description: 'Use the currently checked-out branch', value: undefined as string | undefined },
+            ...branches.map(branch => ({ label: branch, description: 'Analyze this local branch', value: branch }))
+        ], {
+            placeHolder: '분석할 브랜치를 선택하세요'
+        });
+
+        return selected?.value;
+    };
+
     // 사이드바 TreeView 등록
     const treeProvider = new GitMetricsTreeProvider(gitAnalyzer);
     const treeView = vscode.window.createTreeView('gitMetrics', {
@@ -150,13 +176,8 @@ export function activate(context: vscode.ExtensionContext) {
     // 빠른 리포트 내보내기 명령어 등록
     const quickExportDisposable = vscode.commands.registerCommand('gitMetrics.quickExport', async () => {
         try {
-            vscode.window.showInformationMessage('📊 Git 데이터 수집 중...');
-            
             const config = vscode.workspace.getConfiguration('gitMetrics');
             const defaultPeriod = config.get<number>('defaultPeriod', 30);
-            
-            const commits = await gitAnalyzer.getCommitHistory(defaultPeriod);
-            const metrics = await gitAnalyzer.generateMetrics(commits);
 
             const format = await vscode.window.showQuickPick([
                 { label: '📄 HTML 리포트', detail: 'html' },
@@ -168,6 +189,11 @@ export function activate(context: vscode.ExtensionContext) {
             });
 
             if (!format) {return;}
+
+            const branch = await pickAnalysisBranch();
+            vscode.window.showInformationMessage('📊 Git 데이터 수집 중...');
+            const commits = await gitAnalyzer.getCommitHistory(defaultPeriod, branch);
+            const metrics = await gitAnalyzer.generateMetrics(commits, branch);
 
             const options: ReportOptions = {
                 format: format.detail as any,
@@ -223,11 +249,6 @@ export function activate(context: vscode.ExtensionContext) {
             if (!periodInput) {return;}
             const period = parseInt(periodInput);
 
-            vscode.window.showInformationMessage('📊 Git 데이터 수집 중...');
-            
-            const commits = await gitAnalyzer.getCommitHistory(period);
-            const metrics = await gitAnalyzer.generateMetrics(commits);
-
             // 포맷 선택
             const format = await vscode.window.showQuickPick([
                 { label: '📄 HTML 리포트', description: '웹 브라우저에서 볼 수 있는 리포트', detail: 'html' },
@@ -239,6 +260,8 @@ export function activate(context: vscode.ExtensionContext) {
             });
 
             if (!format) {return;}
+
+            const branch = await pickAnalysisBranch();
 
             // 포함할 섹션 선택
             const sections = await vscode.window.showQuickPick([
@@ -265,6 +288,8 @@ export function activate(context: vscode.ExtensionContext) {
             };
 
             vscode.window.showInformationMessage('📄 리포트 생성 중...');
+            const commits = await gitAnalyzer.getCommitHistory(period, branch);
+            const metrics = await gitAnalyzer.generateMetrics(commits, branch);
             const result = await reportGenerator.generateReport(metrics, options);
 
             if (result.success && result.filePath) {
@@ -336,6 +361,20 @@ export function activate(context: vscode.ExtensionContext) {
         } catch (error) {
             vscode.window.showErrorMessage(`오류: ${error}`);
         }
+    });
+
+    const openPrivacySecurityDisposable = vscode.commands.registerCommand('gitMetrics.openPrivacySecurity', async () => {
+        await openBundledDocument(
+            'PRIVACY.md',
+            'Privacy notes are not bundled in this installation.'
+        );
+    });
+
+    const openSupportDisposable = vscode.commands.registerCommand('gitMetrics.openSupport', async () => {
+        await openBundledDocument(
+            'SUPPORT.md',
+            'Support guide is not bundled in this installation.'
+        );
     });
 
     // TreeView 새로고침 명령어
@@ -446,6 +485,8 @@ export function activate(context: vscode.ExtensionContext) {
         quickExportDisposable,
         customExportDisposable,
         openReportsFolderDisposable,
+        openPrivacySecurityDisposable,
+        openSupportDisposable,
         windowsTroubleshootDisposable,
         refreshTreeViewDisposable,
         changeLanguageDisposable,

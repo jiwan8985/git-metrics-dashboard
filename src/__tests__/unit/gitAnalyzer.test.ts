@@ -128,6 +128,30 @@ describe('GitAnalyzer', () => {
         });
     });
 
+    describe('parseShortStat', () => {
+        it('should parse git diff shortstat output', () => {
+            // @ts-ignore - private helper
+            const result = analyzer.parseShortStat(' 4 files changed, 120 insertions(+), 35 deletions(-)');
+
+            expect(result).toEqual({
+                filesChanged: 4,
+                insertions: 120,
+                deletions: 35
+            });
+        });
+
+        it('should handle empty shortstat output', () => {
+            // @ts-ignore - private helper
+            const result = analyzer.parseShortStat('');
+
+            expect(result).toEqual({
+                filesChanged: 0,
+                insertions: 0,
+                deletions: 0
+            });
+        });
+    });
+
     describe('invalidateCache', () => {
         it('should clear cache without throwing', () => {
             expect(() => analyzer.invalidateCache()).not.toThrow();

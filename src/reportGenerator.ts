@@ -757,6 +757,7 @@
 import * as vscode from 'vscode';
 import { MetricsData } from './gitAnalyzer';
 import { BadgeRarity } from './badgeSystem';
+import { prepareRepositoryIntelligence } from './repositoryIntelligence';
 
 export interface ReportOptions {
     format: 'html' | 'json' | 'csv' | 'markdown';
@@ -1358,6 +1359,83 @@ export class ReportGenerator {
                 display: none;
             }
         }
+
+        .command-center {
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 32px;
+            background: var(--secondary-bg);
+        }
+
+        .health-row {
+            display: grid;
+            grid-template-columns: minmax(160px, 220px) 1fr;
+            gap: 20px;
+            align-items: stretch;
+        }
+
+        .health-score {
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            background: var(--bg-color);
+        }
+
+        .health-number {
+            font-size: 48px;
+            font-weight: 900;
+            color: var(--primary-color);
+            line-height: 1;
+        }
+
+        .health-label {
+            margin-top: 10px;
+            font-weight: 700;
+            color: var(--text-color);
+        }
+
+        .signal-grid,
+        .action-grid,
+        .focus-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .signal-card,
+        .action-card,
+        .focus-card {
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--primary-color);
+            border-radius: 8px;
+            padding: 14px;
+            background: var(--bg-color);
+        }
+
+        .signal-title,
+        .priority {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .signal-value,
+        .focus-risk {
+            font-size: 22px;
+            font-weight: 900;
+            margin: 6px 0;
+            color: var(--text-color);
+        }
+
+        @media (max-width: 700px) {
+            .health-row {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body class="${currentTheme}-theme">
@@ -1367,7 +1445,7 @@ export class ReportGenerator {
                 ${currentTheme === 'dark' ? '🌙 다크 테마' : '☀️ 라이트 테마'}
             </div>
             <h1>📊 Git Metrics Report</h1>
-            <p>${projectName} • ${options.period}일 분석 • 생성일: ${generatedAt}</p>
+            <p>${projectName} • ${options.period}일 분석 • 브랜치: ${metrics.branchStats?.currentBranch || 'N/A'} • 생성일: ${generatedAt}</p>
         </div>
         
         <div class="content">
@@ -1379,6 +1457,7 @@ export class ReportGenerator {
                 항상 라이트 테마로 리포트를 생성할 수 있습니다.
             </div>
             ` : ''}
+            ${options.includeSummary ? this.generateCommandCenterSection(metrics, options.period) : ''}
             ${options.includeSummary ? this.generateSummarySection(metrics, options.period) : ''}
             ${options.includeAuthorStats ? this.generateAuthorStatsSection(metrics) : ''}
             ${options.includeFileStats ? this.generateFileStatsSection(metrics) : ''}
@@ -1394,6 +1473,53 @@ export class ReportGenerator {
     </div>
 </body>
 </html>`;
+    }
+
+    private generateCommandCenterSection(metrics: MetricsData, period: number): string {
+        const intelligence = prepareRepositoryIntelligence(metrics, period);
+        const actions = intelligence.actions.map(action => `
+            <div class="action-card">
+                <div class="priority">${action.priority}</div>
+                <strong>${action.title}</strong>
+                <div>${action.detail}</div>
+            </div>
+        `).join('');
+        const focusFiles = intelligence.focusFiles.length > 0
+            ? intelligence.focusFiles.map(file => `
+                <div class="focus-card">
+                    <div class="focus-risk">Risk ${file.score}</div>
+                    <strong><code>${file.file}</code></strong>
+                    <div>${file.reason}</div>
+                </div>
+            `).join('')
+            : '<p>High-risk file candidates were not detected in this period.</p>';
+
+        return `
+        <div class="section command-center">
+            <h2>🧠 Repository Command Center</h2>
+            <div class="health-row">
+                <div class="health-score">
+                    <div class="health-number">${intelligence.healthScore}</div>
+                    <div class="health-label">${intelligence.healthLabel}</div>
+                    <p>${intelligence.summary}</p>
+                </div>
+                <div>
+                    <div class="signal-grid">
+                        ${intelligence.signals.map(signal => `
+                        <div class="signal-card">
+                            <div class="signal-title">${signal.title}</div>
+                            <div class="signal-value">${signal.value}</div>
+                            <div>${signal.detail}</div>
+                        </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+            <h3>🎯 Recommended Next Moves</h3>
+            <div class="action-grid">${actions}</div>
+            <h3>🔥 Refactor Radar</h3>
+            <div class="focus-grid">${focusFiles}</div>
+        </div>`;
     }
 
     private generateSummarySection(metrics: MetricsData, period: number): string {
@@ -1636,11 +1762,13 @@ export class ReportGenerator {
 
     private generateJSONReport(metrics: MetricsData, options: ReportOptions): string {
         const extensionInfo = this.getExtensionInfo();
+        const intelligence = prepareRepositoryIntelligence(metrics, options.period);
         const report = {
             metadata: {
                 generatedAt: new Date().toISOString(),
                 period: options.period,
                 projectName: vscode.workspace.workspaceFolders?.[0]?.name || 'Git Project',
+                branch: metrics.branchStats?.currentBranch || 'N/A',
                 extensionInfo: extensionInfo,
                 options: options
             },
@@ -1650,8 +1778,11 @@ export class ReportGenerator {
                 totalAuthors: metrics.totalAuthors,
                 averageCommitsPerDay: (metrics.totalCommits / options.period),
                 topAuthor: metrics.topAuthor,
-                topFileType: metrics.topFileType
+                topFileType: metrics.topFileType,
+                branch: metrics.branchStats?.currentBranch || 'N/A',
+                branchComparison: metrics.branchComparison
             } : undefined,
+            repositoryIntelligence: options.includeSummary ? intelligence : undefined,
             authorStats: options.includeAuthorStats ? metrics.authorStats : undefined,
             fileStats: options.includeFileStats ? {
                 fileTypes: metrics.fileTypes,
@@ -1680,6 +1811,61 @@ export class ReportGenerator {
 
     private generateCSVReport(metrics: MetricsData, options: ReportOptions): string {
         let csv = '';
+
+        if (options.includeSummary) {
+            const intelligence = prepareRepositoryIntelligence(metrics, options.period);
+            csv += 'Repository Command Center\n';
+            csv += 'Branch,Health Score,Health Label,Summary\n';
+            csv += [
+                this.escapeCSV(metrics.branchStats?.currentBranch || 'N/A'),
+                intelligence.healthScore,
+                this.escapeCSV(intelligence.healthLabel),
+                this.escapeCSV(intelligence.summary)
+            ].join(',') + '\n';
+            csv += '\nSignals\n';
+            csv += 'Title,Value,Detail,Tone\n';
+            intelligence.signals.forEach(signal => {
+                csv += [
+                    this.escapeCSV(signal.title),
+                    this.escapeCSV(signal.value),
+                    this.escapeCSV(signal.detail),
+                    this.escapeCSV(signal.tone)
+                ].join(',') + '\n';
+            });
+            csv += '\nRecommended Next Moves\n';
+            csv += 'Priority,Title,Detail\n';
+            intelligence.actions.forEach(action => {
+                csv += [
+                    this.escapeCSV(action.priority),
+                    this.escapeCSV(action.title),
+                    this.escapeCSV(action.detail)
+                ].join(',') + '\n';
+            });
+            csv += '\nRefactor Radar\n';
+            csv += 'File,Risk Score,Reason\n';
+            intelligence.focusFiles.forEach(file => {
+                csv += [
+                    this.escapeCSV(file.file),
+                    file.score,
+                    this.escapeCSV(file.reason)
+                ].join(',') + '\n';
+            });
+            csv += '\n';
+        }
+
+        if (options.includeSummary && metrics.branchComparison) {
+            csv += 'Branch Comparison\n';
+            csv += 'Base Branch,Target Branch,Ahead,Behind,Files Changed,Insertions,Deletions\n';
+            csv += [
+                this.escapeCSV(metrics.branchComparison.baseBranch),
+                this.escapeCSV(metrics.branchComparison.targetBranch),
+                metrics.branchComparison.ahead,
+                metrics.branchComparison.behind,
+                metrics.branchComparison.filesChanged,
+                metrics.branchComparison.insertions,
+                metrics.branchComparison.deletions
+            ].join(',') + '\n\n';
+        }
 
         if (options.includeAuthorStats) {
             csv += '개발자별 통계\n';
@@ -1780,6 +1966,7 @@ export class ReportGenerator {
 
 **프로젝트:** ${projectName}  
 **분석 기간:** ${options.period}일  
+**브랜치:** ${metrics.branchStats?.currentBranch || 'N/A'}  
 **생성일:** ${generatedAt}  
 
 ---
@@ -1787,6 +1974,47 @@ export class ReportGenerator {
 `;
 
         if (options.includeSummary) {
+            const intelligence = prepareRepositoryIntelligence(metrics, options.period);
+            md += `## 🧠 Repository Command Center
+
+**Health Score:** ${intelligence.healthScore}/100 - ${intelligence.healthLabel}  
+${intelligence.summary}
+
+### Signals
+
+| Signal | Value | Detail |
+|--------|-------|--------|
+`;
+            intelligence.signals.forEach(signal => {
+                md += `| ${signal.title} | ${signal.value} | ${signal.detail} |\n`;
+            });
+
+            md += `
+### Recommended Next Moves
+
+| Priority | Action | Detail |
+|----------|--------|--------|
+`;
+            intelligence.actions.forEach(action => {
+                md += `| ${action.priority} | ${action.title} | ${action.detail} |\n`;
+            });
+
+            md += `
+### Refactor Radar
+
+| File | Risk | Reason |
+|------|------|--------|
+`;
+            if (intelligence.focusFiles.length > 0) {
+                intelligence.focusFiles.forEach(file => {
+                    md += `| \`${file.file}\` | ${file.score} | ${file.reason} |\n`;
+                });
+            } else {
+                md += '| - | - | High-risk file candidates were not detected in this period. |\n';
+            }
+
+            md += '\n---\n\n';
+
             md += `## 📋 요약 통계
 
 | 항목 | 값 |
@@ -1797,6 +2025,8 @@ export class ReportGenerator {
 | 활성 개발자 | ${metrics.totalAuthors} |
 | 최고 일일 커밋 | ${Math.max(...Object.values(metrics.dailyCommits), 0)} |
 | 주력 파일 타입 | ${metrics.topFileType} |
+${metrics.branchComparison ? `| Base 비교 | ${metrics.branchComparison.targetBranch} vs ${metrics.branchComparison.baseBranch}, ahead ${metrics.branchComparison.ahead}, behind ${metrics.branchComparison.behind} |
+| PR 규모 | ${metrics.branchComparison.filesChanged} files, +${metrics.branchComparison.insertions}/-${metrics.branchComparison.deletions} |` : ''}
 
 ---
 
