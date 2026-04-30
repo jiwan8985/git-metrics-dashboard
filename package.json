@@ -2,7 +2,7 @@
   "name": "git-metrics-dashboard",
   "displayName": "Git Metrics Dashboard",
   "description": "Repository intelligence for VS Code: Git health score, risk detection, refactor radar, contributor analytics, and shareable executive reports.",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "publisher": "jiwan-dev",
   "repository": {
     "type": "git",
@@ -18,6 +18,10 @@
   },
   "license": "MIT",
   "icon": "images/icon.png",
+  "galleryBanner": {
+    "color": "#0d1117",
+    "theme": "dark"
+  },
   "keywords": [
     "git",
     "metrics",
@@ -68,6 +72,7 @@
     "onCommand:gitMetrics.openPrivacySecurity",
     "onCommand:gitMetrics.openSupport",
     "onCommand:gitMetrics.windowsTroubleshoot",
+    "onCommand:gitMetrics.copyReadmeBadge",
     "workspaceContains:.git"
   ],
   "main": "./out/extension.js",
@@ -141,6 +146,11 @@
       {
         "command": "gitMetrics.windowsTroubleshoot",
         "title": "Run Windows Troubleshooter",
+        "category": "Git Metrics"
+      },
+      {
+        "command": "gitMetrics.copyReadmeBadge",
+        "title": "Copy README Badge",
         "category": "Git Metrics"
       }
     ],

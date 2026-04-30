@@ -7,6 +7,22 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [0.2.5] - 2026-04-30
+
+### Added
+- 📊 **Health Score Status Bar** — status bar now shows live health score (e.g. `✅ Git: 87/100`) after dashboard analysis, color-coded green/yellow/red
+- 📋 **Copy README Badge** (`Git Metrics: Copy README Badge`) — generates a shields.io Markdown badge to embed in your project README; every repo visitor sees the badge and can install the extension
+- ⭐ **Review Prompt** — after 5 dashboard opens, a gentle prompt invites users to leave a Marketplace review (fueling search ranking)
+- 🚀 **Auto-open on first install** — dashboard opens automatically 0.8 s after the extension is installed in a Git workspace
+- 🎨 **Marketplace Gallery Banner** — dark banner color in `galleryBanner` for a polished Marketplace listing header
+
+### Improved
+- HTML report footer now includes a branded **"Get Git Metrics Dashboard"** CTA button with a Marketplace deep-link — every shared report becomes a marketing channel
+- Markdown report footer now includes a live **VS Code Marketplace version badge** with a link, making shared `.md` reports discoverable
+- Status bar icon updated to use VS Code codicons (`$(graph)`, `$(pass)`, `$(warning)`, `$(error)`) for a native look
+
+---
+
 ## [0.2.4] - 2026-04-29
 
 ### Added

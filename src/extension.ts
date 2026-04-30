@@ -377,6 +377,21 @@ export function activate(context: vscode.ExtensionContext) {
         );
     });
 
+    // README 뱃지 복사 명령어
+    const copyReadmeBadgeDisposable = vscode.commands.registerCommand('gitMetrics.copyReadmeBadge', async () => {
+        const badge = `[![Analyzed with Git Metrics Dashboard](https://img.shields.io/badge/git--metrics-analyzed-blue?logo=visual-studio-code&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=jiwan-dev.git-metrics-dashboard)`;
+        await vscode.env.clipboard.writeText(badge);
+        const action = await vscode.window.showInformationMessage(
+            '📋 README 뱃지가 클립보드에 복사되었습니다! 프로젝트 README.md에 붙여넣기 하세요.',
+            '마켓플레이스 보기'
+        );
+        if (action === '마켓플레이스 보기') {
+            vscode.env.openExternal(vscode.Uri.parse(
+                'https://marketplace.visualstudio.com/items?itemName=jiwan-dev.git-metrics-dashboard'
+            ));
+        }
+    });
+
     // TreeView 새로고침 명령어
     const refreshTreeViewDisposable = vscode.commands.registerCommand('gitMetrics.refreshTreeView', async () => {
         await treeProvider.refresh();
@@ -406,9 +421,16 @@ export function activate(context: vscode.ExtensionContext) {
     // 상태바 아이템 추가
     const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
     statusBarItem.command = 'gitMetrics.showDashboard';
-    statusBarItem.text = "📊 Git Stats";
+    statusBarItem.text = "$(graph) Git Metrics";
     statusBarItem.tooltip = "Git 메트릭 대시보드 열기";
     statusBarItem.show();
+
+    // 대시보드 분석 완료 시 상태바에 health score 표시
+    dashboardProvider.setHealthScoreCallback((score: number) => {
+        const icon = score >= 78 ? '$(pass)' : score >= 58 ? '$(warning)' : '$(error)';
+        statusBarItem.text = `${icon} Git: ${score}/100`;
+        statusBarItem.tooltip = `Repository Health: ${score}/100 — 클릭하여 대시보드 열기`;
+    });
 
     // 상태바 리포트 버튼 추가
     const exportStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 99);
@@ -488,6 +510,7 @@ export function activate(context: vscode.ExtensionContext) {
         openPrivacySecurityDisposable,
         openSupportDisposable,
         windowsTroubleshootDisposable,
+        copyReadmeBadgeDisposable,
         refreshTreeViewDisposable,
         changeLanguageDisposable,
         statusBarItem,
@@ -500,24 +523,54 @@ export function activate(context: vscode.ExtensionContext) {
     // 웰컴 메시지 (첫 설치 시에만)
     const hasShownWelcome = context.globalState.get('gitMetrics.hasShownWelcome', false);
     if (!hasShownWelcome) {
+        context.globalState.update('gitMetrics.hasShownWelcome', true);
+        // 첫 설치 시 대시보드 자동 오픈 (Git 저장소가 있을 때)
+        const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+        if (workspaceRoot) {
+            setTimeout(() => {
+                vscode.commands.executeCommand('gitMetrics.showDashboard');
+            }, 800);
+        }
+
         const isWindows = process.platform === 'win32';
         const welcomeMessage = isWindows
-            ? '🎉 Git Metrics Dashboard가 설치되었습니다! Windows 사용자라면 문제 발생시 "윈도우 문제 해결" 명령어를 사용해보세요.'
-            : '🎉 Git Metrics Dashboard가 설치되었습니다! 상태바의 "📊 Git Stats" 버튼을 클릭하여 시작하세요.';
+            ? '🎉 Git Metrics Dashboard 설치 완료! Windows 사용자는 문제 발생 시 "윈도우 문제 해결" 명령어를 사용해보세요.'
+            : '🎉 Git Metrics Dashboard 설치 완료! 대시보드가 자동으로 열립니다.';
 
         const buttons = isWindows
-            ? ['대시보드 열기', '윈도우 문제 해결', '테마 설정', '더 이상 보지 않기']
-            : ['대시보드 열기', '테마 설정', '더 이상 보지 않기'];
+            ? ['Windows 문제 해결', '⭐ 리뷰 남기기']
+            : ['⭐ 리뷰 남기기'];
 
         vscode.window.showInformationMessage(welcomeMessage, ...buttons).then(action => {
-            if (action === '대시보드 열기') {
-                vscode.commands.executeCommand('gitMetrics.showDashboard');
-            } else if (action === '윈도우 문제 해결') {
+            if (action === 'Windows 문제 해결') {
                 vscode.commands.executeCommand('gitMetrics.windowsTroubleshoot');
-            } else if (action === '테마 설정') {
-                vscode.commands.executeCommand('gitMetrics.toggleTheme');
-            } else if (action === '더 이상 보지 않기') {
-                context.globalState.update('gitMetrics.hasShownWelcome', true);
+            } else if (action === '⭐ 리뷰 남기기') {
+                vscode.env.openExternal(vscode.Uri.parse(
+                    'https://marketplace.visualstudio.com/items?itemName=jiwan-dev.git-metrics-dashboard&ssr=false#review-details'
+                ));
+            }
+        });
+    }
+
+    // 리뷰 유도 (5회 대시보드 오픈 후)
+    const openCount = (context.globalState.get<number>('gitMetrics.openCount', 0)) + 1;
+    context.globalState.update('gitMetrics.openCount', openCount);
+    const hasReviewed = context.globalState.get<boolean>('gitMetrics.hasReviewed', false);
+
+    if (!hasReviewed && openCount === 5) {
+        vscode.window.showInformationMessage(
+            '❤️ Git Metrics Dashboard를 즐겨 사용하고 계신가요? VS Code Marketplace에 ⭐ 별점을 남겨주시면 더 많은 개발자들에게 도움이 됩니다!',
+            '⭐ 지금 리뷰 남기기',
+            '나중에',
+            '다시 보지 않기'
+        ).then(action => {
+            if (action === '⭐ 지금 리뷰 남기기') {
+                context.globalState.update('gitMetrics.hasReviewed', true);
+                vscode.env.openExternal(vscode.Uri.parse(
+                    'https://marketplace.visualstudio.com/items?itemName=jiwan-dev.git-metrics-dashboard&ssr=false#review-details'
+                ));
+            } else if (action === '다시 보지 않기') {
+                context.globalState.update('gitMetrics.hasReviewed', true);
             }
         });
     }
