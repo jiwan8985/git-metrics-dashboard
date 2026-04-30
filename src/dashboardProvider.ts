@@ -16,6 +16,11 @@ export class DashboardProvider {
     private currentPeriod: number = 30;
     private currentBranch: string | undefined;
     private availableBranches: string[] = [];
+    private onHealthScoreUpdate: ((score: number) => void) | undefined;
+
+    setHealthScoreCallback(cb: (score: number) => void) {
+        this.onHealthScoreUpdate = cb;
+    }
 
     constructor(
         private context: vscode.ExtensionContext,
@@ -202,6 +207,10 @@ export class DashboardProvider {
                     this.currentMetrics = metrics;
                     progress.report({ increment: 20, message: 'Rendering dashboard...' });
                     this.panel!.webview.html = this.generateAdvancedHTML(metrics, defaultPeriod, maxTopFiles, this.availableBranches, this.currentBranch);
+                    if (this.onHealthScoreUpdate) {
+                        const intel = prepareRepositoryIntelligence(metrics, defaultPeriod);
+                        this.onHealthScoreUpdate(intel.healthScore);
+                    }
                 } catch (error) {
                     vscode.window.showErrorMessage(`Git Metrics error: ${error}`);
                 }
