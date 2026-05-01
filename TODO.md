@@ -1,582 +1,261 @@
-# Git Metrics Dashboard - 개발 로드맵 & TODO List
+# Git Metrics Dashboard — 설치 수 증가 로드맵
 
-## 📋 개요
+최종 업데이트: 2026-05-01
+기준 버전: 0.2.5
+현재 총 설치 수: 553 (VS Code + Marketplace 합산)
 
-**Marketplace 배포 중인 프로덕션 플러그인의 개발 로드맵**
-
-**현재 버전:** 0.0.9 (보안 패치 & 실시간 감지 기능 완료)
-**최종 업데이트:** 2025-11-24
-**상태:** 🟢 보안 패치 완료, 실시간 Git 변경 감지 완료, Phase 2 진행 중
-
----
-
-## 🔴 즉시 배포 (This Week)
-
-### 1. ⚡ v0.0.9 보안 패치 & 실시간 감지 배포
-**상태:** ✅ 완료됨
-**소요 시간:** 8시간
-**파일 변경:**
-- ✅ `src/gitAnalyzer.ts` - simple-git 도입, XSS 방지
-- ✅ `src/reportGenerator.ts` - CSV 인젝션 방지
-- ✅ `src/dashboardStyles.ts` - 새로 생성 (테마 중앙화)
-- ✅ `src/dashboardDataFormatter.ts` - 새로 생성 (데이터 포맷팅)
-- ✅ `src/gitChangeDetector.ts` - 새로 생성 (Git 변경 감지)
-- ✅ `src/gitStatusIndicator.ts` - 새로 생성 (상태 표시)
-- ✅ `src/extension.ts` - GitChangeDetector & GitStatusIndicator 통합
-- ✅ `package.json` - 의존성 및 설정 옵션 추가
-
-**할 일:**
-- [ ] `npm version minor` (0.0.9 → 0.1.0) - 선택사항
-- [ ] CHANGELOG.md 최종 확인
-- [ ] Git commit & tag
-- [ ] `npm run publish` - Marketplace 배포
-
-**예상 시간:** 1시간
-**영향도:** 🔴 높음 (보안 + 기능 추가)
-- ✅ `package.json` - simple-git 의존성 추가
-
-**할 일:**
-- [ ] `npm version minor` (0.0.8 → 0.1.0)
-- [ ] CHANGELOG.md 업데이트
-- [ ] Git commit & tag
-- [ ] `npm run publish`
-
-**예상 시간:** 1-2시간
-**영향도:** 🔴 높음 (보안)
----
-
-## 🟠 Phase 1: 기초 안정화 (1개월 - 12월)
-
-### 2. 📝 테스트 커버리지 구축
-**상태:** ✅ 완료됨
-**우선도:** 🔴 높음
-**예상 시간:** 20-30시간
-
-#### 단위 테스트 (Unit Tests)
-- [ ] **GitAnalyzer 테스트**
-    - [ ] `getCommitHistory()` - 정상 케이스
-    - [ ] `getCommitHistory()` - 빈 저장소
-    - [ ] `getCommitHistory()` - 대용량 저장소
-    - [ ] `generateMetrics()` - 메트릭 계산
-    - [ ] `parseGitLog()` - 로그 파싱
-    - [ ] `sanitizeString()` - XSS 방지 검증
-    - 목표: 90% 커버리지
-
-- [ ] **BadgeSystem 테스트**
-    - [ ] 배지 임계값 계산
-    - [ ] 진행도 계산
-    - [ ] 엣지 케이스 (0 커밋, 극값)
-    - 목표: 85% 커버리지
-
-- [ ] **ReportGenerator 테스트**
-    - [ ] CSV 생성
-    - [ ] HTML 생성
-    - [ ] JSON 생성
-    - [ ] Markdown 생성
-    - [ ] CSV 인젝션 방지
-    - [ ] XSS 방지
-    - 목표: 80% 커버리지
-    
-#### 통합 테스트 (Integration Tests)
-- [ ] 전체 흐름 테스트 (Git → 분석 → 리포트)
-- [ ] 다양한 데이터 시나리오
-- [ ] 에러 처리 경로
-
-#### UI 테스트 (Webview Tests)
-- [ ] 대시보드 렌더링
-- [ ] 차트 표시
-- [ ] 테마 전환
-- [ ] 내보내기 기능
-
-**파일:** `src/test/extension.test.ts` (확장)
+> 설치 수 = **노출** × **전환율** × **바이럴**
+> 모든 항목은 이 세 가지 중 하나에 직접 연결된다.
 
 ---
 
-### 3. 🌐 국제화 (i18n) - 기본 구현
-**상태:** ✅ 완료됨
-**우선도:** 🟠 중간
-**예상 시간:** 15-20시간
+## 현재 상황
 
-#### 지원 언어
-- [ ] **영어 (English)** - 우선순위 1
-    - Marketplace 글로벌 사용자
-    - 검색 순위 향상
+- Total Acquisition: 553 (VS Code 설치 + Marketplace 웹 설치 합산)
+- VS Code Extensions 탭에서 보이는 다운로드 수 = 두 채널 합산 전체
+- 현재 Marketplace 웹 설치 비중이 더 높음 → VS Code 검색 최적화 여지 있음
+- 문제: 낮은 설치 수 → 검색 하위 노출 → 설치 더 적음 → 악순환
 
-- [ ] **일본어 (日本語)** - 우선순위 2
-    - 아시아 시장
-    - 기술 커뮤니티
-
-- [ ] **중국어 간체 (简体中文)** - 우선순위 3
-    - 가장 큰 개발자 시장
-    - 높은 수익성
-
-#### 구현 계획
-- [ ] i18next 설치
-- [ ] 번역 파일 구조 생성:
-  ```
-  src/locales/
-  ├── en.json (영어)
-  ├── ko.json (한국어)
-  ├── ja.json (일본어)
-  └── zh-CN.json (중국어)
-  ```
-- [ ] UI 문자열 추출
-- [ ] 메인 메시지 번역
-- [ ] 대시보드 UI 번역
-- [ ] 리포트 헤더/레이블 번역
-- [ ] 에러 메시지 번역
-
-**효과:**
-- 영문 구현: 다운로드 ↑ 300-400%
-- 일본어 추가: 다운로드 ↑ 100-150%
-- 중국어 추가: 다운로드 ↑ 200-300%
+통계 확인: https://marketplace.visualstudio.com/manage/publishers/jiwan-dev/extensions/git-metrics-dashboard/hub?_a=acquisition
 
 ---
 
-### 4. 📊 Marketplace 최적화
-**상태:** ✅ 완료됨
-**우선도:** 🟠 중간
-**예상 시간:** 3-5시간
+## 설치 수 증가 공식
 
-- [ ] 메타데이터 업데이트
-    - [ ] Keywords 확대 (현재 14개 → 25개)
-    - [ ] Category: "Developer Tools"로 변경
-    - [ ] 설명 영문화
-
-- [ ] 마케팅 자산
-    - [ ] 스크린샷 최신화 (v0.1.0 기준)
-    - [ ] 데모 GIF 제작 (대시보드, 내보내기)
-    - [ ] 아이콘 개선
-
-- [ ] README 영문화
-    - [ ] 영문 버전 작성
-    - [ ] 사용 예제 추가
----
-
-### 5. 🐛 버그 수정 & 안정화
-**상태:** ⏳ 대기 중
-**우선도:** 🟠 중간
-**예상 시간:** 5-10시간
-
-- [ ] Marketplace 리뷰 모니터링
-    - [ ] 주 1회 리뷰 확인
-    - [ ] 부정적 리뷰 대응
-
-- [ ] GitHub Issues 관리
-    - [ ] 보고된 버그 수정
-    - [ ] 사용자 피드백 반영
-
-- [ ] 엣지 케이스 처리
-    - [ ] 특수 문자 처리
-    - [ ] 인코딩 이슈
-    - [ ] 대용량 저장소 테스트
+```
+설치 수
+  ├── 노출 (얼마나 많이 발견되는가)
+  │     ├── VS Code Extensions 탭 검색 순위
+  │     ├── 카테고리/Featured 노출
+  │     └── 외부 채널 유입 (블로그, SNS, 커뮤니티)
+  │
+  ├── 전환율 (발견 후 설치로 이어지는가)
+  │     ├── 아이콘 + displayName 첫인상
+  │     ├── description 설치 동기 부여
+  │     ├── 별점/리뷰 신뢰도
+  │     ├── README 첫 화면 (스크린샷, 핵심 가치)
+  │     └── 설치 후 즉시 가치 (Walkthrough, 첫 실행)
+  │
+  └── 바이럴 (1명 설치 → N명 설치)
+        ├── 팀 전파 (.vscode/extensions.json)
+        ├── 리포트/배지 공유
+        └── PR Summary 복사 → 팀이 보고 설치
+```
 
 ---
 
-## 🟡 Phase 2: 핵심 기능 확장 (2개월 - 1월-2월)
+## P0 — 즉시 실행 (코드 없음, 이번 주)
 
-**마지막 업데이트:** 2025-11-24
-**현재 진행률:** 2/7 (29%) - 실시간 Git 변경 감지 완료, 다중 저장소 지원 대기 중
+### VS Code 검색 노출 최적화
 
-### 6. 🔄 실시간 Git 변경 감지
-**상태:** ✅ 완료됨
-**우선도:** ⭐⭐ 높음 (차별화 기능)
-**소요 시간:** 3시간
+- [ ] VS Code Extensions 탭에서 핵심 검색어별 현재 순위 기록 (baseline)
+  - `git`, `git metrics`, `git analytics`, `git statistics`, `git dashboard`
+  - `repository health`, `code churn`, `technical debt`, `contributor analytics`
+  - `commit history`, `git report`, `engineering metrics`
+- [x] `package.json` description 첫 문장 재작성 — 검색어 포함 + 설치 동기
+  - `Turn your Git history into a repository health score with risk detection, refactor radar, contributor analytics, and exportable team reports.`
+- [x] `package.json` keywords 재정렬 — 설치 의도 높은 검색어를 앞쪽에
+  - `git`, `git metrics`, `git analytics`, `git statistics`, `git dashboard`, `commit history`, `repository health`, `code churn`, `technical debt`, `contributor analytics`, `branch analytics`, `engineering metrics`, `team report`, `git report`
+- [ ] `displayName` 재검토
+  - 현재: `Git Metrics Dashboard`
+  - 후보: `Git Health & Metrics Dashboard`
+  - 주의: 기존 인지도 유지 우선
+- [x] `categories` 재검토 — SCM Providers 제거, `["Visualization", "Other"]`로 변경
 
-**구현 완료:**
-**구현 계획:**
-- [x] Git 워처 추가
-  ```typescript
-  // src/gitChangeDetector.ts (새로 생성 - 155줄)
-  export class GitChangeDetector {
-    watchForChanges(callback): void
-    setDebounceDelay(delayMs): void
-    dispose(): void
-  }
-  ```
+### 마켓플레이스 전환율 개선
 
-- [x] `.git` 디렉토리 감시
-    - [x] 커밋 감지 (HEAD 해시 비교)
-    - [x] 브랜치 변경 감지 (refs 파일)
-    - [x] 파일 변경 감지 (git status)
-    - [x] Stash 변경 감지
+- [ ] 아이콘 — 작은 크기 검색 카드에서 구분되는지 확인, 약하면 개선
+- [ ] 스크린샷 교체 — 실제 데이터 기반 고화질 (대시보드, 헬스 스코어, 리포트)
+- [ ] 데모 GIF 제작 (15-30초) — 설치 → 대시보드 → 헬스 스코어 → 리포트 내보내기
+- [x] README 최상단 재작성 — VS Code detail 패널 기준
+  - 한 줄 가치 + `No login. No cloud upload. Local-first.` trust copy
+- [ ] CHANGELOG 최신화 — 살아있는 프로젝트처럼 보이게
+- [ ] 버전 배지 0.2.5 업데이트 ✅
+- [ ] README Install 배지 추가 ✅
 
-- [x] Git 상태 표시
-  ```typescript
-  // src/gitStatusIndicator.ts (새로 생성 - 350줄)
-  export class GitStatusIndicator {
-    startWatching(): Promise<void>
-    recordChange(type, message): Promise<void>
-    generateStatusHTML(): string
-  }
-  ```
-  - [x] StatusBar 항목 표시
-  - [x] 변경 이벤트 기록 (최대 50개)
-  - [x] HTML 상태 표시
+### 별점/리뷰 확보 (전환율 직결)
 
-- [x] 자동 새로고침 구현
-  - [x] 대시보드 자동 업데이트
-  - [x] 메트릭 자동 재계산
-  - [x] 배지 자동 평가
+- [x] 리뷰 프롬프트 조건 개선 — 단순 오픈 횟수 → 성공 경험 이후
+  - report export 완료 후 (quickExport, customExport)
+  - README badge copy 후
+  - 3회 성공 후 트리거 (reviewSuccessCount)
+- [x] 리뷰 프롬프트 cooldown 추가 (30일 후 다시 / 다시 보지 않기)
+- [ ] 낮은 별점 방지 — 오류/빈 상태 UX 먼저 보강
 
-- [x] 설정 옵션
-  ```json
-  "gitMetrics.autoRefresh": true/false (기본값: false)
-  "gitMetrics.autoRefreshInterval": 100-30000ms (기본값: 5000)
-  "gitMetrics.showChangeNotification": true/false (기본값: false)
+### 릴리스 주기 (freshness 신호)
 
-  ```
-
-**효과:**
-- 사용자 경험 ↑↑↑
-- 경쟁 제품 대비 차별화
-- 활성 사용자 시간 ↑ 50%
+- [ ] 2-3주마다 릴리스 유지 — VS Code 검색에서 "최근 업데이트" 신호
+- [ ] 릴리스 캘린더 설정 (매월 1일, 15일)
 
 ---
 
-### 7. 📁 다중 저장소 지원 ⭐⭐
-**상태:** ⏳ 대기 중
-**우선도:** ⭐⭐ 매우 높음 (B2B 기회)
-**예상 시간:** 8-12시간
+## P1 — 단기 (설치 후 이탈 방지 + 리텐션)
 
-**현재 한계:** 단일 워크스페이스만 지원
+설치만 늘려도 바로 삭제되면 의미없다. 리텐션이 곧 리뷰 → 별점 → 재설치 선순환.
 
-**구현 계획:**
-- [ ] 다중 저장소 분석 엔진
-  ```typescript
-  // src/multiRepoAnalyzer.ts (새로 생성)
-  export class MultiRepoAnalyzer {
-    analyzeMultipleRepos(): Promise<AggregatedMetrics>
-    aggregateMetrics(): AggregatedMetrics
-  }
-  ```
+### 첫 실행 aha moment (Walkthrough)
 
+- [x] `contributes.walkthroughs` 등록 — VS Code 공식 온보딩 플로우
+  - Step 1: Open Dashboard → Step 2: Health Score → Step 3: Export Report → Step 4: Share with Team
+- [ ] 첫 실행 quick actions (1회만 노출)
+  - Copy README Badge / Export Team Report / Open Refactor Radar
+- [x] 분석 진행 상태 표시 — `vscode.window.withProgress` (Reading git log / Calculating metrics / Rendering)
+- [x] 빈 저장소 / Git 없는 폴더 — `generateErrorHTML()` 전용 empty state + 안내 메시지
+- [x] 분석 실패 자동 진단 — no git repo / git not found / shallow clone / no commits 케이스별 안내
+
+### 팀 전파 기능 (.vscode/extensions.json)
+
+팀 프로젝트 repo에 등록되면 팀원이 열 때 VS Code가 자동 설치 권유 → 1명 설치가 팀 전체로 퍼짐.
+
+- [x] 대시보드 내 "🤝 Share with Team" 버튼 추가 + `gitMetrics.shareWithTeam` 커맨드
+  - `.vscode/extensions.json` snippet 클립보드 복사
+- [x] README에 "팀에 설치하기" 섹션 추가
+- [x] Walkthrough step 4에 팀 공유 포함
+
+### 리포트/배지 공유로 바이럴
+
+- [x] HTML report — 하단 Marketplace CTA + Install 배지 링크 (기존 구현)
+- [x] Markdown report — 하단 shields.io 버전 배지 + Install 링크 (기존 구현)
+- [x] Copy Brief 결과 끝에 `Generated by Git Metrics Dashboard` + Install 링크 추가
+- [ ] README badge가 다른 저장소에 삽입되면 → 보는 사람이 설치 → 바이럴
+
+---
+
+## P2 — 중기 (기능으로 설치 수 늘리기)
+
+기능 자체가 "이거 써봐" 추천을 만드는 것들.
+
+### PR Readiness (팀 내 확산 핵심)
+
+팀원이 PR 전에 이 도구를 쓰면 → 팀장도 보게 됨 → 팀 전체 설치.
+
+- [ ] 현재 브랜치 vs base branch PR readiness score
+- [ ] PR 크기 경고 (files changed, additions/deletions, high-churn files touched)
+- [ ] Review Risk panel (high-churn file, no tests changed, too many directories)
+- [ ] Changed files risk ranking
+- [ ] Suggested reviewers from file ownership
+- [ ] **Copy PR Summary 버튼** — Slack/GitHub/GitLab에 바로 붙여넣기
+- [ ] **Copy PR Description 버튼**
+- [ ] Slack/Teams-friendly PR summary 복사
+
+### Weekly Engineering Brief (팀장 → 팀 확산)
+
+팀장이 쓰면 → 팀원들도 설치하게 됨.
+
+- [ ] Weekly Engineering Brief 자동 생성
+  - 이번 주 momentum, contributor balance, risky files, branch hygiene, next moves
+- [ ] Copy Weekly Brief 버튼 (Slack/이메일 바로 사용)
+- [ ] Monthly/Quarterly Brief
+- [ ] Manager-safe report mode (contributor 개인 평가처럼 보이지 않게)
+
+### 소셜 공유 기능 (바이럴)
+
+- [ ] 헬스 스코어 공유 카드 — "내 저장소 건강도: 87/100" 이미지 + Twitter/LinkedIn 공유 버튼
+- [ ] 배지 달성 시 소셜 공유 버튼
+- [ ] 주간 Git Wrapped — "지난 주 커밋 42개, 최장 스트릭 7일!" + 공유
+
+### 다중 저장소 지원 (팀/조직 단위 확산)
+
+- [ ] 워크스페이스 내 모든 Git repo 자동 감지
 - [ ] 저장소별 탭 네비게이션
-  - [ ] 저장소 선택 드롭다운
-  - [ ] 전체/개별 보기 토글
-  - [ ] 비교 분석
-
-- [ ] 팀 메트릭 대시보드
-  - [ ] 전체 팀 통계
-  - [ ] 저장소별 기여도
-  - [ ] 팀원 순위
-
-- [ ] 설정
-  ```json
-  "gitMetrics.analyzeAllWorkspaceFolders": true
-  "gitMetrics.excludeRepositories": []
-  ```
-
-**B2B 활용:**
-- 팀 리더용 통합 대시보드
-- CTO용 기술 부채 분석
-- HR용 성과 평가
-
-**기대 수익:** 팀 라이선스 모델 가능
+- [ ] 전체 health score 비교 대시보드
+- [ ] monorepo package-level analysis
 
 ---
 
-### 8. 📈 히스토리 & 트렌드 분석
-**상태:** ⏳ 대기 중
-**우선도:** 🟠 중간
-**예상 시간:** 10-15시간
+## P3 — 장기 (기능 확장)
 
-**현재 한계:** 현재 시점만 분석
+### AI 기능 (차별화 → 검색 노출 증가)
 
-**구현 계획:**
-- [ ] SQLite 데이터베이스 추가
-  ```typescript
-  // src/historyManager.ts (새로 생성)
-  export class HistoryManager {
-    saveDailyMetrics(): void
-    getTrendData(): TrendData
-    detectAnomalies(): Anomaly[]
-  }
-  ```
+- [ ] Optional AI provider (OpenAI / Anthropic / Ollama)
+- [ ] BYOK — VS Code SecretStorage에 API key 저장
+- [ ] 기본값: AI 비활성화, No-AI 모드 완전 지원
+- [ ] AI PR summary 생성
+- [ ] AI weekly brief
+- [ ] AI 커밋 메시지 품질 분석 + 개선 제안
+- [ ] AI refactor risk 설명
+- [ ] AI 전송 전 미리보기/redaction
 
-- [ ] 일일 메트릭 저장
-  - [ ] 자동 저장 (일 1회)
-  - [ ] 90일 히스토리 유지
-  - [ ] 자동 정리
+### GitHub/GitLab 연동
 
-- [ ] 트렌드 시각화
-  - [ ] 90일 커밋 추이
-  - [ ] 성장률 계산
-  - [ ] 월간 비교
+- [ ] GitHub PAT 연동 — PR 메트릭, Issue 통계, Actions 상태
+- [ ] GitLab token 연동 — MR, 파이프라인
+- [ ] Slack webhook — 주간 리포트 자동 전송
+- [ ] Microsoft Teams webhook
 
-- [ ] 이상 탐지
-  - [ ] 비정상 활동 감지
-  - [ ] 경고 알림
-  - [ ] 원인 분석
+### 리포트 포맷 확장
 
-**데이터 스키마:**
-```sql
-CREATE TABLE daily_metrics (
-  id INTEGER PRIMARY KEY,
-  date DATE UNIQUE,
-  total_commits INTEGER,
-  total_authors INTEGER,
-  new_files INTEGER,
-  deleted_files INTEGER,
-  avg_commit_size REAL,
-  created_at TIMESTAMP
-);
-```
+- [ ] PDF 리포트 (puppeteer)
+- [ ] Excel (.xlsx) 리포트 (ExcelJS)
+- [ ] PowerPoint (.pptx) — 경영진 발표용
+
+### 플랫폼 확장
+
+- [ ] Web Extension 지원 (vscode.dev, github.dev)
+- [ ] Cursor IDE 호환성 검증
+- [ ] GitHub Codespaces 최적화
+
+### 배지 시스템 확장
+
+- [ ] 배지 달성 시 VS Code 알림 토스트
+- [ ] 배지 레벨 시스템 (Bronze → Silver → Gold → Platinum)
+- [ ] 새 배지: Release Maker, Refactor Hero, Doc Writer, Test Champion, Branch Cleaner
+- [ ] 커스텀 배지 정의 (.gitmetrics.json)
 
 ---
 
-### 9. 🎨 추가 리포트 형식
-**상태:** ⏳ 대기 중
-**우선도:** 🟠 중간
-**예상 시간:** 8-10시간
+## P4 — 코드 품질 / 운영
 
-**현재 지원:** HTML, JSON, CSV, Markdown
+### 리팩터링
 
-#### 추가할 형식
-- [ ] **PDF 리포트** (고급 포매팅)
-  - [ ] 라이브러리: PDFKit 또는 puppeteer
-  - [ ] 차트 포함
-  - [ ] 페이지 레이아웃
-  - [ ] 기업 템플릿
+- [ ] `dashboardProvider.ts` 분할 (현재 3,025줄)
+- [ ] `reportGenerator.ts` 분할 (현재 2,230줄)
+- [ ] `gitAnalyzer.ts` 분할 (현재 1,150줄)
 
-- [ ] **Excel 리포트** (.xlsx)
-  - [ ] 라이브러리: ExcelJS
-  - [ ] 다중 시트
-  - [ ] 차트 & 수식
-  - [ ] 필터링
+### 성능
 
-- [ ] **PowerPoint** (프레젠테이션)
-  - [ ] 라이브러리: pptxgen-js
-  - [ ] 슬라이드 자동 생성
-  - [ ] 차트 삽입
-  - [ ] 커스텀 테마
+- [ ] 대용량 저장소 스트리밍 파싱 (커밋 10,000+)
+- [ ] Worker Thread 오프로드 (분석 중 UI 블로킹 제거)
+- [ ] 캐시 전략 개선 (브랜치/기간별 세분화)
 
-**예상 시간 추가:** +5시간
+### 테스트/CI
+
+- [ ] GitHub Actions — lint + compile + test
+- [ ] 테스트 커버리지 50%+ (dashboardDataFormatter, repositoryIntelligence 추가)
+- [ ] Marketplace 자동 배포 (git tag 시)
 
 ---
 
-## 🟢 Phase 3: 성능 & 최적화 (3개월 - 3월-5월)
+## KPI
 
-### 10. ⚡ dashboardProvider.ts 분할
-**상태:** ⏳ 대기 중
-**우선도:** 🟡 중간
-**예상 시간:** 8-10시간
-
-**현재 상태:** 4,350줄 (거대한 파일)
-
-**분할 계획:**
-```
-dashboardProvider.ts (4,350줄)
-  ├── dashboardProvider.ts (500줄) - 핵심 관리
-  ├── dashboardHtmlGenerator.ts (1,500줄) - HTML 생성
-  ├── dashboardMessageHandler.ts (800줄) - 메시지 처리
-  ├── dashboardExportHandler.ts (550줄) - 내보내기
-  └── dashboardChartBuilder.ts (500줄) - 차트 생성
-```
-
-**효과:**
-- 가독성 ↑↑↑
-- 유지보수성 ↑↑
-- 테스트 용이성 ↑↑
-- 로드 시간 ↓
+| 기간 | 설치 수 | 별점 | 핵심 달성 |
+|------|---------|------|----------|
+| 현재 | 553 | — | baseline |
+| 1개월 | 1,000+ | 4.0+ | 검색 최적화, 스크린샷, 외부 채널 3개 이상 |
+| 3개월 | 3,000+ | 4.3+ | Walkthrough, PR Readiness, Weekly Brief |
+| 6개월 | 10,000+ | 4.5+ | 다중 저장소, 소셜 공유, AI 옵션 |
+| 12개월 | 50,000+ | 4.7+ | 팀/조직 단위 확산, 외부 연동 |
 
 ---
 
-### 11. 🚀 성능 최적화
-**상태:** ⏳ 대기 중
-**우선도:** 🟡 중간
-**예상 시간:** 5-8시간
+## 실험 로그
 
-- [ ] 메모리 최적화
-  - [ ] 대용량 저장소 처리
-  - [ ] 메모리 누수 방지
-  - [ ] 프로파일링
-
-- [ ] 렌더링 최적화
-  - [ ] Webview 렌더링 시간 단축
-  - [ ] 차트 최적화
-  - [ ] 가상 스크롤링
-
-- [ ] 캐시 개선
-  - [ ] CacheManager 활성화
-  - [ ] 캐시 전략 개선
-  - [ ] TTL 최적화
+| 날짜 | 버전 | 변경 내용 | 7일 후 설치 수 | 판단 |
+|------|------|----------|--------------|------|
+| 2026-05-01 | 0.2.5 | baseline | — | 검색 최적화 시작 |
 
 ---
 
-### 12. 🧪 통합 테스트 & CI/CD
-**상태:** ⏳ 대기 중
-**우선도:** 🟡 중간
-**예상 시간:** 4-6시간
+## 하지 말아야 할 것
 
-- [ ] GitHub Actions 설정
-  ```yaml
-  # .github/workflows/test.yml
-  - lint
-  - compile
-  - test
-  - build
-  ```
-
-- [ ] 자동 배포
-  - [ ] PR 자동 테스트
-  - [ ] 마스터 병합 시 자동 배포
-  - [ ] 버전 자동 관리
-
-- [ ] 릴리스 자동화
-  - [ ] CHANGELOG 자동 생성
-  - [ ] GitHub Release 생성
-  - [ ] Marketplace 자동 배포
+- 설치 수가 낮은 상태에서 계정 가입/클라우드 동기화를 먼저 만들지 않는다.
+- 첫 실행 경험을 방치한 채 기능만 붙이지 않는다.
+- 릴리스 없이 3주 이상 방치하지 않는다.
+- contributor ranking을 사람 평가 도구처럼 보이게 만들지 않는다.
+- AI 기능은 기본 비활성화, BYOK, 전송 전 미리보기 없이는 넣지 않는다.
+- Slack/Teams 자동 전송은 민감 정보 경고 없이는 출시하지 않는다.
+- GitHub/GitLab token은 최소 권한 문서화 없이는 출시하지 않는다.
 
 ---
 
-## 🔵 Phase 4: 고급 기능 (4-6개월 - 6월-8월)
-
-### 13. 👥 팀 협업 기능
-**상태:** 💡 아이디어
-**우선도:** 🟡 중간
-**예상 시간:** 15-20시간
-**복잡도:** 높음
-
-- [ ] 팀원 비교 뷰
-  - [ ] 개발자별 메트릭 비교
-  - [ ] 성과 순위
-  - [ ] 강점/약점 분석
-
-- [ ] 코드 리뷰 통계
-  - [ ] PR 분석
-  - [ ] 리뷰 속도
-  - [ ] 협력도
-
-- [ ] 팀 속도 추적
-  - [ ] 스프린트 속도
-  - [ ] 번다운 차트
-  - [ ] 예측 분석
-
----
-
-### 14. 🔗 GitHub/GitLab 통합
-**상태:** 💡 아이디어
-**우선도:** 🟡 중간
-**예상 시간:** 20-30시간
-**복잡도:** 매우 높음
-
-- [ ] GitHub API 연동
-  - [ ] PR 메트릭
-  - [ ] Issue 통계
-  - [ ] 릴리스 분석
-
-- [ ] GitLab API 연동
-  - [ ] MR 메트릭
-  - [ ] CI/CD 통계
-  - [ ] 파이프라인 분석
-
-- [ ] 웹 대시보드
-  - [ ] 팀 공유 가능
-  - [ ] 실시간 업데이트
-  - [ ] 알림 기능
-
----
-
-### 15. 📊 고급 분석 & 인사이트
-**상태:** 💡 아이디어
-**우선도:** 🟡 중간
-**예상 시간:** 15-20시간
-
-- [ ] 코드 복잡도 분석
-  - [ ] ESLint 통합
-  - [ ] 복잡도 추이
-  - [ ] 개선 권장사항
-
-- [ ] 성능 메트릭
-  - [ ] 빌드 시간
-  - [ ] 테스트 커버리지
-  - [ ] 버그 밀도
-
-- [ ] 머신 러닝 인사이트 (향후)
-  - [ ] 패턴 학습
-  - [ ] 이상 탐지
-  - [ ] 성과 예측
-
----
-
-## 📊 통계 & 목표
-
-### 다운로드 목표
-```
-현재 (11월):     ~100-150
-3개월 (2월):     500+
-6개월 (5월):     2,000+
-12개월 (11월):   5,000+
-```
-
-### 개발 일정
-```
-Phase 1 (1개월):   보안 패치, 테스트, i18n
-Phase 2 (2개월):   핵심 기능 (실시간, 다중 저장소, 트렌드)
-Phase 3 (3개월):   성능 최적화, 분할, CI/CD
-Phase 4 (4-6개월): 고급 기능 (팀, 통합, 분석)
-```
-
-### 버전 로드맵
-```
-0.0.9  (1주)   - 보안 패치 배포
-0.1.0  (1개월) - 테스트, i18n, 버그 수정
-0.2.0  (2개월) - 실시간 감지, 다중 저장소
-0.5.0  (3개월) - 히스토리, 추가 리포트 형식
-1.0.0  (4개월) - 프로덕션 안정화
-2.0.0  (6개월) - 팀 협업, 통합 기능
-```
-
----
-
-## ✅ 우선순위 정리표
-
-| 순위 | 기능 | 시간 | 우선도 | 영향도 | 복잡도 |
-|------|------|------|--------|--------|--------|
-| 1 | v0.0.9 배포 | 1-2h | 🔴 | 높음 | 낮음 |
-| 2 | 테스트 구축 | 20-30h | 🔴 | 높음 | 중간 |
-| 3 | i18n (기본) | 15-20h | 🟠 | 높음 | 중간 |
-| 4 | Marketplace 최적화 | 3-5h | 🟠 | 중간 | 낮음 |
-| 5 | 실시간 감지 | 4-6h | ⭐⭐ | 높음 | 중간 |
-| 6 | 다중 저장소 | 8-12h | ⭐⭐ | 높음 | 높음 |
-| 7 | 히스토리 분석 | 10-15h | 🟠 | 중간 | 중간 |
-| 8 | 추가 리포트 | 8-10h | 🟠 | 중간 | 중간 |
-| 9 | 파일 분할 | 8-10h | 🟡 | 중간 | 중간 |
-| 10 | 성능 최적화 | 5-8h | 🟡 | 중간 | 낮음 |
-
----
-
-## 🎯 이번 주 실행 계획
-
-```
-월-화: v0.0.9 배포
-  - [ ] CHANGELOG.md 업데이트
-  - [ ] git tag v0.0.9
-  - [ ] npm run publish
-
-수-목: 테스트 프레임워크 설정
-  - [ ] Jest/Mocha 설정
-  - [ ] GitAnalyzer 초기 테스트 작성
-
-금: i18n 계획
-  - [ ] i18next 설치
-  - [ ] 번역 파일 구조 생성
-  - [ ] 영어 번역 시작
-```
-
----
-
-## 📞 피드백
-
-마켓플레이스 리뷰 및 GitHub Issues를 정기적으로 확인하여 사용자 요청사항을 반영합니다.
-
-**주요 모니터링 대상:**
-- Marketplace 별점 및 리뷰
-- GitHub Issues
-- GitHub Discussions
-
----
-
-**마지막 업데이트:** 2025-11-24
-**다음 검토:** 2025-12-24
+**다음 검토:** 2026-05-15

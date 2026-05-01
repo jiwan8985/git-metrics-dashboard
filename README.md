@@ -1,13 +1,12 @@
-# 📊 Git Metrics Dashboard
+# Git Metrics Dashboard
 
-> **Comprehensive Git Repository Analytics and Metrics Dashboard for VS Code**
+**Turn your Git history into a repository health score** — risk detection, refactor radar, contributor analytics, and exportable team reports. No login. No cloud upload. Local-first.
 
-![Version](https://img.shields.io/badge/version-0.2.4-blue.svg)
+[![Install in VS Code](https://img.shields.io/badge/Install%20in-VS%20Code-007ACC?logo=visualstudiocode&logoColor=white)](vscode:extension/jiwan-dev.git-metrics-dashboard)
+![Version](https://img.shields.io/badge/version-0.2.7-blue.svg)
 ![VS Code](https://img.shields.io/badge/VS%20Code-1.85.0+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-yellow.svg)
 ![Languages](https://img.shields.io/badge/UI%20languages-4-brightgreen.svg)
-
-A powerful VS Code extension that turns Git history into an executive-ready repository intelligence dashboard with beautiful visualizations, health scoring, risk detection, achievement badges, and multi-format report exports.
 
 **English** | [한국어](./README.ko.md) | [日本語](./README.ja.md) | [简体中文](./README.zh-CN.md)
 
@@ -59,8 +58,13 @@ A powerful VS Code extension that turns Git history into an executive-ready repo
 
 ## 🚀 Installation
 
-1. Open VS Code
-2. Search **"Git Metrics Dashboard"** in the Extensions Marketplace (`Ctrl+Shift+X`)
+**Quickest way — opens VS Code directly:**
+
+[![Install in VS Code](https://img.shields.io/badge/Install%20in-VS%20Code-007ACC?logo=visualstudiocode&logoColor=white)](vscode:extension/jiwan-dev.git-metrics-dashboard)
+
+Or manually:
+1. Open VS Code → press `Ctrl+Shift+X`
+2. Search **"Git Metrics Dashboard"**
 3. Click **Install**
 4. Open any Git repository in your workspace
 
@@ -153,6 +157,24 @@ Reports are saved to `<workspace>/git-metrics-reports/` by default (configurable
 
 ---
 
+## 👥 Install for Your Team
+
+Add Git Metrics Dashboard to your project's recommended extensions so every teammate gets a VS Code install prompt when they open the repository.
+
+**1.** Create or edit `.vscode/extensions.json` in your project root:
+
+```json
+{
+  "recommendations": ["jiwan-dev.git-metrics-dashboard"]
+}
+```
+
+**2.** Commit and push. When a teammate opens the project, VS Code will suggest installing Git Metrics Dashboard automatically.
+
+Or, inside the dashboard, click **🤝 Share with Team** to copy the snippet to your clipboard.
+
+---
+
 ## 🔧 Commands
 
 | Command | Shortcut | Description |
@@ -213,4 +235,6 @@ MIT License — see [LICENSE](LICENSE) for details.
 
 ---
 
-⭐ If this extension is useful, please [star it on GitHub](https://github.com/jiwan8985/git-metrics-dashboard) and leave a review on the Marketplace!
+⭐ If this extension is useful, please [star it on GitHub](https://github.com/jiwan8985/git-metrics-dashboard) and leave a review on the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=jiwan-dev.git-metrics-dashboard)!
+
+[![Install in VS Code](https://img.shields.io/badge/Install%20in-VS%20Code-007ACC?logo=visualstudiocode&logoColor=white)](vscode:extension/jiwan-dev.git-metrics-dashboard)
