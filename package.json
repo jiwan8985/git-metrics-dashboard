@@ -1,8 +1,8 @@
 {
   "name": "git-metrics-dashboard",
   "displayName": "Git Metrics Dashboard",
-  "description": "Repository intelligence for VS Code: Git health score, risk detection, refactor radar, contributor analytics, and shareable executive reports.",
-  "version": "0.2.5",
+  "description": "Turn your Git history into a repository health score with risk detection, refactor radar, contributor analytics, and exportable team reports.",
+  "version": "0.2.7",
   "publisher": "jiwan-dev",
   "repository": {
     "type": "git",
@@ -24,44 +24,39 @@
   },
   "keywords": [
     "git",
-    "metrics",
+    "git metrics",
+    "git analytics",
+    "git statistics",
+    "git dashboard",
+    "commit history",
+    "repository health",
+    "code churn",
+    "technical debt",
+    "contributor analytics",
+    "branch analytics",
+    "engineering metrics",
+    "team report",
+    "git report",
+    "refactor",
+    "productivity",
+    "visualization",
     "dashboard",
     "analytics",
     "statistics",
     "commits",
     "contributors",
-    "analysis",
     "report",
     "export",
-    "csv",
-    "json",
-    "html",
-    "markdown",
-    "visualization",
-    "github",
-    "git-log",
-    "repository",
-    "productivity",
-    "team-metrics",
-    "code-review",
-    "repository-health",
-    "engineering-intelligence",
-    "technical-debt",
-    "refactor",
-    "churn",
     "manager-report",
     "badges",
-    "achievements",
-    "dark-theme",
-    "light-theme"
+    "achievements"
   ],
   "engines": {
     "vscode": "^1.85.0"
   },
   "categories": [
-    "Other",
     "Visualization",
-    "SCM Providers"
+    "Other"
   ],
   "activationEvents": [
     "onView:gitMetrics",
@@ -73,6 +68,7 @@
     "onCommand:gitMetrics.openSupport",
     "onCommand:gitMetrics.windowsTroubleshoot",
     "onCommand:gitMetrics.copyReadmeBadge",
+    "onCommand:gitMetrics.shareWithTeam",
     "workspaceContains:.git"
   ],
   "main": "./out/extension.js",
@@ -152,6 +148,11 @@
         "command": "gitMetrics.copyReadmeBadge",
         "title": "Copy README Badge",
         "category": "Git Metrics"
+      },
+      {
+        "command": "gitMetrics.shareWithTeam",
+        "title": "Share with Team (.vscode/extensions.json)",
+        "category": "Git Metrics"
       }
     ],
     "menus": {
@@ -181,6 +182,10 @@
         },
         {
           "command": "gitMetrics.openSupport"
+        },
+        {
+          "command": "gitMetrics.shareWithTeam",
+          "when": "workspaceFolderCount > 0"
         }
       ],
       "view/title": [
@@ -353,6 +358,54 @@
         "key": "ctrl+shift+g ctrl+shift+t",
         "mac": "cmd+shift+g cmd+shift+t",
         "when": "workspaceFolderCount > 0"
+      }
+    ],
+    "walkthroughs": [
+      {
+        "id": "gitMetricsDashboard.gettingStarted",
+        "title": "Get Started with Git Metrics Dashboard",
+        "description": "Turn your Git history into a repository health score in minutes.",
+        "steps": [
+          {
+            "id": "openDashboard",
+            "title": "Open Your Git Dashboard",
+            "description": "Open the dashboard to see your repository analytics at a glance.\n\n[Open Dashboard](command:gitMetrics.showDashboard)",
+            "media": {
+              "image": "images/dashboard-screenshot.png",
+              "altText": "Git Metrics Dashboard overview"
+            },
+            "completionEvents": ["onCommand:gitMetrics.showDashboard"]
+          },
+          {
+            "id": "checkHealthScore",
+            "title": "Check Your Repository Health Score",
+            "description": "The **Repository Command Center** calculates a score (0–100) from momentum, churn, commit quality, collaboration, and branch hygiene. Use **Recommended Next Moves** to decide what to improve first.",
+            "media": {
+              "image": "images/dashboard-screenshot-2.png",
+              "altText": "Repository health score and recommended next moves"
+            },
+            "completionEvents": ["onCommand:gitMetrics.showDashboard"]
+          },
+          {
+            "id": "exportReport",
+            "title": "Export a Team Report",
+            "description": "Generate a shareable report in HTML, Markdown, JSON, or CSV format.\n\n[Quick Export](command:gitMetrics.quickExport)",
+            "media": {
+              "image": "images/html-report-screenshot.png",
+              "altText": "HTML team report with health score and risk signals"
+            },
+            "completionEvents": ["onCommand:gitMetrics.quickExport"]
+          },
+          {
+            "id": "shareWithTeam",
+            "title": "Share with Your Team",
+            "description": "Add Git Metrics Dashboard to your project's recommended extensions. Teammates get a VS Code install prompt automatically when they open the repo.\n\n[Copy Team Recommendation](command:gitMetrics.shareWithTeam)",
+            "media": {
+              "markdown": "walkthroughs/step-share.md"
+            },
+            "completionEvents": ["onCommand:gitMetrics.shareWithTeam"]
+          }
+        ]
       }
     ]
   },

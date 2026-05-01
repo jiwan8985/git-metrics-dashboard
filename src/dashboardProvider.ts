@@ -76,6 +76,9 @@ export class DashboardProvider {
                         await vscode.env.clipboard.writeText(message.text);
                         vscode.window.showInformationMessage('📋 통계가 클립보드에 복사되었습니다!');
                         break;
+                    case 'shareWithTeam':
+                        await vscode.commands.executeCommand('gitMetrics.shareWithTeam');
+                        break;
                 }
             },
             undefined,
@@ -212,10 +215,45 @@ export class DashboardProvider {
                         this.onHealthScoreUpdate(intel.healthScore);
                     }
                 } catch (error) {
-                    vscode.window.showErrorMessage(`Git Metrics error: ${error}`);
+                    this.panel!.webview.html = this.generateErrorHTML(String(error));
                 }
             }
         );
+    }
+
+    private generateErrorHTML(errorMessage: string): string {
+        const lower = errorMessage.toLowerCase();
+        let title = 'Analysis Error';
+        let guidance = 'An unexpected error occurred. Please reload the window and try again.';
+        let action = '';
+
+        if (lower.includes('not a git repository') || lower.includes('not a git repo')) {
+            title = 'No Git Repository Found';
+            guidance = 'Open a folder that contains a Git repository, then reopen the dashboard.';
+            action = '<p style="margin-top:12px"><code>git init</code> to initialize a new repository, or <code>git clone &lt;url&gt;</code> to clone an existing one.</p>';
+        } else if (lower.includes('git: command not found') || lower.includes('\'git\' is not recognized')) {
+            title = 'Git Not Found';
+            guidance = 'Git is not installed or not in your PATH.';
+            action = '<p style="margin-top:12px">Install Git from <a href="https://git-scm.com/downloads" style="color:#58a6ff">git-scm.com/downloads</a> and restart VS Code.</p>';
+        } else if (lower.includes('shallow')) {
+            title = 'Shallow Clone Detected';
+            guidance = 'This repository was cloned with limited history. Run <code>git fetch --unshallow</code> to restore full history.';
+        } else if (lower.includes('no commits') || lower.includes('does not have any commits')) {
+            title = 'No Commits Found';
+            guidance = 'This repository has no commits yet, or no commits fall within the selected analysis period. Try increasing the period in settings.';
+        }
+
+        return `<!DOCTYPE html><html><body style="display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:var(--vscode-font-family);background:var(--vscode-editor-background);color:var(--vscode-editor-foreground)">
+<div style="text-align:center;max-width:480px;padding:32px">
+  <div style="font-size:48px;margin-bottom:16px">⚠️</div>
+  <h2 style="margin:0 0 12px">${title}</h2>
+  <p style="color:var(--vscode-descriptionForeground);margin:0 0 8px">${guidance}</p>
+  ${action}
+  <details style="margin-top:20px;text-align:left;font-size:12px;color:var(--vscode-descriptionForeground)">
+    <summary style="cursor:pointer">Error details</summary>
+    <pre style="white-space:pre-wrap;word-break:break-all;margin-top:8px">${errorMessage.replace(/</g, '&lt;')}</pre>
+  </details>
+</div></body></html>`;
     }
 
     private async handleExportReport(options: ReportOptions) {
@@ -1492,6 +1530,7 @@ export class DashboardProvider {
 
         <div class="command-actions">
             <button class="ghost-btn" onclick="copyBrief()">Copy Brief</button>
+            <button class="ghost-btn" onclick="shareWithTeam()">🤝 Share with Team</button>
             <button class="ghost-btn" onclick="scrollToSection('refactor-radar')">Refactor Radar</button>
             <button class="ghost-btn" onclick="scrollToSection('activity-section')">Activity</button>
             <button class="ghost-btn" onclick="scrollToSection('contributors-section')">Contributors</button>
@@ -1963,6 +2002,10 @@ export class DashboardProvider {
         function copyBrief() {
             const brief = ${JSON.stringify(buildExecutiveBrief(metrics, intelligence, days))};
             vscode.postMessage({ command: 'copyStats', text: brief });
+        }
+
+        function shareWithTeam() {
+            vscode.postMessage({ command: 'shareWithTeam' });
         }
 
         function scrollToSection(id) {

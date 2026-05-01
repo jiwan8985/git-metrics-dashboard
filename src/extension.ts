@@ -222,6 +222,7 @@ export function activate(context: vscode.ExtensionContext) {
                 } else if (action === '폴더에서 보기') {
                     vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(result.filePath));
                 }
+                triggerReviewPromptIfReady(context);
             } else {
                 vscode.window.showErrorMessage(result.error || '리포트 생성에 실패했습니다.');
             }
@@ -305,6 +306,7 @@ export function activate(context: vscode.ExtensionContext) {
                 } else if (action === '폴더에서 보기') {
                     vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(result.filePath));
                 }
+                triggerReviewPromptIfReady(context);
             } else {
                 vscode.window.showErrorMessage(result.error || '리포트 생성에 실패했습니다.');
             }
@@ -388,6 +390,22 @@ export function activate(context: vscode.ExtensionContext) {
         if (action === '마켓플레이스 보기') {
             vscode.env.openExternal(vscode.Uri.parse(
                 'https://marketplace.visualstudio.com/items?itemName=jiwan-dev.git-metrics-dashboard'
+            ));
+        }
+        triggerReviewPromptIfReady(context);
+    });
+
+    // 팀 공유 명령어
+    const shareWithTeamDisposable = vscode.commands.registerCommand('gitMetrics.shareWithTeam', async () => {
+        const snippet = JSON.stringify({ recommendations: ['jiwan-dev.git-metrics-dashboard'] }, null, 2);
+        await vscode.env.clipboard.writeText(snippet);
+        const action = await vscode.window.showInformationMessage(
+            '📋 .vscode/extensions.json 스니펫이 복사되었습니다! 팀 저장소의 .vscode/extensions.json에 붙여넣으면 팀원이 VS Code를 열 때 자동 설치 권유를 받습니다.',
+            '자세히 보기'
+        );
+        if (action === '자세히 보기') {
+            vscode.env.openExternal(vscode.Uri.parse(
+                'https://code.visualstudio.com/docs/editor/extension-marketplace#_workspace-recommended-extensions'
             ));
         }
     });
@@ -511,6 +529,7 @@ export function activate(context: vscode.ExtensionContext) {
         openSupportDisposable,
         windowsTroubleshootDisposable,
         copyReadmeBadgeDisposable,
+        shareWithTeamDisposable,
         refreshTreeViewDisposable,
         changeLanguageDisposable,
         statusBarItem,
@@ -552,27 +571,37 @@ export function activate(context: vscode.ExtensionContext) {
         });
     }
 
-    // 리뷰 유도 (5회 대시보드 오픈 후)
-    const openCount = (context.globalState.get<number>('gitMetrics.openCount', 0)) + 1;
-    context.globalState.update('gitMetrics.openCount', openCount);
-    const hasReviewed = context.globalState.get<boolean>('gitMetrics.hasReviewed', false);
+}
 
-    if (!hasReviewed && openCount === 5) {
-        vscode.window.showInformationMessage(
-            '❤️ Git Metrics Dashboard를 즐겨 사용하고 계신가요? VS Code Marketplace에 ⭐ 별점을 남겨주시면 더 많은 개발자들에게 도움이 됩니다!',
-            '⭐ 지금 리뷰 남기기',
-            '나중에',
-            '다시 보지 않기'
-        ).then(action => {
-            if (action === '⭐ 지금 리뷰 남기기') {
-                context.globalState.update('gitMetrics.hasReviewed', true);
-                vscode.env.openExternal(vscode.Uri.parse(
-                    'https://marketplace.visualstudio.com/items?itemName=jiwan-dev.git-metrics-dashboard&ssr=false#review-details'
-                ));
-            } else if (action === '다시 보지 않기') {
-                context.globalState.update('gitMetrics.hasReviewed', true);
-            }
-        });
+async function triggerReviewPromptIfReady(context: vscode.ExtensionContext): Promise<void> {
+    const hasReviewed = context.globalState.get<boolean>('gitMetrics.hasReviewed', false);
+    if (hasReviewed) { return; }
+
+    const snoozedUntil = context.globalState.get<number>('gitMetrics.reviewSnoozedUntil', 0);
+    if (Date.now() < snoozedUntil) { return; }
+
+    const successCount = (context.globalState.get<number>('gitMetrics.reviewSuccessCount', 0)) + 1;
+    await context.globalState.update('gitMetrics.reviewSuccessCount', successCount);
+    if (successCount < 3) { return; }
+
+    const action = await vscode.window.showInformationMessage(
+        '❤️ Git Metrics Dashboard가 도움이 되셨나요? VS Code Marketplace에 ⭐ 별점을 남겨주시면 더 많은 개발자들에게 도움이 됩니다!',
+        '⭐ 지금 리뷰 남기기',
+        '30일 후 다시',
+        '다시 보지 않기'
+    );
+
+    if (action === '⭐ 지금 리뷰 남기기') {
+        await context.globalState.update('gitMetrics.hasReviewed', true);
+        vscode.env.openExternal(vscode.Uri.parse(
+            'https://marketplace.visualstudio.com/items?itemName=jiwan-dev.git-metrics-dashboard&ssr=false#review-details'
+        ));
+    } else if (action === '30일 후 다시') {
+        const snoozeTo = Date.now() + 30 * 24 * 60 * 60 * 1000;
+        await context.globalState.update('gitMetrics.reviewSnoozedUntil', snoozeTo);
+        await context.globalState.update('gitMetrics.reviewSuccessCount', 0);
+    } else if (action === '다시 보지 않기') {
+        await context.globalState.update('gitMetrics.hasReviewed', true);
     }
 }
 
