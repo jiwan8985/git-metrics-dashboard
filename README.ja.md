@@ -3,7 +3,7 @@
 **Gitの履歴をリポジトリヘルススコアに変換** — リスク検出、リファクターレーダー、コントリビューター分析、チームレポートのエクスポート。ログイン不要。クラウドアップロードなし。ローカルファースト。
 
 [![VS Codeでインストール](https://img.shields.io/badge/Install%20in-VS%20Code-007ACC?logo=visualstudiocode&logoColor=white)](vscode:extension/jiwan-dev.git-metrics-dashboard)
-![Version](https://img.shields.io/badge/version-0.2.11-blue.svg)
+![Version](https://img.shields.io/badge/version-0.2.13-blue.svg)
 ![VS Code](https://img.shields.io/badge/VS%20Code-1.85.0+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-yellow.svg)
 ![Languages](https://img.shields.io/badge/UI%20languages-4-brightgreen.svg)

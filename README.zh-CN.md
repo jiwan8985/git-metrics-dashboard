@@ -3,7 +3,7 @@
 **将 Git 历史转化为仓库健康评分** — 风险检测、重构雷达、贡献者分析和可导出的团队报告。无需登录。不上传云端。本地优先。
 
 [![在 VS Code 中安装](https://img.shields.io/badge/Install%20in-VS%20Code-007ACC?logo=visualstudiocode&logoColor=white)](vscode:extension/jiwan-dev.git-metrics-dashboard)
-![Version](https://img.shields.io/badge/version-0.2.11-blue.svg)
+![Version](https://img.shields.io/badge/version-0.2.13-blue.svg)
 ![VS Code](https://img.shields.io/badge/VS%20Code-1.85.0+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-yellow.svg)
 ![Languages](https://img.shields.io/badge/UI%20languages-4-brightgreen.svg)
