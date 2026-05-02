@@ -112,6 +112,7 @@ temp/
 
 # VSCode Extension specific
 vsc-extension-quickstart.md
+TODO.md
 **/test-workspace/
 .vscode-test/
 

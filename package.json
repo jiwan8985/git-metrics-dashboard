@@ -2,7 +2,7 @@
   "name": "git-metrics-dashboard",
   "displayName": "Git Metrics Dashboard",
   "description": "Turn your Git history into a repository health score with risk detection, refactor radar, contributor analytics, and exportable team reports.",
-  "version": "0.2.11",
+  "version": "0.2.13",
   "publisher": "jiwan-dev",
   "repository": {
     "type": "git",
@@ -378,8 +378,7 @@
             "title": "Open Your Git Dashboard",
             "description": "Open the dashboard to see your repository analytics at a glance.\n\n[Open Dashboard](command:gitMetrics.showDashboard)",
             "media": {
-              "image": "images/dashboard-screenshot.png",
-              "altText": "Git Metrics Dashboard overview"
+              "markdown": "walkthroughs/step-share.md"
             },
             "completionEvents": ["onCommand:gitMetrics.showDashboard"]
           },
@@ -388,8 +387,7 @@
             "title": "Check Your Repository Health Score",
             "description": "The **Repository Command Center** calculates a score (0–100) from momentum, churn, commit quality, collaboration, and branch hygiene. Use **Recommended Next Moves** to decide what to improve first.",
             "media": {
-              "image": "images/dashboard-screenshot-2.png",
-              "altText": "Repository health score and recommended next moves"
+              "markdown": "walkthroughs/step-share.md"
             },
             "completionEvents": ["onCommand:gitMetrics.showDashboard"]
           },
@@ -398,8 +396,7 @@
             "title": "Export a Team Report",
             "description": "Generate a shareable report in HTML, Markdown, JSON, or CSV format.\n\n[Quick Export](command:gitMetrics.quickExport)",
             "media": {
-              "image": "images/html-report-screenshot.png",
-              "altText": "HTML team report with health score and risk signals"
+              "markdown": "walkthroughs/step-share.md"
             },
             "completionEvents": ["onCommand:gitMetrics.quickExport"]
           },

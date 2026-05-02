@@ -3,7 +3,7 @@
 **Git 히스토리를 리포지토리 헬스 스코어로** — 리스크 감지, 리팩터 레이더, 기여자 분석, 팀 리포트 내보내기. 로그인 불필요. 클라우드 업로드 없음. 로컬 퍼스트.
 
 [![VS Code에서 설치](https://img.shields.io/badge/Install%20in-VS%20Code-007ACC?logo=visualstudiocode&logoColor=white)](vscode:extension/jiwan-dev.git-metrics-dashboard)
-![Version](https://img.shields.io/badge/version-0.2.11-blue.svg)
+![Version](https://img.shields.io/badge/version-0.2.13-blue.svg)
 ![VS Code](https://img.shields.io/badge/VS%20Code-1.85.0+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-yellow.svg)
 ![Languages](https://img.shields.io/badge/UI%20languages-4-brightgreen.svg)
