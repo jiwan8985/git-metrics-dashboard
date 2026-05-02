@@ -4,9 +4,14 @@ import { ReportGenerator, ReportOptions } from './reportGenerator';
 import { Badge, BadgeCategory, BadgeRarity } from './badgeSystem';
 import {
     buildExecutiveBrief,
+    buildPRDescription,
+    buildPRSummary,
+    buildWeeklyBrief,
+    calcPRReadiness,
     getPriorityColor,
     getToneColor,
-    prepareRepositoryIntelligence
+    prepareRepositoryIntelligence,
+    RepositoryIntelligence
 } from './repositoryIntelligence';
 
 export class DashboardProvider {
@@ -79,6 +84,13 @@ export class DashboardProvider {
                     case 'shareWithTeam':
                         await vscode.commands.executeCommand('gitMetrics.shareWithTeam');
                         break;
+                    case 'shareScore': {
+                        const score = message.score as number;
+                        const tweetText = `My repository health score is ${score}/100 🚀 Analyzed with Git Metrics Dashboard for VS Code`;
+                        const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent('https://marketplace.visualstudio.com/items?itemName=jiwan-dev.git-metrics-dashboard')}`;
+                        await vscode.env.openExternal(vscode.Uri.parse(twitterUrl));
+                        break;
+                    }
                 }
             },
             undefined,
@@ -254,6 +266,38 @@ export class DashboardProvider {
     <pre style="white-space:pre-wrap;word-break:break-all;margin-top:8px">${errorMessage.replace(/</g, '&lt;')}</pre>
   </details>
 </div></body></html>`;
+    }
+
+    private buildPRReadinessSectionHTML(metrics: MetricsData, _intelligence: RepositoryIntelligence): string {
+        const bc = metrics.branchComparison!;
+        const pr = calcPRReadiness(metrics);
+        const scoreColor = pr.score >= 75 ? 'var(--accent-green)' : pr.score >= 50 ? 'var(--accent-orange)' : 'var(--accent-red)';
+        return `
+    <div class="section-header" id="pr-readiness">
+        <div>
+            <h2 class="section-title">🔀 PR Readiness</h2>
+            <div class="section-subtitle">${this.escapeHtml(bc.targetBranch)} → ${this.escapeHtml(bc.baseBranch)}</div>
+        </div>
+    </div>
+    <div class="pr-readiness-card">
+        <div class="pr-meta">
+            <span class="pr-score-num" style="color:${scoreColor}">${pr.score}</span>
+            <span class="pr-score-denom">/100</span>
+            <span class="pr-size-badge size-${pr.sizeLabel.toLowerCase()}">${pr.sizeLabel}</span>
+        </div>
+        <div class="pr-stats">
+            <span>📁 ${bc.filesChanged} files</span>
+            <span>+${bc.insertions.toLocaleString()}/-${bc.deletions.toLocaleString()} lines</span>
+            <span>⬆️ ${bc.ahead} commits ahead</span>
+        </div>
+        <div class="pr-risks">
+            ${pr.risks.map(r => `<div class="pr-risk-item">${r}</div>`).join('')}
+        </div>
+        <div class="pr-actions">
+            <button class="ghost-btn" onclick="copyPRSummary()">📋 Copy PR Summary</button>
+            <button class="ghost-btn" onclick="copyPRDescription()">📝 Copy PR Description</button>
+        </div>
+    </div>`;
     }
 
     private async handleExportReport(options: ReportOptions) {
@@ -592,6 +636,31 @@ export class DashboardProvider {
             border-color: var(--primary-color);
             background: var(--hover-bg);
         }
+
+        .pr-readiness-card {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 26px;
+        }
+        .pr-meta { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+        .pr-score-num { font-size: 28px; font-weight: 800; }
+        .pr-score-denom { font-size: 14px; color: var(--text-muted); }
+        .pr-size-badge {
+            display: inline-block; padding: 2px 10px; border-radius: 999px;
+            font-size: 12px; font-weight: 700; color: #fff;
+        }
+        .pr-size-badge.size-s  { background: var(--accent-green); }
+        .pr-size-badge.size-m  { background: var(--accent-blue); }
+        .pr-size-badge.size-l  { background: var(--accent-orange); }
+        .pr-size-badge.size-xl { background: var(--accent-red); }
+        .pr-stats { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px;
+                    color: var(--text-muted); margin-bottom: 10px; }
+        .pr-risks { font-size: 13px; margin-bottom: 14px; }
+        .pr-risk-item { padding: 3px 0; color: var(--text-muted); }
+        .pr-risk-item::before { content: '• '; }
+        .pr-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
         .priority {
             display: inline-flex;
@@ -1530,8 +1599,11 @@ export class DashboardProvider {
 
         <div class="command-actions">
             <button class="ghost-btn" onclick="copyBrief()">Copy Brief</button>
+            <button class="ghost-btn" onclick="copyWeeklyBrief()">📊 Weekly Brief</button>
+            <button class="ghost-btn" onclick="shareScore()">🐦 Share Score</button>
             <button class="ghost-btn" onclick="shareWithTeam()">🤝 Share with Team</button>
             <button class="ghost-btn" onclick="scrollToSection('refactor-radar')">Refactor Radar</button>
+            ${metrics.branchComparison ? `<button class="ghost-btn" onclick="scrollToSection('pr-readiness')">🔀 PR Readiness</button>` : ''}
             <button class="ghost-btn" onclick="scrollToSection('activity-section')">Activity</button>
             <button class="ghost-btn" onclick="scrollToSection('contributors-section')">Contributors</button>
             <button class="ghost-btn" onclick="scrollToSection('badges-section')">Badges</button>
@@ -1610,6 +1682,8 @@ export class DashboardProvider {
         ${metrics.branchComparison ? `<div class="summary-chip"><span>🔀 Base 비교</span><strong>${metrics.branchComparison.baseBranch}: +${metrics.branchComparison.ahead}/-${metrics.branchComparison.behind}</strong></div>` : ''}
         ${metrics.branchComparison ? `<div class="summary-chip"><span>📦 PR 규모</span><strong>${metrics.branchComparison.filesChanged} files, +${metrics.branchComparison.insertions}/-${metrics.branchComparison.deletions}</strong></div>` : ''}
     </div>
+
+    ${metrics.branchComparison ? this.buildPRReadinessSectionHTML(metrics, intelligence) : ''}
 
     <!-- GitHub-style Commit Calendar (16-week heatmap) -->
     <div class="metric-card">
@@ -2006,6 +2080,25 @@ export class DashboardProvider {
 
         function shareWithTeam() {
             vscode.postMessage({ command: 'shareWithTeam' });
+        }
+
+        function copyWeeklyBrief() {
+            const brief = ${JSON.stringify(buildWeeklyBrief(metrics, intelligence, days))};
+            vscode.postMessage({ command: 'copyStats', text: brief });
+        }
+
+        function copyPRSummary() {
+            const text = ${JSON.stringify(metrics.branchComparison ? buildPRSummary(metrics, intelligence, days) : 'No branch comparison data.')};
+            vscode.postMessage({ command: 'copyStats', text: text });
+        }
+
+        function copyPRDescription() {
+            const text = ${JSON.stringify(metrics.branchComparison ? buildPRDescription(metrics, intelligence) : 'No branch comparison data.')};
+            vscode.postMessage({ command: 'copyStats', text: text });
+        }
+
+        function shareScore() {
+            vscode.postMessage({ command: 'shareScore', score: ${intelligence.healthScore} });
         }
 
         function scrollToSection(id) {

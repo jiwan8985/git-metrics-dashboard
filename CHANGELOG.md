@@ -7,6 +7,18 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [0.2.8] - 2026-05-02
+
+### Added
+- 🔀 **PR Readiness panel** — when a non-main branch is selected, shows a PR readiness score (0–100), size label (S/M/L/XL), risk signals (PR too large, too many commits, high-churn files), and **Copy PR Summary** / **Copy PR Description (Markdown)** buttons for pasting into Slack, GitHub, or GitLab
+- 📊 **Weekly Engineering Brief** — new **"Weekly Brief"** button copies a Slack/email-ready engineering brief including health score, top contributors, hot files, and next moves with a Marketplace attribution footer
+- 🐦 **Share Score** — new **"Share Score"** button opens a pre-filled Twitter share intent with the repository health score and extension link for social visibility
+
+### Improved
+- command-actions quick-nav bar now includes a **🔀 PR Readiness** scroll shortcut when branch comparison data is available
+
+---
+
 ## [0.2.7] - 2026-05-01
 
 ### Added

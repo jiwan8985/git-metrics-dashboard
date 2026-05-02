@@ -2,7 +2,7 @@
   "name": "git-metrics-dashboard",
   "displayName": "Git Metrics Dashboard",
   "description": "Turn your Git history into a repository health score with risk detection, refactor radar, contributor analytics, and exportable team reports.",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "publisher": "jiwan-dev",
   "repository": {
     "type": "git",

@@ -129,28 +129,27 @@
 
 팀원이 PR 전에 이 도구를 쓰면 → 팀장도 보게 됨 → 팀 전체 설치.
 
-- [ ] 현재 브랜치 vs base branch PR readiness score
-- [ ] PR 크기 경고 (files changed, additions/deletions, high-churn files touched)
-- [ ] Review Risk panel (high-churn file, no tests changed, too many directories)
-- [ ] Changed files risk ranking
+- [x] 현재 브랜치 vs base branch PR readiness score (0-100, S/M/L/XL 라벨)
+- [x] PR 크기 경고 (files changed, additions/deletions, ahead commits)
+- [x] Review Risk panel (high-churn files in repo, XL PR, too many commits)
+- [ ] Changed files risk ranking (실제 변경 파일 목록 필요 — gitAnalyzer 확장 필요)
 - [ ] Suggested reviewers from file ownership
-- [ ] **Copy PR Summary 버튼** — Slack/GitHub/GitLab에 바로 붙여넣기
-- [ ] **Copy PR Description 버튼**
-- [ ] Slack/Teams-friendly PR summary 복사
+- [x] **Copy PR Summary 버튼** — Slack/GitHub/GitLab에 바로 붙여넣기
+- [x] **Copy PR Description 버튼** — Markdown 형식
+- [x] Slack/Teams-friendly PR summary 복사
 
 ### Weekly Engineering Brief (팀장 → 팀 확산)
 
 팀장이 쓰면 → 팀원들도 설치하게 됨.
 
-- [ ] Weekly Engineering Brief 자동 생성
-  - 이번 주 momentum, contributor balance, risky files, branch hygiene, next moves
-- [ ] Copy Weekly Brief 버튼 (Slack/이메일 바로 사용)
+- [x] Weekly Engineering Brief 자동 생성 — health score, top contributors, hot files, next moves
+- [x] Copy Weekly Brief 버튼 (Slack/이메일 바로 사용)
 - [ ] Monthly/Quarterly Brief
 - [ ] Manager-safe report mode (contributor 개인 평가처럼 보이지 않게)
 
 ### 소셜 공유 기능 (바이럴)
 
-- [ ] 헬스 스코어 공유 카드 — "내 저장소 건강도: 87/100" 이미지 + Twitter/LinkedIn 공유 버튼
+- [x] 헬스 스코어 Twitter 공유 버튼 — "Share Score" → pre-filled tweet with score + Marketplace link
 - [ ] 배지 달성 시 소셜 공유 버튼
 - [ ] 주간 Git Wrapped — "지난 주 커밋 42개, 최장 스트릭 7일!" + 공유
 
