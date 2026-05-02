@@ -26,6 +26,7 @@ export class DashboardProvider {
     private onHealthScoreUpdate: ((score: number) => void) | undefined;
     private onStreakUpdate: ((streak: number, longestStreak: number) => void) | undefined;
     private onBadgeUnlock: ((newBadges: { id: string; name: string; icon: string; rarity: string }) => void) | undefined;
+    private onTodayCommitsUpdate: ((count: number) => void) | undefined;
 
     setHealthScoreCallback(cb: (score: number) => void) {
         this.onHealthScoreUpdate = cb;
@@ -37,6 +38,10 @@ export class DashboardProvider {
 
     setBadgeUnlockCallback(cb: (badge: { id: string; name: string; icon: string; rarity: string }) => void) {
         this.onBadgeUnlock = cb;
+    }
+
+    setTodayCommitsCallback(cb: (count: number) => void) {
+        this.onTodayCommitsUpdate = cb;
     }
 
     constructor(
@@ -252,6 +257,12 @@ export class DashboardProvider {
                         const longest = metrics.commitStreak?.longestStreak || 0;
                         this.onStreakUpdate(streak, longest);
                     }
+                    // Today commits status bar callback
+                    if (this.onTodayCommitsUpdate) {
+                        const todayKey = new Date().toISOString().split('T')[0];
+                        const todayCount = (metrics.dailyCommits && metrics.dailyCommits[todayKey]) || 0;
+                        this.onTodayCommitsUpdate(todayCount);
+                    }
                     // Badge unlock detection
                     if (this.onBadgeUnlock && metrics.badges) {
                         const prevUnlocked = new Set<string>(
@@ -385,67 +396,88 @@ export class DashboardProvider {
     }
 
     private async showExportDialog() {
-        // Quick Pick을 사용한 간단한 옵션 선택
-        const format = await vscode.window.showQuickPick([
-            { label: '📄 HTML', description: '웹 브라우저에서 볼 수 있는 리포트', detail: 'html' },
-            { label: '📋 JSON', description: '프로그래밍적으로 처리 가능한 데이터', detail: 'json' },
-            { label: '📊 CSV', description: 'Excel에서 열 수 있는 표 형식', detail: 'csv' },
-            { label: '📝 Markdown', description: 'GitHub README 스타일 문서', detail: 'markdown' }
-        ], {
-            placeHolder: '내보내기 형식을 선택하세요'
-        });
+        // Step 1: 템플릿 선택
+        const templateChoice = await vscode.window.showQuickPick([
+            { label: '📊 Full Report',       description: '모든 섹션 — 팀 공유용', detail: 'full' },
+            { label: '👔 Executive Summary', description: 'Health score + Actions only', detail: 'executive' },
+            { label: '🔀 PR Report',          description: 'PR Readiness + Branch', detail: 'pr' },
+            { label: '👤 Developer Focus',    description: 'Badges + Streak + Time', detail: 'developer' },
+            { label: '⚙️ Custom',            description: '섹션 직접 선택', detail: 'custom' }
+        ], { placeHolder: '리포트 템플릿을 선택하세요' });
 
+        if (!templateChoice) {return;}
+        const template = templateChoice.detail as 'full' | 'executive' | 'pr' | 'developer' | 'custom';
+
+        // Step 2: 포맷 선택 (템플릿별 필터)
+        const allFormats = [
+            { label: '📄 HTML', description: '웹 브라우저용', detail: 'html' },
+            { label: '📋 JSON', description: '데이터 처리용', detail: 'json' },
+            { label: '📊 CSV',  description: 'Excel용', detail: 'csv' },
+            { label: '📝 Markdown', description: 'GitHub 문서용', detail: 'markdown' }
+        ];
+        const formatItems = template === 'pr'
+            ? [{ label: '📝 Markdown', description: 'PR 공유에 최적', detail: 'markdown' }, { label: '📄 HTML', description: '웹 브라우저용', detail: 'html' }]
+            : template === 'executive'
+                ? [{ label: '📄 HTML', description: '웹 브라우저용', detail: 'html' }, { label: '📝 Markdown', description: 'GitHub 문서용', detail: 'markdown' }]
+                : allFormats;
+
+        const format = await vscode.window.showQuickPick(formatItems, { placeHolder: '내보내기 형식을 선택하세요' });
         if (!format) {return;}
 
-        const includeOptions = await vscode.window.showQuickPick([
-            { label: '📊 전체 리포트', description: '모든 섹션 포함', picked: true },
-            { label: '📋 요약만', description: '기본 통계만 포함' },
-            { label: '🎯 사용자 정의', description: '포함할 섹션 선택' }
-        ], {
-            placeHolder: '포함할 내용을 선택하세요'
-        });
-
-        if (!includeOptions) {return;}
-
-        let reportOptions: ReportOptions = {
-            format: format.detail as any,
-            includeSummary: true,
-            includeCharts: true,
-            includeFileStats: true,
-            includeAuthorStats: true,
-            includeTimeAnalysis: true,
-            includeBadges: true,
-            period: this.currentPeriod
-        };
-
-        if (includeOptions.label === '📋 요약만') {
+        // 프리셋별 옵션 빌드
+        let reportOptions: ReportOptions;
+        if (template === 'executive') {
             reportOptions = {
-                ...reportOptions,
-                includeCharts: false,
-                includeFileStats: false,
-                includeAuthorStats: false,
-                includeTimeAnalysis: false,
-                includeBadges: false
+                format: format.detail as any, template: 'executive',
+                includeSummary: true, includeCharts: false, includeFileStats: false,
+                includeAuthorStats: false, includeTimeAnalysis: false, includeBadges: false,
+                includePRReadiness: false, includeStreak: false, period: this.currentPeriod
             };
-        } else if (includeOptions.label === '🎯 사용자 정의') {
+        } else if (template === 'pr') {
+            reportOptions = {
+                format: format.detail as any, template: 'pr',
+                includeSummary: true, includeCharts: false, includeFileStats: false,
+                includeAuthorStats: false, includeTimeAnalysis: false, includeBadges: false,
+                includePRReadiness: true, includeStreak: false, period: this.currentPeriod
+            };
+        } else if (template === 'developer') {
+            reportOptions = {
+                format: format.detail as any, template: 'developer',
+                includeSummary: true, includeCharts: false, includeFileStats: false,
+                includeAuthorStats: false, includeTimeAnalysis: true, includeBadges: true,
+                includePRReadiness: false, includeStreak: true, period: this.currentPeriod
+            };
+        } else if (template === 'custom') {
             const sections = await vscode.window.showQuickPick([
-                { label: '📋 요약 통계', picked: true, detail: 'includeSummary' },
-                { label: '👥 개발자별 통계', picked: true, detail: 'includeAuthorStats' },
-                { label: '📁 파일 타입별 분석', picked: true, detail: 'includeFileStats' },
-                { label: '⏰ 시간대별 분석', picked: true, detail: 'includeTimeAnalysis' },
-                { label: '🏆 개발자 배지', picked: true, detail: 'includeBadges' }
-            ], {
-                placeHolder: '포함할 섹션을 선택하세요 (다중 선택 가능)',
-                canPickMany: true
-            });
-
-            if (!sections) {return;}
-
-            reportOptions.includeSummary = sections.some(s => s.detail === 'includeSummary');
-            reportOptions.includeAuthorStats = sections.some(s => s.detail === 'includeAuthorStats');
-            reportOptions.includeFileStats = sections.some(s => s.detail === 'includeFileStats');
-            reportOptions.includeTimeAnalysis = sections.some(s => s.detail === 'includeTimeAnalysis');
-            reportOptions.includeBadges = sections.some(s => s.detail === 'includeBadges');
+                { label: '📋 요약 통계',       picked: true,  detail: 'includeSummary' },
+                { label: '👥 개발자별 통계',     picked: true,  detail: 'includeAuthorStats' },
+                { label: '📁 파일 타입별 분석',  picked: true,  detail: 'includeFileStats' },
+                { label: '⏰ 시간대별 분석',     picked: true,  detail: 'includeTimeAnalysis' },
+                { label: '🏆 개발자 배지',       picked: true,  detail: 'includeBadges' },
+                { label: '🔥 커밋 스트릭',       picked: false, detail: 'includeStreak' },
+                { label: '🔀 PR Readiness',      picked: false, detail: 'includePRReadiness' }
+            ], { placeHolder: '포함할 섹션을 선택하세요 (다중 선택 가능)', canPickMany: true });
+            if (!sections || sections.length === 0) {return;}
+            reportOptions = {
+                format: format.detail as any,
+                includeSummary:     sections.some(s => s.detail === 'includeSummary'),
+                includeCharts: true,
+                includeFileStats:   sections.some(s => s.detail === 'includeFileStats'),
+                includeAuthorStats: sections.some(s => s.detail === 'includeAuthorStats'),
+                includeTimeAnalysis:sections.some(s => s.detail === 'includeTimeAnalysis'),
+                includeBadges:      sections.some(s => s.detail === 'includeBadges'),
+                includePRReadiness: sections.some(s => s.detail === 'includePRReadiness'),
+                includeStreak:      sections.some(s => s.detail === 'includeStreak'),
+                period: this.currentPeriod
+            };
+        } else {
+            // full
+            reportOptions = {
+                format: format.detail as any, template: 'full',
+                includeSummary: true, includeCharts: true, includeFileStats: true,
+                includeAuthorStats: true, includeTimeAnalysis: true, includeBadges: true,
+                includePRReadiness: true, includeStreak: true, period: this.currentPeriod
+            };
         }
 
         await this.handleExportReport(reportOptions);
@@ -1609,6 +1641,8 @@ export class DashboardProvider {
             <button class="btn ${days === 7 ? 'active' : ''}" onclick="changePeriod(7)">7일</button>
             <button class="btn ${days === 30 ? 'active' : ''}" onclick="changePeriod(30)">30일</button>
             <button class="btn ${days === 90 ? 'active' : ''}" onclick="changePeriod(90)">90일</button>
+            <button class="btn ${days === 180 ? 'active' : ''}" onclick="changePeriod(180)">180일</button>
+            <button class="btn ${days === 365 ? 'active' : ''}" onclick="changePeriod(365)">365일</button>
             <button class="btn refresh" onclick="refresh()">🔄 새로고침</button>
             <select class="branch-select" onchange="changeBranch(this.value)" title="Analyze a specific local branch">
                 ${branchOptions}

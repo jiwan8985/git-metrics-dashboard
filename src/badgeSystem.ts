@@ -427,6 +427,66 @@ export class BadgeSystem {
                 unlocked: false,
                 progress: 0,
                 progressDescription: ''
+            },
+            {
+                id: 'velocity_king',
+                name: '벨로시티 킹',
+                description: '분석 기간 내 하루 평균 커밋 3개 이상 (고속 개발)',
+                icon: '⚡',
+                category: BadgeCategory.COMMIT_MASTER,
+                rarity: BadgeRarity.RARE,
+                criteria: { type: 'ratio', threshold: 30 },
+                unlocked: false,
+                progress: 0,
+                progressDescription: ''
+            },
+            {
+                id: 'clean_coder',
+                name: '클린 코더',
+                description: '커밋당 평균 변경 라인 50줄 미만 & 커밋 20개 이상 (작고 깔끔한 커밋)',
+                icon: '🧹',
+                category: BadgeCategory.CODE_QUALITY,
+                rarity: BadgeRarity.UNCOMMON,
+                criteria: { type: 'count', threshold: 20 },
+                unlocked: false,
+                progress: 0,
+                progressDescription: ''
+            },
+            {
+                id: 'deep_diver',
+                name: '딥 다이버',
+                description: '단일 파일에 50회 이상 커밋 (전문 집중)',
+                icon: '🤿',
+                category: BadgeCategory.EXPLORER,
+                rarity: BadgeRarity.EPIC,
+                criteria: { type: 'count', threshold: 50 },
+                unlocked: false,
+                progress: 0,
+                progressDescription: ''
+            },
+            {
+                id: 'repo_guardian',
+                name: '레포 가디언',
+                description: '총 커밋 1000개 이상 달성',
+                icon: '🛡️',
+                category: BadgeCategory.MILESTONE,
+                rarity: BadgeRarity.LEGENDARY,
+                criteria: { type: 'count', threshold: 1000 },
+                unlocked: false,
+                progress: 0,
+                progressDescription: ''
+            },
+            {
+                id: 'commit_365',
+                name: '1년 개발자',
+                description: '1년(365일) 이상 커밋 기록 보유',
+                icon: '🗓️',
+                category: BadgeCategory.MILESTONE,
+                rarity: BadgeRarity.LEGENDARY,
+                criteria: { type: 'count', threshold: 365 },
+                unlocked: false,
+                progress: 0,
+                progressDescription: ''
             }
         ];
     }
@@ -545,6 +605,21 @@ export class BadgeSystem {
 
             case 'code_reviewer':
                 return this.calculateCodeReviewerProgress(commits, criteria.threshold);
+
+            case 'velocity_king':
+                return this.calculateVelocityKingProgress(metrics, commits, period);
+
+            case 'clean_coder':
+                return this.calculateCleanCoderProgress(metrics, commits);
+
+            case 'deep_diver':
+                return this.calculateDeepDiverProgress(metrics, criteria.threshold);
+
+            case 'repo_guardian':
+                return this.calculateRepoGuardianProgress(commits, criteria.threshold);
+
+            case 'commit_365':
+                return this.calculateCommit365Progress(commits, criteria.threshold);
 
             default:
                 return { current: 0, required: criteria.threshold, unit: 'units', description: 'Unknown badge' };
@@ -815,6 +890,63 @@ export class BadgeSystem {
         const smallCommits = commits.filter(c => c.files.length <= 3).length;
         const pct = Math.round((smallCommits / commits.length) * 100);
         return { current: pct, required, unit: '%', description: 'Small-scope commits (≤3 files)' };
+    }
+
+    private calculateVelocityKingProgress(_metrics: MetricsData, commits: CommitData[], period: number): BadgeProgress {
+        const required = 30; // ratio×10 threshold (3.0 avg/day)
+        if (commits.length === 0 || period === 0) {
+            return { current: 0, required, unit: 'avg×10', description: 'Daily average commits ×10' };
+        }
+        const dailyMap: { [date: string]: number } = {};
+        for (const c of commits) {
+            const d = c.date.toISOString().split('T')[0];
+            dailyMap[d] = (dailyMap[d] || 0) + 1;
+        }
+        const activeDays = Object.keys(dailyMap).length;
+        if (activeDays === 0) {
+            return { current: 0, required, unit: 'avg×10', description: 'Daily average commits ×10' };
+        }
+        const avg = commits.length / activeDays;
+        return { current: Math.round(avg * 10), required, unit: 'avg×10', description: `${avg.toFixed(1)} avg commits/active day` };
+    }
+
+    private calculateCleanCoderProgress(_metrics: MetricsData, commits: CommitData[]): BadgeProgress {
+        const required = 50;
+        if (commits.length < 20) {
+            return { current: 0, required: 20, unit: 'commits', description: 'Need 20+ commits (clean small commits)' };
+        }
+        const totalChanges = commits.reduce((sum, c) => sum + (c.insertions || 0) + (c.deletions || 0), 0);
+        const avgLines = Math.round(totalChanges / commits.length);
+        // 50줄 미만이면 진행도 100 (달성), 초과면 낮은 진행도
+        const current = avgLines < required ? commits.length : 0;
+        return { current, required: commits.length, unit: 'commits', description: `Avg ${avgLines} lines/commit (need <50)` };
+    }
+
+    private calculateDeepDiverProgress(metrics: MetricsData, required: number): BadgeProgress {
+        const fileCounts = Object.values(metrics.fileStats);
+        const maxCount = fileCounts.length > 0 ? Math.max(...fileCounts) : 0;
+        return { current: maxCount, required, unit: 'commits', description: 'Max commits to single file' };
+    }
+
+    private calculateRepoGuardianProgress(commits: CommitData[], required: number): BadgeProgress {
+        return { current: commits.length, required, unit: 'commits', description: 'Total commits (all time in analysis window)' };
+    }
+
+    private calculateCommit365Progress(commits: CommitData[], required: number): BadgeProgress {
+        if (commits.length === 0) {
+            return { current: 0, required, unit: 'days', description: 'Days with commit history' };
+        }
+        const sortedDates = commits
+            .map(c => c.date.toISOString().split('T')[0])
+            .filter((v, i, a) => a.indexOf(v) === i)
+            .sort();
+        if (sortedDates.length < 2) {
+            return { current: 0, required, unit: 'days', description: 'Days span of commit history' };
+        }
+        const first = new Date(sortedDates[0]);
+        const last = new Date(sortedDates[sortedDates.length - 1]);
+        const span = Math.round((last.getTime() - first.getTime()) / (1000 * 60 * 60 * 24));
+        return { current: span, required, unit: 'days', description: 'Days span of commit history' };
     }
 
     // 배지 카테고리별 필터링

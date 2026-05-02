@@ -2,7 +2,7 @@
   "name": "git-metrics-dashboard",
   "displayName": "Git Metrics Dashboard",
   "description": "Turn your Git history into a repository health score with risk detection, refactor radar, contributor analytics, and exportable team reports.",
-  "version": "0.2.9",
+  "version": "0.2.10",
   "publisher": "jiwan-dev",
   "repository": {
     "type": "git",
@@ -69,6 +69,7 @@
     "onCommand:gitMetrics.windowsTroubleshoot",
     "onCommand:gitMetrics.copyReadmeBadge",
     "onCommand:gitMetrics.shareWithTeam",
+    "onCommand:gitMetrics.generateReleaseNotes",
     "workspaceContains:.git",
     "onStartupFinished"
   ],
@@ -153,6 +154,11 @@
       {
         "command": "gitMetrics.shareWithTeam",
         "title": "Share with Team (.vscode/extensions.json)",
+        "category": "Git Metrics"
+      },
+      {
+        "command": "gitMetrics.generateReleaseNotes",
+        "title": "Generate Release Notes",
         "category": "Git Metrics"
       }
     ],

@@ -1,7 +1,7 @@
 # Git Metrics Dashboard — 설치 수 증가 로드맵
 
 최종 업데이트: 2026-05-02
-기준 버전: 0.2.9
+기준 버전: 0.2.9 → v0.2.10(개발 중)
 현재 총 설치 수: 553 (VS Code + Marketplace 합산)
 
 > 설치 수 = **노출** × **전환율** × **바이럴**
@@ -73,7 +73,7 @@
 ### 릴리스 주기 (freshness 신호)
 
 - [ ] 2-3주마다 릴리스 유지 — VS Code 검색 "최근 업데이트" 신호
-- [x] v0.2.6 ~ v0.2.8 빠른 연속 릴리스 완료
+- [x] v0.2.6 ~ v0.2.10 빠른 연속 릴리스 완료
 
 ---
 
@@ -85,14 +85,15 @@
 - [x] 분석 진행 상태 표시 (`vscode.window.withProgress`)
 - [x] 빈 저장소 / Git 없는 폴더 전용 empty state + 진단 가이드
 - [ ] 첫 실행 quick actions (1회만 노출) — Copy README Badge / Export Report / Open Refactor Radar
-- [x] `onStartupFinished` activation → 상태바 스트릭 즉시 표시 (**구현 필요**)
+- [x] `onStartupFinished` activation → 상태바 스트릭 즉시 표시
 
 ### 상태바 강화 (항상 보이는 동기 루프)
 
 - [x] Health score 상태바 (`$(pass) Git: 87/100`)
 - [x] Export 버튼 상태바
 - [x] **스트릭 카운터 상태바** — `🔥 12일` 항상 표시 → 동료가 보고 궁금해함
-- [ ] **오늘 커밋 수 상태바** — `📝 3 today` (**구현 필요**)
+- [x] **오늘 커밋 수 상태바** — `📝 3 today` ← **v0.2.10 구현 완료**
+- [x] **Health Score 트렌드 화살표** — `✅ Git: 87↑` ← **v0.2.10 구현 완료**
 
 ### 팀 전파
 
@@ -109,61 +110,72 @@
 
 ---
 
-## P2 — 기능으로 설치 수 늘리기 (구현 완료 + 잔여)
+## P2 — 기능으로 설치 수 늘리기
 
 ### PR Readiness (팀 내 확산)
 
 - [x] PR readiness score (0-100) + 크기 라벨 (S/M/L/XL)
 - [x] PR 크기 경고 + high-churn files 리스크
 - [x] Copy PR Summary / Copy PR Description (Markdown)
-- [ ] **Changed files 실제 목록** — `git diff --name-only` → 변경 파일별 리스크 랭킹 (**구현 필요**)
-- [ ] Suggested reviewers from file ownership (파일 기여자 기반)
+- [x] **Changed files 실제 목록** — `git diff --name-only baseBranch...HEAD` ← **v0.2.10 구현 완료**
+- [x] **Suggested Reviewers** — 파일 기여 이력 기반 추천 ← **v0.2.10 구현 완료**
+
+### 분석 기간 프리셋
+
+- [x] 7일 / 30일 / 90일 버튼 (기존)
+- [x] **180일 / 1년 버튼** ← **v0.2.10 구현 완료**
+
+### Release Notes 자동 생성 (바이럴 + 팀 가치)
+
+- [x] **자동 Release Notes 생성** (`gitMetrics.generateReleaseNotes`) ← **v0.2.10 구현 완료**
+  - 마지막 git tag 이후 커밋을 conventional commit 타입별로 분류
+  - `## [v0.x.y] - YYYY-MM-DD` 형식 Markdown 자동 생성
+  - 클립보드 복사 + 파일 저장 옵션
+  - "Generated with Git Metrics Dashboard" 귀속 → 바이럴
+
+### Health Score 이력 관리 (리텐션 루프)
+
+- [x] **Health score history** — 최근 30개 점수를 globalState에 저장 ← **v0.2.10 구현 완료**
+- [x] **Trend 화살표 in status bar** — `↑87` (상승) / `↓72` (하락) ← **v0.2.10 구현 완료**
+- [x] **Health score trend mini-chart in dashboard** ← **v0.2.10 구현 완료**
+- [ ] "지난번보다 +5점 향상!" 알림 (다음 릴리스)
+
+### 배지 시스템 강화 (게임화 → 리텐션 + 바이럴)
+
+- [x] 기존 29개 배지 (v0.2.9 기준)
+- [x] **새 배지 추가 (5개, v0.2.10)** ← **구현 완료**
+  - `velocity_king` — 하루 10+ 커밋 (RARE)
+  - `clean_coder` — conventional commit 90%+ (EPIC)
+  - `deep_diver` — 단일 커밋에 1000+ 라인 변경 (UNCOMMON)
+  - `repo_guardian` — 100일 이상 기여 이력 (EPIC)
+  - `commit_365` — 1년 연속 커밋 (LEGENDARY)
+- [x] **배지 달성 시 VS Code 토스트 알림 + 공유 옵션** (v0.2.9 구현)
 
 ### Weekly/Monthly Engineering Brief
 
 - [x] Weekly Engineering Brief 생성 + 복사 버튼
-- [ ] **Monthly/Quarterly Brief** — 월간/분기 요약 (**구현 필요**)
+- [ ] **Monthly/Quarterly Brief** — 월간/분기 요약 (다음 릴리스)
 - [ ] Manager-safe report mode
-
-### 배지 시스템 강화 (게임화 → 리텐션 + 바이럴)
-
-현재 17개 배지. 목표: 30개+
-
-- [x] 기존 17개 배지 (Streak 3종, Quality 3종, Collaborator 2종, Time Warrior 3종, Milestone 4종, Consistency 2종)
-- [x] **새 배지 추가** (v0.2.9 배포됨, 17→29개):
-  - `doc_writer` — 문서 커밋 20% 이상 (UNCOMMON)
-  - `test_champion` — 테스트 파일 변경 15% 이상 (RARE)
-  - `refactor_hero` — 삭제 라인이 추가 라인보다 많은 커밋 30% 이상 (RARE)
-  - `branch_cleaner` — stale branch 3개 이하 유지 (UNCOMMON)
-  - `speed_demon` — 커밋 평균 간격 4시간 이내 (UNCOMMON)
-  - `first_blood` — 하루 첫 커밋자 (COMMON)
-  - `hot_streak_14` — 14일 연속 커밋 (UNCOMMON)
-  - `hot_streak_50` — 50일 연속 커밋 (LEGENDARY)
-  - `code_reviewer` — 다수 파일 짧은 커밋 패턴 (RARE)
-  - `midnight_coder` — 자정 이후 커밋 10% 이상 (UNCOMMON)
-  - `release_maker` — main/master 브랜치 커밋 20개 이상 (RARE)
-  - `mono_focus` — 단일 파일 타입 80% 이상 집중 (COMMON)
-- [x] **배지 달성 시 VS Code 토스트 알림 + 공유 옵션**
-  - "🏆 새 배지 달성: Commit Legend! 팀에 공유하시겠어요?"
-  - 공유 클릭 → 트위터/클립보드로 배지 텍스트 복사
 
 ### 소셜 공유 / 바이럴
 
 - [x] Share Score (Twitter pre-filled tweet)
-- [ ] **배지 달성 시 소셜 공유 버튼** (배지 토스트 연동)
-- [x] **Git Wrapped** — 대시보드 🎁 Git Wrapped 버튼으로 하이라이트 카드 복사
-  - 선택 기간의 하이라이트 카드 (커밋, 스트릭, 배지, 최고 기여일)
-  - Copy Wrapped Card → Slack/Twitter 바이럴
-- [x] **Copy Streak Card** — 대시보드 🔥 Streak Card 버튼으로 스트릭 공유 텍스트 복사
-  - "🔥 42-day commit streak on [project]! Tracked with Git Metrics Dashboard"
+- [x] Git Wrapped — 하이라이트 카드 복사
+- [x] Copy Streak Card — 스트릭 공유 텍스트 복사
 - [ ] 주간 Git Wrapped — "지난 주 커밋 42개, 최장 스트릭 7일!" + 공유
 
-### 다중 저장소 지원
+### 커밋 품질 리더보드
 
-- [ ] 워크스페이스 내 모든 Git repo 자동 감지
-- [ ] 저장소별 탭 네비게이션
-- [ ] 전체 health score 비교 대시보드
-- [ ] monorepo package-level analysis
+- [x] **Author별 Conventional Commit 준수율** ← **v0.2.10 구현 완료**
+  - Author Stats 테이블에 "Conv%" 컬럼 추가
+  - 팀 내 코드 품질 경쟁 유도 → 팀 확산
+
+### 파일 결합도 분석 (File Coupling)
+
+- [x] **함께 변경되는 파일 쌍 탐지** ← **v0.2.10 구현 완료**
+  - 같은 커밋에 자주 함께 변경되는 파일 TOP 5
+  - "이 두 파일은 항상 같이 변경됩니다" → 모듈 분리 시사점
+  - Refactor Radar 하단에 표시
 
 ---
 
@@ -177,16 +189,8 @@
 - [ ] 일일 커밋 목표 설정 (`gitMetrics.dailyGoal`)
 - [ ] 스트릭 복구 알림 ("어제 커밋을 빠뜨렸습니다. 오늘 커밋하면 스트릭 재시작!")
 
-### 헬스 스코어 이력 관리
-
-- [ ] **Health score history** — 최근 30개 점수를 globalState에 저장 (**구현 필요**)
-- [ ] **Trend indicator in status bar** — `↑87` (상승) / `↓72` (하락)
-- [ ] Health score trend mini-chart in dashboard
-- [ ] "지난번보다 +5점 향상!" 알림
-
 ### 커밋 품질 심층 분석
 
-- [ ] **Changed files 실제 목록** (`git diff --name-only baseBranch...HEAD`)
 - [ ] 커밋 메시지 품질 점수 (길이, 특수문자, 의미 없는 패턴 감지)
 - [ ] "chore: fix" 같은 저품질 메시지 패턴 경고
 - [ ] Commit size distribution histogram
@@ -221,14 +225,21 @@
 - [ ] Cursor IDE 호환성 검증
 - [ ] GitHub Codespaces 최적화
 
+### 다중 저장소 지원
+
+- [ ] 워크스페이스 내 모든 Git repo 자동 감지
+- [ ] 저장소별 탭 네비게이션
+- [ ] 전체 health score 비교 대시보드
+- [ ] monorepo package-level analysis
+
 ---
 
 ## P4 — 코드 품질 / 운영
 
 ### 리팩터링
 
-- [ ] `dashboardProvider.ts` 분할 (현재 3,100+ 줄)
-- [ ] `reportGenerator.ts` 분할 (현재 2,230+ 줄)
+- [ ] `dashboardProvider.ts` 분할 (현재 3,242줄)
+- [ ] `reportGenerator.ts` 분할 (현재 2,500+줄)
 - [ ] `gitAnalyzer.ts` 분할 (현재 1,150줄)
 
 ### 성능
@@ -250,10 +261,10 @@
 | 기간 | 설치 수 | 별점 | 핵심 달성 |
 |------|---------|------|----------|
 | 현재 (0.2.9) | 553 | — | P0~P3 주요 기능 구현 완료 |
-| 1개월 | 1,000+ | 4.0+ | 스트릭 상태바, 배지 토스트, Git Wrapped |
-| 3개월 | 3,000+ | 4.3+ | AI 기능 옵션, GitHub 연동, 다중 저장소 |
-| 6개월 | 10,000+ | 4.5+ | 전체 바이럴 루프 완성 |
-| 12개월 | 50,000+ | 4.7+ | 팀/조직 단위 확산, 외부 연동 |
+| v0.2.10 | 800+ | 4.0+ | Health 이력, Release Notes, Suggested Reviewers, 파일 커플링 |
+| 1개월 | 1,500+ | 4.2+ | AI 옵션 (BYOK), Monthly Brief |
+| 3개월 | 5,000+ | 4.5+ | GitHub 연동, 다중 저장소 |
+| 6개월 | 15,000+ | 4.7+ | 전체 바이럴 루프 완성 |
 
 ---
 
@@ -265,6 +276,8 @@
 | 2026-05-01 | 0.2.6 | keywords/description/categories/review prompt | — | — |
 | 2026-05-01 | 0.2.7 | Walkthrough, Share with Team, Empty State, Copy Brief 귀속 | — | — |
 | 2026-05-02 | 0.2.8 | PR Readiness, Weekly Brief, Share Score | — | — |
+| 2026-05-02 | 0.2.9 | 29 badges, badge toasts, streak milestones, Git Wrapped | — | — |
+| 2026-05-02 | 0.2.10 | Export templates, Health history, Release Notes, Suggested Reviewers, File Coupling | — | — |
 
 ---
 
