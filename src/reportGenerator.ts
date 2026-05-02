@@ -770,6 +770,7 @@ export interface ReportOptions {
     includeBadges: boolean;
     includePRReadiness?: boolean;
     includeStreak?: boolean;
+    anonymizeAuthors?: boolean;
     period: number;
 }
 
@@ -784,6 +785,19 @@ export class ReportGenerator {
 
     constructor(context: vscode.ExtensionContext) {
         this._context = context;
+    }
+
+    // 작성자 이름 익명화 (외부 공유용)
+    private anonymizeMetrics(metrics: MetricsData): MetricsData {
+        const LABELS = ['Developer A', 'Developer B', 'Developer C', 'Developer D', 'Developer E',
+            'Developer F', 'Developer G', 'Developer H', 'Developer I', 'Developer J'];
+        const clone: MetricsData = JSON.parse(JSON.stringify(metrics));
+        if (clone.authorStats) {
+            clone.authorStats.forEach((a, i) => {
+                a.name = LABELS[i] ?? `Developer ${String.fromCharCode(65 + i)}`;
+            });
+        }
+        return clone;
     }
 
     // 현재 테마 감지
@@ -890,20 +904,23 @@ export class ReportGenerator {
             const safeFileName = `git-metrics-${templateName}-${branchName || 'repo'}-${timestamp}-${options.period}days.${options.format}`;
             const fileUri = vscode.Uri.joinPath(reportsUri, safeFileName);
 
+            // 익명화 처리 (anonymizeAuthors: true일 때 authorStats 이름 치환)
+            const reportMetrics = options.anonymizeAuthors ? this.anonymizeMetrics(metrics) : metrics;
+
             // 리포트 내용 생성
             let content: string;
             switch (options.format) {
                 case 'html':
-                    content = this.generateHTMLReport(metrics, options);
+                    content = this.generateHTMLReport(reportMetrics, options);
                     break;
                 case 'json':
-                    content = this.generateJSONReport(metrics, options);
+                    content = this.generateJSONReport(reportMetrics, options);
                     break;
                 case 'csv':
-                    content = this.generateCSVReport(metrics, options);
+                    content = this.generateCSVReport(reportMetrics, options);
                     break;
                 case 'markdown':
-                    content = this.generateMarkdownReport(metrics, options);
+                    content = this.generateMarkdownReport(reportMetrics, options);
                     break;
                 default:
                     return { success: false, error: '지원하지 않는 포맷입니다.' };

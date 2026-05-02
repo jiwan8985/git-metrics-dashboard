@@ -6,6 +6,7 @@ import { GitChangeDetector } from './gitChangeDetector';
 import { GitStatusIndicator } from './gitStatusIndicator';
 import { GitMetricsTreeProvider } from './gitMetricsTreeProvider';
 import { initializeI18n, changeLanguage, SUPPORTED_LANGUAGES } from './i18n';
+import { prepareRepositoryIntelligence, buildMonthlyBrief } from './repositoryIntelligence';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Git Metrics Dashboard 활성화됨!');
@@ -210,11 +211,18 @@ export function activate(context: vscode.ExtensionContext) {
             // 프리셋별 옵션 빌드
             let options: ReportOptions;
             if (template === 'executive') {
+                const anonymizeChoice = await vscode.window.showQuickPick([
+                    { label: '❌ 실제 이름 유지', description: '내부 팀용', detail: 'false' },
+                    { label: '✅ 익명화 (Developer A/B/C...)', description: '외부 이해관계자 공유용', detail: 'true' }
+                ], { placeHolder: '작성자 익명화 옵션 선택' });
+                if (!anonymizeChoice) { return; }
+                const anonymize = anonymizeChoice.detail === 'true';
                 options = {
                     format: format.detail as any, template: 'executive',
                     includeSummary: true, includeCharts: false, includeFileStats: false,
-                    includeAuthorStats: false, includeTimeAnalysis: false, includeBadges: false,
-                    includePRReadiness: false, includeStreak: false, period: defaultPeriod
+                    includeAuthorStats: anonymize, includeTimeAnalysis: false, includeBadges: false,
+                    includePRReadiness: false, includeStreak: false,
+                    anonymizeAuthors: anonymize, period: defaultPeriod
                 };
             } else if (template === 'pr') {
                 options = {
@@ -344,11 +352,18 @@ export function activate(context: vscode.ExtensionContext) {
             // 프리셋별 옵션 빌드
             let options: ReportOptions;
             if (template === 'executive') {
+                const anonymizeChoice = await vscode.window.showQuickPick([
+                    { label: '❌ 실제 이름 유지', description: '내부 팀용', detail: 'false' },
+                    { label: '✅ 익명화 (Developer A/B/C...)', description: '외부 이해관계자 공유용', detail: 'true' }
+                ], { placeHolder: '작성자 익명화 옵션 선택' });
+                if (!anonymizeChoice) { return; }
+                const anonymize = anonymizeChoice.detail === 'true';
                 options = {
                     format: format.detail as any, template: 'executive',
                     includeSummary: true, includeCharts: false, includeFileStats: false,
-                    includeAuthorStats: false, includeTimeAnalysis: false, includeBadges: false,
-                    includePRReadiness: false, includeStreak: false, period
+                    includeAuthorStats: anonymize, includeTimeAnalysis: false, includeBadges: false,
+                    includePRReadiness: false, includeStreak: false,
+                    anonymizeAuthors: anonymize, period
                 };
             } else if (template === 'pr') {
                 options = {
@@ -553,6 +568,103 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
+    // Conventional Commit 도우미 명령어
+    const conventionalCommitDisposable = vscode.commands.registerCommand('gitMetrics.conventionalCommit', async () => {
+        const TYPES = [
+            { label: '✨ feat', description: 'A new feature', detail: 'feat' },
+            { label: '🐛 fix', description: 'A bug fix', detail: 'fix' },
+            { label: '📝 docs', description: 'Documentation only changes', detail: 'docs' },
+            { label: '♻️ refactor', description: 'Code change that neither fixes a bug nor adds a feature', detail: 'refactor' },
+            { label: '🧪 test', description: 'Adding missing tests or correcting existing tests', detail: 'test' },
+            { label: '🔧 chore', description: 'Other changes that don\'t modify src or test files', detail: 'chore' },
+            { label: '⚡ perf', description: 'A code change that improves performance', detail: 'perf' },
+            { label: '💄 style', description: 'Changes that do not affect the meaning of the code', detail: 'style' },
+            { label: '🔨 build', description: 'Changes that affect the build system or external dependencies', detail: 'build' },
+            { label: '🚀 ci', description: 'Changes to CI/CD configuration files and scripts', detail: 'ci' }
+        ];
+
+        const typeChoice = await vscode.window.showQuickPick(TYPES, {
+            placeHolder: '커밋 타입을 선택하세요'
+        });
+        if (!typeChoice) { return; }
+
+        const scope = await vscode.window.showInputBox({
+            prompt: '스코프 입력 (선택사항, 예: auth, ui, api)',
+            placeHolder: '비워두면 스코프 없이 생성됩니다'
+        });
+        if (scope === undefined) { return; }
+
+        const description = await vscode.window.showInputBox({
+            prompt: '커밋 설명 입력 (소문자로 시작, 마침표 없이)',
+            placeHolder: '예: add login button, fix null pointer exception',
+            validateInput: (val) => {
+                if (!val || val.trim().length === 0) { return '설명을 입력해주세요'; }
+                if (val.trim().endsWith('.')) { return '마침표 없이 입력해주세요'; }
+                return null;
+            }
+        });
+        if (!description) { return; }
+
+        const prefix = scope ? `${typeChoice.detail}(${scope.trim()})` : typeChoice.detail;
+        const commitMsg = `${prefix}: ${description.trim()}`;
+
+        await vscode.env.clipboard.writeText(commitMsg);
+
+        const terminal = vscode.window.activeTerminal || vscode.window.createTerminal('Git Commit');
+        terminal.show();
+        terminal.sendText(`git commit -m "${commitMsg}"`, false);
+
+        vscode.window.showInformationMessage(
+            `✅ 커밋 메시지: ${commitMsg}`,
+            '클립보드에 복사됨'
+        );
+    });
+
+    // 월간 브리프 생성 명령어
+    const generateMonthlyBriefDisposable = vscode.commands.registerCommand('gitMetrics.generateMonthlyBrief', async () => {
+        try {
+            const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+            if (!workspaceRoot) {
+                vscode.window.showErrorMessage('워크스페이스가 열려있지 않습니다.');
+                return;
+            }
+
+            const periodChoice = await vscode.window.showQuickPick([
+                { label: '📅 최근 30일 (Monthly)', detail: '30' },
+                { label: '📅 최근 60일 (Bi-Monthly)', detail: '60' },
+                { label: '📅 최근 90일 (Quarterly)', detail: '90' }
+            ], { placeHolder: '브리프 기간을 선택하세요' });
+            if (!periodChoice) { return; }
+            const period = parseInt(periodChoice.detail);
+
+            let briefContent = '';
+            await vscode.window.withProgress(
+                { location: vscode.ProgressLocation.Notification, title: `월간 브리프 생성 중 (${period}일)...`, cancellable: false },
+                async () => {
+                    const commits = await gitAnalyzer.getCommitHistory(period);
+                    const metrics = await gitAnalyzer.generateMetrics(commits);
+                    const intelligence = prepareRepositoryIntelligence(metrics, period);
+                    briefContent = buildMonthlyBrief(metrics, intelligence, period);
+                    await vscode.env.clipboard.writeText(briefContent);
+                }
+            );
+
+            const action = await vscode.window.showInformationMessage(
+                `📋 월간 브리프가 클립보드에 복사되었습니다! (${period}일 분석)`,
+                '파일로 저장'
+            );
+
+            if (action === '파일로 저장') {
+                const savePath = vscode.Uri.file(`${workspaceRoot}/MONTHLY_BRIEF.md`);
+                await vscode.workspace.fs.writeFile(savePath, Buffer.from(briefContent, 'utf8'));
+                const doc = await vscode.workspace.openTextDocument(savePath);
+                await vscode.window.showTextDocument(doc);
+            }
+        } catch (error) {
+            vscode.window.showErrorMessage(`월간 브리프 생성 실패: ${error}`);
+        }
+    });
+
     // TreeView 새로고침 명령어
     const refreshTreeViewDisposable = vscode.commands.registerCommand('gitMetrics.refreshTreeView', async () => {
         await treeProvider.refresh();
@@ -608,6 +720,27 @@ export function activate(context: vscode.ExtensionContext) {
 
         statusBarItem.text = `${icon} Git: ${score}/100${trend}`;
         statusBarItem.tooltip = `Repository Health: ${score}/100${trend ? ` (${trend === '↑' ? '개선' : trend === '↓' ? '하락' : '유지'})` : ''} — 클릭하여 대시보드 열기`;
+
+        // Health score +5 이상 향상 시 축하 알림
+        if (history.length >= 2) {
+            const prev = history[history.length - 2];
+            const improvement = score - prev;
+            if (improvement >= 5) {
+                void (async () => {
+                    const action = await vscode.window.showInformationMessage(
+                        `🎉 저번보다 +${improvement}점 향상! ${score}/100 🧠`,
+                        '𝕏 공유하기',
+                        '닫기'
+                    );
+                    if (action === '𝕏 공유하기') {
+                        const tweetText = `My repo health score improved by +${improvement} points to ${score}/100! 🧠 Tracking progress with Git Metrics Dashboard for VS Code`;
+                        await vscode.env.openExternal(vscode.Uri.parse(
+                            `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent('https://marketplace.visualstudio.com/items?itemName=jiwan-dev.git-metrics-dashboard')}`
+                        ));
+                    }
+                })();
+            }
+        }
     });
 
     // 스트릭 상태바
@@ -622,30 +755,68 @@ export function activate(context: vscode.ExtensionContext) {
         } else {
             streakStatusBarItem.hide();
         }
+        // 스트릭 위험 알림용으로 현재 스트릭 저장
+        context.globalState.update('gitMetrics.currentStreak', streak);
         checkStreakMilestone(context, streak);
     });
 
-    // 오늘 커밋수 상태바
+    // 오늘 커밋수 상태바 (일일 목표 지원)
     const todayStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 96);
     todayStatusBarItem.command = 'gitMetrics.showDashboard';
     todayStatusBarItem.tooltip = '오늘 커밋 수 — 클릭하여 대시보드 열기';
+
+    let todayCommitCount = 0;
+    let goalReachedToday = false;
+
     dashboardProvider.setTodayCommitsCallback((count: number) => {
-        if (count > 0) {
+        todayCommitCount = count;
+        const config = vscode.workspace.getConfiguration('gitMetrics');
+        const goal = config.get<number>('dailyCommitGoal', 0);
+
+        if (goal > 0) {
+            todayStatusBarItem.text = `📝 ${count}/${goal} today`;
+            todayStatusBarItem.tooltip = `오늘 커밋: ${count}/${goal} — 클릭하여 대시보드 열기`;
+            todayStatusBarItem.show();
+            // 목표 달성 축하 (1회만)
+            if (count >= goal && !goalReachedToday) {
+                goalReachedToday = true;
+                vscode.window.showInformationMessage(`🎯 오늘의 커밋 목표 달성! ${count}/${goal} 커밋 완료!`, '대시보드 열기').then(a => {
+                    if (a === '대시보드 열기') { vscode.commands.executeCommand('gitMetrics.showDashboard'); }
+                });
+            }
+        } else if (count > 0) {
             todayStatusBarItem.text = `📝 ${count} today`;
+            todayStatusBarItem.tooltip = '오늘 커밋 수 — 클릭하여 대시보드 열기';
             todayStatusBarItem.show();
         } else {
             todayStatusBarItem.hide();
         }
     });
 
+    // 오늘 날짜 변경 감지 → 목표 달성 플래그 초기화
+    let lastCheckedDate = new Date().toDateString();
+    const dateCheckInterval = setInterval(() => {
+        const today = new Date().toDateString();
+        if (today !== lastCheckedDate) {
+            lastCheckedDate = today;
+            goalReachedToday = false;
+        }
+    }, 60000);
+
     // 배지 달성 토스트
     dashboardProvider.setBadgeUnlockCallback(async (badge) => {
         const action = await vscode.window.showInformationMessage(
             `🏆 새 배지 달성: ${badge.icon} ${badge.name}! (${badge.rarity})`,
-            '공유하기',
+            '𝕏 트위터 공유',
+            '📋 텍스트 복사',
             '확인'
         );
-        if (action === '공유하기') {
+        if (action === '𝕏 트위터 공유') {
+            const tweetText = `🏆 Just earned the "${badge.name}" ${badge.icon} badge on Git Metrics Dashboard for VS Code! #DevLife #GitMetrics`;
+            await vscode.env.openExternal(vscode.Uri.parse(
+                `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent('https://marketplace.visualstudio.com/items?itemName=jiwan-dev.git-metrics-dashboard')}`
+            ));
+        } else if (action === '📋 텍스트 복사') {
             const text = `🏆 "${badge.name}" 배지 달성! ${badge.icon} — Git Metrics Dashboard for VS Code\nhttps://marketplace.visualstudio.com/items?itemName=jiwan-dev.git-metrics-dashboard`;
             await vscode.env.clipboard.writeText(text);
             vscode.window.showInformationMessage('📋 공유 텍스트가 클립보드에 복사되었습니다!');
@@ -734,6 +905,8 @@ export function activate(context: vscode.ExtensionContext) {
         copyReadmeBadgeDisposable,
         shareWithTeamDisposable,
         generateReleaseNotesDisposable,
+        generateMonthlyBriefDisposable,
+        conventionalCommitDisposable,
         refreshTreeViewDisposable,
         changeLanguageDisposable,
         statusBarItem,
@@ -746,6 +919,44 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     // 웰컴 메시지 (첫 설치 시에만)
+    // 스트릭 위험 알림 스케줄러 (매분 체크 → 오후 8시 윈도우에 스트릭 있고 오늘 커밋 없으면 알림)
+    const streakDangerCheckInterval = setInterval(async () => {
+        const config = vscode.workspace.getConfiguration('gitMetrics');
+        if (!config.get<boolean>('streakDangerAlert', true)) { return; }
+
+        const now = new Date();
+        const hour = now.getHours();
+        const minute = now.getMinutes();
+
+        // 오후 8시 ~ 8시 1분 사이에만 발동 (하루 1회)
+        if (hour !== 20 || minute !== 0) { return; }
+
+        // 이미 오늘 알림을 보냈으면 skip
+        const alertKey = 'gitMetrics.streakDangerAlertDate';
+        const lastAlertDate = context.globalState.get<string>(alertKey, '');
+        const todayStr = now.toDateString();
+        if (lastAlertDate === todayStr) { return; }
+
+        // 스트릭이 있는지 확인
+        const currentStreak = context.globalState.get<number>('gitMetrics.currentStreak', 0);
+        if (currentStreak <= 0) { return; }
+
+        // 오늘 커밋이 없는지 확인
+        if (todayCommitCount > 0) { return; }
+
+        await context.globalState.update(alertKey, todayStr);
+        const action = await vscode.window.showWarningMessage(
+            `🔥 ${currentStreak}일 스트릭이 자정에 끊깁니다! 오늘 커밋을 남기세요.`,
+            '대시보드 열기',
+            '나중에'
+        );
+        if (action === '대시보드 열기') {
+            vscode.commands.executeCommand('gitMetrics.showDashboard');
+        }
+    }, 60000);
+    context.subscriptions.push({ dispose: () => clearInterval(streakDangerCheckInterval) });
+    context.subscriptions.push({ dispose: () => clearInterval(dateCheckInterval) });
+
     const hasShownWelcome = context.globalState.get('gitMetrics.hasShownWelcome', false);
     if (!hasShownWelcome) {
         context.globalState.update('gitMetrics.hasShownWelcome', true);

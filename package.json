@@ -2,7 +2,7 @@
   "name": "git-metrics-dashboard",
   "displayName": "Git Metrics Dashboard",
   "description": "Turn your Git history into a repository health score with risk detection, refactor radar, contributor analytics, and exportable team reports.",
-  "version": "0.2.13",
+  "version": "0.3.0",
   "publisher": "jiwan-dev",
   "repository": {
     "type": "git",
@@ -70,6 +70,8 @@
     "onCommand:gitMetrics.copyReadmeBadge",
     "onCommand:gitMetrics.shareWithTeam",
     "onCommand:gitMetrics.generateReleaseNotes",
+    "onCommand:gitMetrics.generateMonthlyBrief",
+    "onCommand:gitMetrics.conventionalCommit",
     "workspaceContains:.git",
     "onStartupFinished"
   ],
@@ -159,6 +161,16 @@
       {
         "command": "gitMetrics.generateReleaseNotes",
         "title": "Generate Release Notes",
+        "category": "Git Metrics"
+      },
+      {
+        "command": "gitMetrics.generateMonthlyBrief",
+        "title": "Generate Monthly Brief",
+        "category": "Git Metrics"
+      },
+      {
+        "command": "gitMetrics.conventionalCommit",
+        "title": "Conventional Commit Helper",
         "category": "Git Metrics"
       }
     ],
@@ -325,6 +337,18 @@
           "type": "boolean",
           "default": false,
           "description": "Show notification message when Git changes are detected"
+        },
+        "gitMetrics.dailyCommitGoal": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "maximum": 50,
+          "description": "Daily commit goal (0 = disabled). Shows progress in status bar: 📝 2/5 today"
+        },
+        "gitMetrics.streakDangerAlert": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a reminder at 8 PM if you haven't committed today and have an active streak"
         },
         "gitMetrics.language": {
           "type": "string",

@@ -103,7 +103,14 @@ export class DashboardProvider {
                         break;
                     case 'shareScore': {
                         const score = message.score as number;
-                        const tweetText = `My repository health score is ${score}/100 🚀 Analyzed with Git Metrics Dashboard for VS Code`;
+                        const tweetText = `My repository health score is ${score}/100 🧠 Analyzed with Git Metrics Dashboard for VS Code`;
+                        const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent('https://marketplace.visualstudio.com/items?itemName=jiwan-dev.git-metrics-dashboard')}`;
+                        await vscode.env.openExternal(vscode.Uri.parse(twitterUrl));
+                        break;
+                    }
+                    case 'shareStreak': {
+                        const streak = message.streak as number;
+                        const tweetText = `🔥 ${streak}-day commit streak! Keeping the momentum going with Git Metrics Dashboard for VS Code`;
                         const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent('https://marketplace.visualstudio.com/items?itemName=jiwan-dev.git-metrics-dashboard')}`;
                         await vscode.env.openExternal(vscode.Uri.parse(twitterUrl));
                         break;
@@ -711,6 +718,35 @@ export class DashboardProvider {
         .ghost-btn:hover {
             border-color: var(--primary-color);
             background: var(--hover-bg);
+        }
+
+        .health-share-row {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .share-pill-btn {
+            background: rgba(255,255,255,0.12);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 999px;
+            padding: 5px 14px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 700;
+            transition: background 0.15s;
+        }
+
+        .share-pill-btn:hover {
+            background: rgba(255,255,255,0.25);
+        }
+
+        .streak-pill-btn {
+            border-color: rgba(255, 160, 0, 0.5);
+            background: rgba(255, 120, 0, 0.15);
         }
 
         .pr-readiness-card {
@@ -1482,6 +1518,33 @@ export class DashboardProvider {
             color: var(--text-muted);
         }
 
+        .next-badge-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .next-badge-item {
+            background: var(--secondary-bg);
+            border: 1.5px solid var(--warning-color);
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+
+        .next-badge-item-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+
+        .next-badge-item-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-color);
+            flex: 1;
+        }
+
         .progress-bar {
             background: var(--border-color);
             border-radius: 8px;
@@ -1663,6 +1726,10 @@ export class DashboardProvider {
                 </div>
                 <div class="health-label">${intelligence.healthLabel}</div>
                 <div class="intelligence-copy">${intelligence.summary}</div>
+                <div class="health-share-row">
+                    <button class="share-pill-btn" onclick="shareScore()" title="Share health score on Twitter/X">𝕏 Share Score</button>
+                    ${(metrics.commitStreak?.currentStreak || 0) > 0 ? `<button class="share-pill-btn streak-pill-btn" onclick="shareStreak()" title="Share streak on Twitter/X">🔥 ${metrics.commitStreak?.currentStreak}d Share</button>` : ''}
+                </div>
             </div>
             <div class="insight-grid">
                 ${intelligence.signals.map(signal => `
@@ -2029,17 +2096,23 @@ export class DashboardProvider {
             </div>
             <div>
                 ${badgeData.inProgress.length > 0 ? (() => {
-                    const nextBadge = badgeData.inProgress[0];
+                    const top3 = badgeData.inProgress.slice(0, 3);
                     return `
-                    <div class="metric-title">🎯 다음 목표</div>
-                    <div class="badge-card in-progress ${nextBadge.rarity}" style="text-align:left;">
-                        <div class="badge-name">${nextBadge.icon} ${nextBadge.name}</div>
-                        <div class="badge-description">${nextBadge.description}</div>
-                        <div class="badge-progress-bar">
-                            <div class="progress-fill" style="width: ${nextBadge.progress}%"></div>
-                            <span class="progress-text">${nextBadge.progress}%</span>
-                        </div>
-                        <div class="badge-progress-desc">${nextBadge.progressDescription}</div>
+                    <div class="metric-title">🎯 다음 목표 <span style="font-size:11px;opacity:0.6;font-weight:400;">TOP ${top3.length}</span></div>
+                    <div class="next-badge-list">
+                        ${top3.map(badge => `
+                        <div class="next-badge-item">
+                            <div class="next-badge-item-header">
+                                <span style="font-size:18px;line-height:1;">${badge.icon}</span>
+                                <span class="next-badge-item-name">${badge.name}</span>
+                                <span class="badge-rarity ${badge.rarity}" style="font-size:9px;padding:1px 6px;margin:0;">${badge.rarity.toUpperCase()}</span>
+                            </div>
+                            <div class="badge-progress-bar" style="height:10px;margin:5px 0;">
+                                <div class="progress-fill" style="width:${badge.progress}%"></div>
+                                <span class="progress-text">${badge.progress}%</span>
+                            </div>
+                            <div class="badge-progress-desc">${badge.progressDescription}</div>
+                        </div>`).join('')}
                     </div>`;
                 })() : `
                     <div class="metric-title">🎯 다음 목표</div>
@@ -2179,6 +2252,10 @@ export class DashboardProvider {
 
         function shareScore() {
             vscode.postMessage({ command: 'shareScore', score: ${intelligence.healthScore} });
+        }
+
+        function shareStreak() {
+            vscode.postMessage({ command: 'shareStreak', streak: ${metrics.commitStreak?.currentStreak || 0} });
         }
 
         function copyStreakCard() {
