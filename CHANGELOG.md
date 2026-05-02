@@ -7,6 +7,33 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [0.2.9] - 2026-05-02
+
+### Added
+- 🏆 **12 new achievement badges** — hot_streak_14 (🔥 14-day streak), hot_streak_50 (⚡ 50-day LEGENDARY), doc_writer (📝), test_champion (✅), refactor_hero (♻️), midnight_coder (🌙), speed_demon (💨), first_blood (🌅), release_maker (🚀), mono_focus (🎯), code_reviewer (👁️) — badge count grows from 17 to 29
+- 🔥 **Streak status bar** — always-visible `🔥 Xd` counter in the status bar; teammates see it and ask about it
+- 🎉 **Badge unlock toast** — when a new badge is unlocked after analysis, a VS Code notification fires with a one-click share option
+- 📅 **Streak milestone alerts** — special toasts at 7 / 14 / 30 / 50 / 100-day milestones with clipboard share
+- 🃏 **Copy Streak Card** — new dashboard button that copies a shareable streak text to clipboard
+- 🎁 **Git Wrapped** — new dashboard button that copies a period highlight card (commits, streak, top contributor, hottest file, peak hour) ready for Slack / Twitter
+
+### Improved
+- `onStartupFinished` activation event — streak status bar appears immediately when VS Code starts, even before opening the dashboard
+
+---
+
+## [0.2.8] - 2026-05-02
+
+### Added
+- 🔀 **PR Readiness panel** — when a non-main branch is selected, shows a PR readiness score (0–100), size label (S/M/L/XL), risk signals (PR too large, too many commits, high-churn files), and **Copy PR Summary** / **Copy PR Description (Markdown)** buttons for pasting into Slack, GitHub, or GitLab
+- 📊 **Weekly Engineering Brief** — new **"Weekly Brief"** button copies a Slack/email-ready engineering brief including health score, top contributors, hot files, and next moves with a Marketplace attribution footer
+- 🐦 **Share Score** — new **"Share Score"** button opens a pre-filled Twitter share intent with the repository health score and extension link for social visibility
+
+### Improved
+- command-actions quick-nav bar now includes a **🔀 PR Readiness** scroll shortcut when branch comparison data is available
+
+---
+
 ## [0.2.7] - 2026-05-01
 
 ### Added

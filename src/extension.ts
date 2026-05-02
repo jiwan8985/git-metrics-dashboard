@@ -179,32 +179,94 @@ export function activate(context: vscode.ExtensionContext) {
             const config = vscode.workspace.getConfiguration('gitMetrics');
             const defaultPeriod = config.get<number>('defaultPeriod', 30);
 
-            const format = await vscode.window.showQuickPick([
+            // Step 1: 템플릿 선택
+            const templateChoice = await vscode.window.showQuickPick([
+                { label: '📊 Full Report',       description: '모든 섹션 — 팀 공유용 [HTML]', detail: 'full' },
+                { label: '👔 Executive Summary', description: 'Health score + Actions only [HTML/MD]', detail: 'executive' },
+                { label: '🔀 PR Report',          description: 'PR Readiness + Branch [Markdown]', detail: 'pr' },
+                { label: '👤 Developer Focus',    description: 'Badges + Streak + Time Analysis [HTML]', detail: 'developer' },
+                { label: '⚙️ Custom',            description: '포맷과 섹션을 직접 선택', detail: 'custom' }
+            ], { placeHolder: '리포트 템플릿을 선택하세요' });
+
+            if (!templateChoice) {return;}
+            const template = templateChoice.detail as 'full' | 'executive' | 'pr' | 'developer' | 'custom';
+
+            // Step 2: 포맷 선택 (템플릿별 필터링)
+            const allFormats = [
                 { label: '📄 HTML 리포트', detail: 'html' },
                 { label: '📋 JSON 데이터', detail: 'json' },
-                { label: '📊 CSV 파일', detail: 'csv' },
-                { label: '📝 Markdown 문서', detail: 'markdown' }
-            ], {
-                placeHolder: '내보내기 형식을 선택하세요'
-            });
+                { label: '📊 CSV 파일',    detail: 'csv' },
+                { label: '📝 Markdown',    detail: 'markdown' }
+            ];
+            const formatItems = template === 'pr'
+                ? [{ label: '📝 Markdown', detail: 'markdown' }, { label: '📄 HTML 리포트', detail: 'html' }]
+                : template === 'executive'
+                    ? [{ label: '📄 HTML 리포트', detail: 'html' }, { label: '📝 Markdown', detail: 'markdown' }]
+                    : allFormats;
 
+            const format = await vscode.window.showQuickPick(formatItems, { placeHolder: '내보내기 형식을 선택하세요' });
             if (!format) {return;}
+
+            // 프리셋별 옵션 빌드
+            let options: ReportOptions;
+            if (template === 'executive') {
+                options = {
+                    format: format.detail as any, template: 'executive',
+                    includeSummary: true, includeCharts: false, includeFileStats: false,
+                    includeAuthorStats: false, includeTimeAnalysis: false, includeBadges: false,
+                    includePRReadiness: false, includeStreak: false, period: defaultPeriod
+                };
+            } else if (template === 'pr') {
+                options = {
+                    format: format.detail as any, template: 'pr',
+                    includeSummary: true, includeCharts: false, includeFileStats: false,
+                    includeAuthorStats: false, includeTimeAnalysis: false, includeBadges: false,
+                    includePRReadiness: true, includeStreak: false, period: defaultPeriod
+                };
+            } else if (template === 'developer') {
+                options = {
+                    format: format.detail as any, template: 'developer',
+                    includeSummary: true, includeCharts: false, includeFileStats: false,
+                    includeAuthorStats: false, includeTimeAnalysis: true, includeBadges: true,
+                    includePRReadiness: false, includeStreak: true, period: defaultPeriod
+                };
+            } else if (template === 'custom') {
+                const sections = await vscode.window.showQuickPick([
+                    { label: '📋 요약 통계',         picked: true,  detail: 'includeSummary' },
+                    { label: '👥 개발자별 통계',       picked: true,  detail: 'includeAuthorStats' },
+                    { label: '📁 파일 타입별 분석',    picked: true,  detail: 'includeFileStats' },
+                    { label: '⏰ 시간대별 분석',       picked: true,  detail: 'includeTimeAnalysis' },
+                    { label: '🏆 개발자 배지',         picked: true,  detail: 'includeBadges' },
+                    { label: '🔥 커밋 스트릭',         picked: false, detail: 'includeStreak' },
+                    { label: '🔀 PR Readiness',        picked: false, detail: 'includePRReadiness' }
+                ], { placeHolder: '포함할 섹션을 선택하세요 (다중 선택)', canPickMany: true });
+                if (!sections || sections.length === 0) {return;}
+                options = {
+                    format: format.detail as any,
+                    includeSummary:     sections.some(s => s.detail === 'includeSummary'),
+                    includeCharts: true,
+                    includeFileStats:   sections.some(s => s.detail === 'includeFileStats'),
+                    includeAuthorStats: sections.some(s => s.detail === 'includeAuthorStats'),
+                    includeTimeAnalysis:sections.some(s => s.detail === 'includeTimeAnalysis'),
+                    includeBadges:      sections.some(s => s.detail === 'includeBadges'),
+                    includePRReadiness: sections.some(s => s.detail === 'includePRReadiness'),
+                    includeStreak:      sections.some(s => s.detail === 'includeStreak'),
+                    period: defaultPeriod
+                };
+            } else {
+                // full
+                options = {
+                    format: format.detail as any, template: 'full',
+                    includeSummary: true, includeCharts: true, includeFileStats: true,
+                    includeAuthorStats: true, includeTimeAnalysis: true, includeBadges: true,
+                    includePRReadiness: true, includeStreak: true, period: defaultPeriod
+                };
+            }
 
             const branch = await pickAnalysisBranch();
             vscode.window.showInformationMessage('📊 Git 데이터 수집 중...');
             const commits = await gitAnalyzer.getCommitHistory(defaultPeriod, branch);
             const metrics = await gitAnalyzer.generateMetrics(commits, branch);
-
-            const options: ReportOptions = {
-                format: format.detail as any,
-                includeSummary: true,
-                includeCharts: true,
-                includeFileStats: true,
-                includeAuthorStats: true,
-                includeTimeAnalysis: true,
-                includeBadges: true,
-                period: defaultPeriod
-            };
 
             vscode.window.showInformationMessage('📄 리포트 생성 중...');
             const result = await reportGenerator.generateReport(metrics, options);
@@ -215,7 +277,6 @@ export function activate(context: vscode.ExtensionContext) {
                     '파일 열기',
                     '폴더에서 보기'
                 );
-
                 if (action === '파일 열기') {
                     const doc = await vscode.workspace.openTextDocument(result.filePath);
                     await vscode.window.showTextDocument(doc);
@@ -250,43 +311,90 @@ export function activate(context: vscode.ExtensionContext) {
             if (!periodInput) {return;}
             const period = parseInt(periodInput);
 
-            // 포맷 선택
-            const format = await vscode.window.showQuickPick([
+            // 템플릿 선택
+            const templateChoice = await vscode.window.showQuickPick([
+                { label: '📊 Full Report',       description: '모든 섹션', detail: 'full' },
+                { label: '👔 Executive Summary', description: 'Health score + Actions only', detail: 'executive' },
+                { label: '🔀 PR Report',          description: 'PR Readiness + Branch', detail: 'pr' },
+                { label: '👤 Developer Focus',    description: 'Badges + Streak + Time', detail: 'developer' },
+                { label: '⚙️ Custom',            description: '섹션 직접 선택', detail: 'custom' }
+            ], { placeHolder: '리포트 템플릿을 선택하세요' });
+
+            if (!templateChoice) {return;}
+            const template = templateChoice.detail as 'full' | 'executive' | 'pr' | 'developer' | 'custom';
+
+            // 포맷 선택 (템플릿별 필터)
+            const allFormats = [
                 { label: '📄 HTML 리포트', description: '웹 브라우저에서 볼 수 있는 리포트', detail: 'html' },
                 { label: '📋 JSON 데이터', description: '프로그래밍적으로 처리 가능한 데이터', detail: 'json' },
-                { label: '📊 CSV 파일', description: 'Excel에서 열 수 있는 표 형식', detail: 'csv' },
-                { label: '📝 Markdown 문서', description: 'GitHub README 스타일 문서', detail: 'markdown' }
-            ], {
-                placeHolder: '내보내기 형식을 선택하세요'
-            });
+                { label: '📊 CSV 파일',    description: 'Excel에서 열 수 있는 표 형식', detail: 'csv' },
+                { label: '📝 Markdown',    description: 'GitHub README 스타일 문서', detail: 'markdown' }
+            ];
+            const formatItems = template === 'pr'
+                ? [{ label: '📝 Markdown', description: 'PR 공유에 최적', detail: 'markdown' }, { label: '📄 HTML 리포트', description: '웹 브라우저용', detail: 'html' }]
+                : template === 'executive'
+                    ? [{ label: '📄 HTML 리포트', description: '웹 브라우저용', detail: 'html' }, { label: '📝 Markdown', description: 'GitHub 문서용', detail: 'markdown' }]
+                    : allFormats;
 
+            const format = await vscode.window.showQuickPick(formatItems, { placeHolder: '내보내기 형식을 선택하세요' });
             if (!format) {return;}
 
             const branch = await pickAnalysisBranch();
 
-            // 포함할 섹션 선택
-            const sections = await vscode.window.showQuickPick([
-                { label: '📋 요약 통계', picked: true, detail: 'includeSummary' },
-                { label: '👥 개발자별 통계', picked: true, detail: 'includeAuthorStats' },
-                { label: '📁 파일 타입별 분석', picked: true, detail: 'includeFileStats' },
-                { label: '⏰ 시간대별 분석', picked: true, detail: 'includeTimeAnalysis' }
-            ], {
-                placeHolder: '포함할 섹션을 선택하세요 (다중 선택 가능)',
-                canPickMany: true
-            });
-
-            if (!sections || sections.length === 0) {return;}
-
-            const options: ReportOptions = {
-                format: format.detail as any,
-                includeSummary: sections.some(s => s.detail === 'includeSummary'),
-                includeCharts: true,
-                includeFileStats: sections.some(s => s.detail === 'includeFileStats'),
-                includeAuthorStats: sections.some(s => s.detail === 'includeAuthorStats'),
-                includeTimeAnalysis: sections.some(s => s.detail === 'includeTimeAnalysis'),
-                includeBadges: true,
-                period: period
-            };
+            // 프리셋별 옵션 빌드
+            let options: ReportOptions;
+            if (template === 'executive') {
+                options = {
+                    format: format.detail as any, template: 'executive',
+                    includeSummary: true, includeCharts: false, includeFileStats: false,
+                    includeAuthorStats: false, includeTimeAnalysis: false, includeBadges: false,
+                    includePRReadiness: false, includeStreak: false, period
+                };
+            } else if (template === 'pr') {
+                options = {
+                    format: format.detail as any, template: 'pr',
+                    includeSummary: true, includeCharts: false, includeFileStats: false,
+                    includeAuthorStats: false, includeTimeAnalysis: false, includeBadges: false,
+                    includePRReadiness: true, includeStreak: false, period
+                };
+            } else if (template === 'developer') {
+                options = {
+                    format: format.detail as any, template: 'developer',
+                    includeSummary: true, includeCharts: false, includeFileStats: false,
+                    includeAuthorStats: false, includeTimeAnalysis: true, includeBadges: true,
+                    includePRReadiness: false, includeStreak: true, period
+                };
+            } else if (template === 'custom') {
+                const sections = await vscode.window.showQuickPick([
+                    { label: '📋 요약 통계',       picked: true,  detail: 'includeSummary' },
+                    { label: '👥 개발자별 통계',     picked: true,  detail: 'includeAuthorStats' },
+                    { label: '📁 파일 타입별 분석',  picked: true,  detail: 'includeFileStats' },
+                    { label: '⏰ 시간대별 분석',     picked: true,  detail: 'includeTimeAnalysis' },
+                    { label: '🏆 개발자 배지',       picked: true,  detail: 'includeBadges' },
+                    { label: '🔥 커밋 스트릭',       picked: false, detail: 'includeStreak' },
+                    { label: '🔀 PR Readiness',      picked: false, detail: 'includePRReadiness' }
+                ], { placeHolder: '포함할 섹션을 선택하세요 (다중 선택 가능)', canPickMany: true });
+                if (!sections || sections.length === 0) {return;}
+                options = {
+                    format: format.detail as any,
+                    includeSummary:     sections.some(s => s.detail === 'includeSummary'),
+                    includeCharts: true,
+                    includeFileStats:   sections.some(s => s.detail === 'includeFileStats'),
+                    includeAuthorStats: sections.some(s => s.detail === 'includeAuthorStats'),
+                    includeTimeAnalysis:sections.some(s => s.detail === 'includeTimeAnalysis'),
+                    includeBadges:      sections.some(s => s.detail === 'includeBadges'),
+                    includePRReadiness: sections.some(s => s.detail === 'includePRReadiness'),
+                    includeStreak:      sections.some(s => s.detail === 'includeStreak'),
+                    period
+                };
+            } else {
+                options = {
+                    format: format.detail as any, template: 'full',
+                    includeSummary: true, includeCharts: true, includeFileStats: true,
+                    includeAuthorStats: true, includeTimeAnalysis: true, includeBadges: true,
+                    includePRReadiness: true, includeStreak: true, period
+                };
+            }
 
             vscode.window.showInformationMessage('📄 리포트 생성 중...');
             const commits = await gitAnalyzer.getCommitHistory(period, branch);
@@ -299,7 +407,6 @@ export function activate(context: vscode.ExtensionContext) {
                     '파일 열기',
                     '폴더에서 보기'
                 );
-
                 if (action === '파일 열기') {
                     const doc = await vscode.workspace.openTextDocument(result.filePath);
                     await vscode.window.showTextDocument(doc);
@@ -410,6 +517,42 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
+    // 릴리즈 노트 생성 명령어
+    const generateReleaseNotesDisposable = vscode.commands.registerCommand('gitMetrics.generateReleaseNotes', async () => {
+        try {
+            const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+            if (!workspaceRoot) {
+                vscode.window.showErrorMessage('워크스페이스가 열려있지 않습니다.');
+                return;
+            }
+
+            const analyzer = new GitAnalyzer();
+            let generatedNotes = '';
+            await vscode.window.withProgress(
+                { location: vscode.ProgressLocation.Notification, title: '릴리즈 노트 생성 중...', cancellable: false },
+                async () => {
+                    generatedNotes = await analyzer.generateReleaseNotes();
+                    await vscode.env.clipboard.writeText(generatedNotes);
+                }
+            );
+
+            const action = await vscode.window.showInformationMessage(
+                '📋 릴리즈 노트가 클립보드에 복사되었습니다! CHANGELOG.md 또는 PR description에 붙여넣기 하세요.',
+                '파일로 저장'
+            );
+
+            if (action === '파일로 저장') {
+                const notes = generatedNotes;
+                const savePath = vscode.Uri.file(`${workspaceRoot}/RELEASE_NOTES.md`);
+                await vscode.workspace.fs.writeFile(savePath, Buffer.from(notes, 'utf8'));
+                const doc = await vscode.workspace.openTextDocument(savePath);
+                await vscode.window.showTextDocument(doc);
+            }
+        } catch (error) {
+            vscode.window.showErrorMessage(`릴리즈 노트 생성 실패: ${error}`);
+        }
+    });
+
     // TreeView 새로고침 명령어
     const refreshTreeViewDisposable = vscode.commands.registerCommand('gitMetrics.refreshTreeView', async () => {
         await treeProvider.refresh();
@@ -443,11 +586,70 @@ export function activate(context: vscode.ExtensionContext) {
     statusBarItem.tooltip = "Git 메트릭 대시보드 열기";
     statusBarItem.show();
 
-    // 대시보드 분석 완료 시 상태바에 health score 표시
+    // 대시보드 분석 완료 시 상태바에 health score 표시 (트렌드 화살표 포함)
     dashboardProvider.setHealthScoreCallback((score: number) => {
         const icon = score >= 78 ? '$(pass)' : score >= 58 ? '$(warning)' : '$(error)';
-        statusBarItem.text = `${icon} Git: ${score}/100`;
-        statusBarItem.tooltip = `Repository Health: ${score}/100 — 클릭하여 대시보드 열기`;
+
+        // Health score history 관리 (최근 30개 유지)
+        const historyKey = 'gitMetrics.healthHistory';
+        const history: number[] = context.globalState.get<number[]>(historyKey, []);
+        history.push(score);
+        if (history.length > 30) { history.splice(0, history.length - 30); }
+        context.globalState.update(historyKey, history);
+
+        // 트렌드 화살표 계산 (직전 값과 비교)
+        let trend = '';
+        if (history.length >= 2) {
+            const prev = history[history.length - 2];
+            if (score > prev + 2) { trend = '↑'; }
+            else if (score < prev - 2) { trend = '↓'; }
+            else { trend = '→'; }
+        }
+
+        statusBarItem.text = `${icon} Git: ${score}/100${trend}`;
+        statusBarItem.tooltip = `Repository Health: ${score}/100${trend ? ` (${trend === '↑' ? '개선' : trend === '↓' ? '하락' : '유지'})` : ''} — 클릭하여 대시보드 열기`;
+    });
+
+    // 스트릭 상태바
+    const streakStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 97);
+    streakStatusBarItem.command = 'gitMetrics.showDashboard';
+    streakStatusBarItem.tooltip = '현재 커밋 스트릭 — 클릭하여 대시보드 열기';
+
+    dashboardProvider.setStreakCallback((streak: number, _longestStreak: number) => {
+        if (streak > 0) {
+            streakStatusBarItem.text = `🔥 ${streak}d`;
+            streakStatusBarItem.show();
+        } else {
+            streakStatusBarItem.hide();
+        }
+        checkStreakMilestone(context, streak);
+    });
+
+    // 오늘 커밋수 상태바
+    const todayStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 96);
+    todayStatusBarItem.command = 'gitMetrics.showDashboard';
+    todayStatusBarItem.tooltip = '오늘 커밋 수 — 클릭하여 대시보드 열기';
+    dashboardProvider.setTodayCommitsCallback((count: number) => {
+        if (count > 0) {
+            todayStatusBarItem.text = `📝 ${count} today`;
+            todayStatusBarItem.show();
+        } else {
+            todayStatusBarItem.hide();
+        }
+    });
+
+    // 배지 달성 토스트
+    dashboardProvider.setBadgeUnlockCallback(async (badge) => {
+        const action = await vscode.window.showInformationMessage(
+            `🏆 새 배지 달성: ${badge.icon} ${badge.name}! (${badge.rarity})`,
+            '공유하기',
+            '확인'
+        );
+        if (action === '공유하기') {
+            const text = `🏆 "${badge.name}" 배지 달성! ${badge.icon} — Git Metrics Dashboard for VS Code\nhttps://marketplace.visualstudio.com/items?itemName=jiwan-dev.git-metrics-dashboard`;
+            await vscode.env.clipboard.writeText(text);
+            vscode.window.showInformationMessage('📋 공유 텍스트가 클립보드에 복사되었습니다!');
+        }
     });
 
     // 상태바 리포트 버튼 추가
@@ -504,6 +706,7 @@ export function activate(context: vscode.ExtensionContext) {
                     statusBarItem.hide();
                     exportStatusBarItem.hide();
                     themeStatusBarItem.hide();
+                    streakStatusBarItem.hide();
                 }
             }
         } catch (error) {
@@ -530,11 +733,14 @@ export function activate(context: vscode.ExtensionContext) {
         windowsTroubleshootDisposable,
         copyReadmeBadgeDisposable,
         shareWithTeamDisposable,
+        generateReleaseNotesDisposable,
         refreshTreeViewDisposable,
         changeLanguageDisposable,
         statusBarItem,
         exportStatusBarItem,
         themeStatusBarItem,
+        streakStatusBarItem,
+        todayStatusBarItem,
         treeView,
         { dispose: () => { changeDetector?.dispose(); statusIndicator?.dispose(); } }
     );
@@ -571,6 +777,28 @@ export function activate(context: vscode.ExtensionContext) {
         });
     }
 
+}
+
+async function checkStreakMilestone(context: vscode.ExtensionContext, streak: number): Promise<void> {
+    const milestones = [7, 14, 30, 50, 100];
+    const alerted = new Set<number>(context.globalState.get<number[]>('gitMetrics.streakMilestonesAlerted', []));
+    for (const m of milestones) {
+        if (streak >= m && !alerted.has(m)) {
+            alerted.add(m);
+            await context.globalState.update('gitMetrics.streakMilestonesAlerted', Array.from(alerted));
+            const action = await vscode.window.showInformationMessage(
+                `🔥 ${m}일 커밋 스트릭 달성! 축하합니다!`,
+                '공유하기',
+                '확인'
+            );
+            if (action === '공유하기') {
+                const text = `🔥 ${m}-day commit streak achieved! Tracked with Git Metrics Dashboard for VS Code\nhttps://marketplace.visualstudio.com/items?itemName=jiwan-dev.git-metrics-dashboard`;
+                await vscode.env.clipboard.writeText(text);
+                vscode.window.showInformationMessage('📋 공유 텍스트가 복사되었습니다!');
+            }
+            break; // 한 번에 하나만 표시
+        }
+    }
 }
 
 async function triggerReviewPromptIfReady(context: vscode.ExtensionContext): Promise<void> {
