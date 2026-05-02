@@ -6,7 +6,9 @@ import {
     buildExecutiveBrief,
     buildPRDescription,
     buildPRSummary,
+    buildStreakCard,
     buildWeeklyBrief,
+    buildWrappedSummary,
     calcPRReadiness,
     getPriorityColor,
     getToneColor,
@@ -22,9 +24,19 @@ export class DashboardProvider {
     private currentBranch: string | undefined;
     private availableBranches: string[] = [];
     private onHealthScoreUpdate: ((score: number) => void) | undefined;
+    private onStreakUpdate: ((streak: number, longestStreak: number) => void) | undefined;
+    private onBadgeUnlock: ((newBadges: { id: string; name: string; icon: string; rarity: string }) => void) | undefined;
 
     setHealthScoreCallback(cb: (score: number) => void) {
         this.onHealthScoreUpdate = cb;
+    }
+
+    setStreakCallback(cb: (streak: number, longestStreak: number) => void) {
+        this.onStreakUpdate = cb;
+    }
+
+    setBadgeUnlockCallback(cb: (badge: { id: string; name: string; icon: string; rarity: string }) => void) {
+        this.onBadgeUnlock = cb;
     }
 
     constructor(
@@ -91,6 +103,14 @@ export class DashboardProvider {
                         await vscode.env.openExternal(vscode.Uri.parse(twitterUrl));
                         break;
                     }
+                    case 'copyStreakCard':
+                        await vscode.env.clipboard.writeText(message.text);
+                        vscode.window.showInformationMessage('📋 스트릭 카드가 클립보드에 복사되었습니다!');
+                        break;
+                    case 'copyWrapped':
+                        await vscode.env.clipboard.writeText(message.text);
+                        vscode.window.showInformationMessage('📋 Git Wrapped 요약이 클립보드에 복사되었습니다!');
+                        break;
                 }
             },
             undefined,
@@ -222,9 +242,33 @@ export class DashboardProvider {
                     this.currentMetrics = metrics;
                     progress.report({ increment: 20, message: 'Rendering dashboard...' });
                     this.panel!.webview.html = this.generateAdvancedHTML(metrics, defaultPeriod, maxTopFiles, this.availableBranches, this.currentBranch);
+                    const intel = prepareRepositoryIntelligence(metrics, defaultPeriod);
                     if (this.onHealthScoreUpdate) {
-                        const intel = prepareRepositoryIntelligence(metrics, defaultPeriod);
                         this.onHealthScoreUpdate(intel.healthScore);
+                    }
+                    // Streak status bar callback
+                    if (this.onStreakUpdate) {
+                        const streak = metrics.commitStreak?.currentStreak || 0;
+                        const longest = metrics.commitStreak?.longestStreak || 0;
+                        this.onStreakUpdate(streak, longest);
+                    }
+                    // Badge unlock detection
+                    if (this.onBadgeUnlock && metrics.badges) {
+                        const prevUnlocked = new Set<string>(
+                            this.context.globalState.get<string[]>('gitMetrics.unlockedBadges', [])
+                        );
+                        const newlyUnlocked = metrics.badges.filter(
+                            b => b.unlocked && !prevUnlocked.has(b.id)
+                        );
+                        if (newlyUnlocked.length > 0) {
+                            await this.context.globalState.update(
+                                'gitMetrics.unlockedBadges',
+                                metrics.badges.filter(b => b.unlocked).map(b => b.id)
+                            );
+                            for (const badge of newlyUnlocked) {
+                                this.onBadgeUnlock({ id: badge.id, name: badge.name, icon: badge.icon, rarity: badge.rarity });
+                            }
+                        }
                     }
                 } catch (error) {
                     this.panel!.webview.html = this.generateErrorHTML(String(error));
@@ -1602,6 +1646,8 @@ export class DashboardProvider {
             <button class="ghost-btn" onclick="copyWeeklyBrief()">📊 Weekly Brief</button>
             <button class="ghost-btn" onclick="shareScore()">🐦 Share Score</button>
             <button class="ghost-btn" onclick="shareWithTeam()">🤝 Share with Team</button>
+            <button class="ghost-btn" onclick="copyStreakCard()">🔥 Streak Card</button>
+            <button class="ghost-btn" onclick="copyWrapped()">🎁 Git Wrapped</button>
             <button class="ghost-btn" onclick="scrollToSection('refactor-radar')">Refactor Radar</button>
             ${metrics.branchComparison ? `<button class="ghost-btn" onclick="scrollToSection('pr-readiness')">🔀 PR Readiness</button>` : ''}
             <button class="ghost-btn" onclick="scrollToSection('activity-section')">Activity</button>
@@ -2099,6 +2145,20 @@ export class DashboardProvider {
 
         function shareScore() {
             vscode.postMessage({ command: 'shareScore', score: ${intelligence.healthScore} });
+        }
+
+        function copyStreakCard() {
+            const text = ${JSON.stringify(buildStreakCard(
+                metrics.commitStreak?.currentStreak || 0,
+                metrics.commitStreak?.longestStreak || 0,
+                metrics.branchStats?.currentBranch || 'this project'
+            ))};
+            vscode.postMessage({ command: 'copyStreakCard', text });
+        }
+
+        function copyWrapped() {
+            const text = ${JSON.stringify(buildWrappedSummary(metrics, intelligence, days))};
+            vscode.postMessage({ command: 'copyWrapped', text });
         }
 
         function scrollToSection(id) {

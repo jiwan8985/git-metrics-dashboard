@@ -450,6 +450,35 @@ export function activate(context: vscode.ExtensionContext) {
         statusBarItem.tooltip = `Repository Health: ${score}/100 — 클릭하여 대시보드 열기`;
     });
 
+    // 스트릭 상태바
+    const streakStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 97);
+    streakStatusBarItem.command = 'gitMetrics.showDashboard';
+    streakStatusBarItem.tooltip = '현재 커밋 스트릭 — 클릭하여 대시보드 열기';
+
+    dashboardProvider.setStreakCallback((streak: number, _longestStreak: number) => {
+        if (streak > 0) {
+            streakStatusBarItem.text = `🔥 ${streak}d`;
+            streakStatusBarItem.show();
+        } else {
+            streakStatusBarItem.hide();
+        }
+        checkStreakMilestone(context, streak);
+    });
+
+    // 배지 달성 토스트
+    dashboardProvider.setBadgeUnlockCallback(async (badge) => {
+        const action = await vscode.window.showInformationMessage(
+            `🏆 새 배지 달성: ${badge.icon} ${badge.name}! (${badge.rarity})`,
+            '공유하기',
+            '확인'
+        );
+        if (action === '공유하기') {
+            const text = `🏆 "${badge.name}" 배지 달성! ${badge.icon} — Git Metrics Dashboard for VS Code\nhttps://marketplace.visualstudio.com/items?itemName=jiwan-dev.git-metrics-dashboard`;
+            await vscode.env.clipboard.writeText(text);
+            vscode.window.showInformationMessage('📋 공유 텍스트가 클립보드에 복사되었습니다!');
+        }
+    });
+
     // 상태바 리포트 버튼 추가
     const exportStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 99);
     exportStatusBarItem.command = 'gitMetrics.quickExport';
@@ -504,6 +533,7 @@ export function activate(context: vscode.ExtensionContext) {
                     statusBarItem.hide();
                     exportStatusBarItem.hide();
                     themeStatusBarItem.hide();
+                    streakStatusBarItem.hide();
                 }
             }
         } catch (error) {
@@ -535,6 +565,7 @@ export function activate(context: vscode.ExtensionContext) {
         statusBarItem,
         exportStatusBarItem,
         themeStatusBarItem,
+        streakStatusBarItem,
         treeView,
         { dispose: () => { changeDetector?.dispose(); statusIndicator?.dispose(); } }
     );
@@ -571,6 +602,28 @@ export function activate(context: vscode.ExtensionContext) {
         });
     }
 
+}
+
+async function checkStreakMilestone(context: vscode.ExtensionContext, streak: number): Promise<void> {
+    const milestones = [7, 14, 30, 50, 100];
+    const alerted = new Set<number>(context.globalState.get<number[]>('gitMetrics.streakMilestonesAlerted', []));
+    for (const m of milestones) {
+        if (streak >= m && !alerted.has(m)) {
+            alerted.add(m);
+            await context.globalState.update('gitMetrics.streakMilestonesAlerted', Array.from(alerted));
+            const action = await vscode.window.showInformationMessage(
+                `🔥 ${m}일 커밋 스트릭 달성! 축하합니다!`,
+                '공유하기',
+                '확인'
+            );
+            if (action === '공유하기') {
+                const text = `🔥 ${m}-day commit streak achieved! Tracked with Git Metrics Dashboard for VS Code\nhttps://marketplace.visualstudio.com/items?itemName=jiwan-dev.git-metrics-dashboard`;
+                await vscode.env.clipboard.writeText(text);
+                vscode.window.showInformationMessage('📋 공유 텍스트가 복사되었습니다!');
+            }
+            break; // 한 번에 하나만 표시
+        }
+    }
 }
 
 async function triggerReviewPromptIfReady(context: vscode.ExtensionContext): Promise<void> {

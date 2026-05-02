@@ -1,7 +1,7 @@
 # Git Metrics Dashboard — 설치 수 증가 로드맵
 
-최종 업데이트: 2026-05-01
-기준 버전: 0.2.5
+최종 업데이트: 2026-05-02
+기준 버전: 0.2.9
 현재 총 설치 수: 553 (VS Code + Marketplace 합산)
 
 > 설치 수 = **노출** × **전환율** × **바이럴**
@@ -27,7 +27,7 @@
   ├── 노출 (얼마나 많이 발견되는가)
   │     ├── VS Code Extensions 탭 검색 순위
   │     ├── 카테고리/Featured 노출
-  │     └── 외부 채널 유입 (블로그, SNS, 커뮤니티)
+  │     └── 바이럴로 인한 간접 유입
   │
   ├── 전환율 (발견 후 설치로 이어지는가)
   │     ├── 아이콘 + displayName 첫인상
@@ -39,121 +39,126 @@
   └── 바이럴 (1명 설치 → N명 설치)
         ├── 팀 전파 (.vscode/extensions.json)
         ├── 리포트/배지 공유
-        └── PR Summary 복사 → 팀이 보고 설치
+        ├── PR Summary 복사 → 팀이 보고 설치
+        ├── 스트릭/배지 달성 → 소셜 공유
+        └── Git Wrapped → 매년 SNS 공유
 ```
 
 ---
 
-## P0 — 즉시 실행 (코드 없음, 이번 주)
+## P0 — 즉시 실행 (이번 주)
 
 ### VS Code 검색 노출 최적화
 
 - [ ] VS Code Extensions 탭에서 핵심 검색어별 현재 순위 기록 (baseline)
-  - `git`, `git metrics`, `git analytics`, `git statistics`, `git dashboard`
-  - `repository health`, `code churn`, `technical debt`, `contributor analytics`
-  - `commit history`, `git report`, `engineering metrics`
-- [x] `package.json` description 첫 문장 재작성 — 검색어 포함 + 설치 동기
-  - `Turn your Git history into a repository health score with risk detection, refactor radar, contributor analytics, and exportable team reports.`
-- [x] `package.json` keywords 재정렬 — 설치 의도 높은 검색어를 앞쪽에
-  - `git`, `git metrics`, `git analytics`, `git statistics`, `git dashboard`, `commit history`, `repository health`, `code churn`, `technical debt`, `contributor analytics`, `branch analytics`, `engineering metrics`, `team report`, `git report`
-- [ ] `displayName` 재검토
-  - 현재: `Git Metrics Dashboard`
-  - 후보: `Git Health & Metrics Dashboard`
-  - 주의: 기존 인지도 유지 우선
-- [x] `categories` 재검토 — SCM Providers 제거, `["Visualization", "Other"]`로 변경
+- [x] `package.json` description 재작성 — 검색어 포함 + 설치 동기
+- [x] `package.json` keywords 재정렬 — 설치 의도 높은 검색어 앞쪽
+- [x] `categories` 재검토 — SCM Providers 제거, `["Visualization", "Other"]`
+- [ ] `displayName` 재검토: `Git Health & Metrics Dashboard` 후보 (기존 인지도 우선)
 
 ### 마켓플레이스 전환율 개선
 
-- [ ] 아이콘 — 작은 크기 검색 카드에서 구분되는지 확인, 약하면 개선
+- [ ] 아이콘 — 작은 검색 카드에서 구분되는지 확인
 - [ ] 스크린샷 교체 — 실제 데이터 기반 고화질 (대시보드, 헬스 스코어, 리포트)
 - [ ] 데모 GIF 제작 (15-30초) — 설치 → 대시보드 → 헬스 스코어 → 리포트 내보내기
-- [x] README 최상단 재작성 — VS Code detail 패널 기준
-  - 한 줄 가치 + `No login. No cloud upload. Local-first.` trust copy
+- [x] README 최상단 재작성 — `No login. No cloud upload. Local-first.` trust copy
 - [ ] CHANGELOG 최신화 — 살아있는 프로젝트처럼 보이게
-- [ ] 버전 배지 0.2.5 업데이트 ✅
-- [ ] README Install 배지 추가 ✅
 
 ### 별점/리뷰 확보 (전환율 직결)
 
-- [x] 리뷰 프롬프트 조건 개선 — 단순 오픈 횟수 → 성공 경험 이후
-  - report export 완료 후 (quickExport, customExport)
-  - README badge copy 후
-  - 3회 성공 후 트리거 (reviewSuccessCount)
-- [x] 리뷰 프롬프트 cooldown 추가 (30일 후 다시 / 다시 보지 않기)
-- [ ] 낮은 별점 방지 — 오류/빈 상태 UX 먼저 보강
+- [x] 리뷰 프롬프트 — export/badge copy 3회 성공 후 트리거
+- [x] 리뷰 프롬프트 cooldown (30일 snooze / 다시 보지 않기)
+- [ ] 낮은 별점 방지 — 오류/빈 상태 UX 보강 ✅ (generateErrorHTML 구현)
 
 ### 릴리스 주기 (freshness 신호)
 
-- [ ] 2-3주마다 릴리스 유지 — VS Code 검색에서 "최근 업데이트" 신호
-- [ ] 릴리스 캘린더 설정 (매월 1일, 15일)
+- [ ] 2-3주마다 릴리스 유지 — VS Code 검색 "최근 업데이트" 신호
+- [x] v0.2.6 ~ v0.2.8 빠른 연속 릴리스 완료
 
 ---
 
-## P1 — 단기 (설치 후 이탈 방지 + 리텐션)
+## P1 — 리텐션 + 첫 실행 경험 (구현 완료 + 잔여)
 
-설치만 늘려도 바로 삭제되면 의미없다. 리텐션이 곧 리뷰 → 별점 → 재설치 선순환.
+### 첫 실행 aha moment
 
-### 첫 실행 aha moment (Walkthrough)
+- [x] `contributes.walkthroughs` 4단계 온보딩 등록
+- [x] 분석 진행 상태 표시 (`vscode.window.withProgress`)
+- [x] 빈 저장소 / Git 없는 폴더 전용 empty state + 진단 가이드
+- [ ] 첫 실행 quick actions (1회만 노출) — Copy README Badge / Export Report / Open Refactor Radar
+- [x] `onStartupFinished` activation → 상태바 스트릭 즉시 표시 (**구현 필요**)
 
-- [x] `contributes.walkthroughs` 등록 — VS Code 공식 온보딩 플로우
-  - Step 1: Open Dashboard → Step 2: Health Score → Step 3: Export Report → Step 4: Share with Team
-- [ ] 첫 실행 quick actions (1회만 노출)
-  - Copy README Badge / Export Team Report / Open Refactor Radar
-- [x] 분석 진행 상태 표시 — `vscode.window.withProgress` (Reading git log / Calculating metrics / Rendering)
-- [x] 빈 저장소 / Git 없는 폴더 — `generateErrorHTML()` 전용 empty state + 안내 메시지
-- [x] 분석 실패 자동 진단 — no git repo / git not found / shallow clone / no commits 케이스별 안내
+### 상태바 강화 (항상 보이는 동기 루프)
 
-### 팀 전파 기능 (.vscode/extensions.json)
+- [x] Health score 상태바 (`$(pass) Git: 87/100`)
+- [x] Export 버튼 상태바
+- [x] **스트릭 카운터 상태바** — `🔥 12일` 항상 표시 → 동료가 보고 궁금해함
+- [ ] **오늘 커밋 수 상태바** — `📝 3 today` (**구현 필요**)
 
-팀 프로젝트 repo에 등록되면 팀원이 열 때 VS Code가 자동 설치 권유 → 1명 설치가 팀 전체로 퍼짐.
+### 팀 전파
 
-- [x] 대시보드 내 "🤝 Share with Team" 버튼 추가 + `gitMetrics.shareWithTeam` 커맨드
-  - `.vscode/extensions.json` snippet 클립보드 복사
-- [x] README에 "팀에 설치하기" 섹션 추가
-- [x] Walkthrough step 4에 팀 공유 포함
+- [x] 대시보드 "🤝 Share with Team" 버튼 + `gitMetrics.shareWithTeam`
+- [x] README "팀에 설치하기" 섹션
+- [x] Walkthrough step 4 팀 공유
 
-### 리포트/배지 공유로 바이럴
+### 리포트/배지 공유 바이럴
 
-- [x] HTML report — 하단 Marketplace CTA + Install 배지 링크 (기존 구현)
-- [x] Markdown report — 하단 shields.io 버전 배지 + Install 링크 (기존 구현)
-- [x] Copy Brief 결과 끝에 `Generated by Git Metrics Dashboard` + Install 링크 추가
-- [ ] README badge가 다른 저장소에 삽입되면 → 보는 사람이 설치 → 바이럴
+- [x] HTML report Marketplace CTA footer
+- [x] Markdown report shields.io 배지 footer
+- [x] Copy Brief attribution footer
+- [ ] README badge 다른 저장소 삽입 → 바이럴
 
 ---
 
-## P2 — 중기 (기능으로 설치 수 늘리기)
+## P2 — 기능으로 설치 수 늘리기 (구현 완료 + 잔여)
 
-기능 자체가 "이거 써봐" 추천을 만드는 것들.
+### PR Readiness (팀 내 확산)
 
-### PR Readiness (팀 내 확산 핵심)
+- [x] PR readiness score (0-100) + 크기 라벨 (S/M/L/XL)
+- [x] PR 크기 경고 + high-churn files 리스크
+- [x] Copy PR Summary / Copy PR Description (Markdown)
+- [ ] **Changed files 실제 목록** — `git diff --name-only` → 변경 파일별 리스크 랭킹 (**구현 필요**)
+- [ ] Suggested reviewers from file ownership (파일 기여자 기반)
 
-팀원이 PR 전에 이 도구를 쓰면 → 팀장도 보게 됨 → 팀 전체 설치.
+### Weekly/Monthly Engineering Brief
 
-- [x] 현재 브랜치 vs base branch PR readiness score (0-100, S/M/L/XL 라벨)
-- [x] PR 크기 경고 (files changed, additions/deletions, ahead commits)
-- [x] Review Risk panel (high-churn files in repo, XL PR, too many commits)
-- [ ] Changed files risk ranking (실제 변경 파일 목록 필요 — gitAnalyzer 확장 필요)
-- [ ] Suggested reviewers from file ownership
-- [x] **Copy PR Summary 버튼** — Slack/GitHub/GitLab에 바로 붙여넣기
-- [x] **Copy PR Description 버튼** — Markdown 형식
-- [x] Slack/Teams-friendly PR summary 복사
+- [x] Weekly Engineering Brief 생성 + 복사 버튼
+- [ ] **Monthly/Quarterly Brief** — 월간/분기 요약 (**구현 필요**)
+- [ ] Manager-safe report mode
 
-### Weekly Engineering Brief (팀장 → 팀 확산)
+### 배지 시스템 강화 (게임화 → 리텐션 + 바이럴)
 
-팀장이 쓰면 → 팀원들도 설치하게 됨.
+현재 17개 배지. 목표: 30개+
 
-- [x] Weekly Engineering Brief 자동 생성 — health score, top contributors, hot files, next moves
-- [x] Copy Weekly Brief 버튼 (Slack/이메일 바로 사용)
-- [ ] Monthly/Quarterly Brief
-- [ ] Manager-safe report mode (contributor 개인 평가처럼 보이지 않게)
+- [x] 기존 17개 배지 (Streak 3종, Quality 3종, Collaborator 2종, Time Warrior 3종, Milestone 4종, Consistency 2종)
+- [x] **새 배지 추가** (v0.2.9 배포됨, 17→29개):
+  - `doc_writer` — 문서 커밋 20% 이상 (UNCOMMON)
+  - `test_champion` — 테스트 파일 변경 15% 이상 (RARE)
+  - `refactor_hero` — 삭제 라인이 추가 라인보다 많은 커밋 30% 이상 (RARE)
+  - `branch_cleaner` — stale branch 3개 이하 유지 (UNCOMMON)
+  - `speed_demon` — 커밋 평균 간격 4시간 이내 (UNCOMMON)
+  - `first_blood` — 하루 첫 커밋자 (COMMON)
+  - `hot_streak_14` — 14일 연속 커밋 (UNCOMMON)
+  - `hot_streak_50` — 50일 연속 커밋 (LEGENDARY)
+  - `code_reviewer` — 다수 파일 짧은 커밋 패턴 (RARE)
+  - `midnight_coder` — 자정 이후 커밋 10% 이상 (UNCOMMON)
+  - `release_maker` — main/master 브랜치 커밋 20개 이상 (RARE)
+  - `mono_focus` — 단일 파일 타입 80% 이상 집중 (COMMON)
+- [x] **배지 달성 시 VS Code 토스트 알림 + 공유 옵션**
+  - "🏆 새 배지 달성: Commit Legend! 팀에 공유하시겠어요?"
+  - 공유 클릭 → 트위터/클립보드로 배지 텍스트 복사
 
-### 소셜 공유 기능 (바이럴)
+### 소셜 공유 / 바이럴
 
-- [x] 헬스 스코어 Twitter 공유 버튼 — "Share Score" → pre-filled tweet with score + Marketplace link
-- [ ] 배지 달성 시 소셜 공유 버튼
+- [x] Share Score (Twitter pre-filled tweet)
+- [ ] **배지 달성 시 소셜 공유 버튼** (배지 토스트 연동)
+- [x] **Git Wrapped** — 대시보드 🎁 Git Wrapped 버튼으로 하이라이트 카드 복사
+  - 선택 기간의 하이라이트 카드 (커밋, 스트릭, 배지, 최고 기여일)
+  - Copy Wrapped Card → Slack/Twitter 바이럴
+- [x] **Copy Streak Card** — 대시보드 🔥 Streak Card 버튼으로 스트릭 공유 텍스트 복사
+  - "🔥 42-day commit streak on [project]! Tracked with Git Metrics Dashboard"
 - [ ] 주간 Git Wrapped — "지난 주 커밋 42개, 최장 스트릭 7일!" + 공유
 
-### 다중 저장소 지원 (팀/조직 단위 확산)
+### 다중 저장소 지원
 
 - [ ] 워크스페이스 내 모든 Git repo 자동 감지
 - [ ] 저장소별 탭 네비게이션
@@ -162,7 +167,29 @@
 
 ---
 
-## P3 — 장기 (기능 확장)
+## P3 — 중장기 기능 확장
+
+### 스트릭 & 동기 시스템
+
+- [x] **스트릭 카운터 상태바** (항상 표시)
+- [x] **스트릭 마일스톤 알림** — 7일/14일/30일/50일/100일 달성 시 축하 토스트
+- [ ] **Daily first commit 축하** — 오늘 첫 커밋 감지 시 "🎉 오늘의 첫 커밋!" 토스트
+- [ ] 일일 커밋 목표 설정 (`gitMetrics.dailyGoal`)
+- [ ] 스트릭 복구 알림 ("어제 커밋을 빠뜨렸습니다. 오늘 커밋하면 스트릭 재시작!")
+
+### 헬스 스코어 이력 관리
+
+- [ ] **Health score history** — 최근 30개 점수를 globalState에 저장 (**구현 필요**)
+- [ ] **Trend indicator in status bar** — `↑87` (상승) / `↓72` (하락)
+- [ ] Health score trend mini-chart in dashboard
+- [ ] "지난번보다 +5점 향상!" 알림
+
+### 커밋 품질 심층 분석
+
+- [ ] **Changed files 실제 목록** (`git diff --name-only baseBranch...HEAD`)
+- [ ] 커밋 메시지 품질 점수 (길이, 특수문자, 의미 없는 패턴 감지)
+- [ ] "chore: fix" 같은 저품질 메시지 패턴 경고
+- [ ] Commit size distribution histogram
 
 ### AI 기능 (차별화 → 검색 노출 증가)
 
@@ -194,21 +221,14 @@
 - [ ] Cursor IDE 호환성 검증
 - [ ] GitHub Codespaces 최적화
 
-### 배지 시스템 확장
-
-- [ ] 배지 달성 시 VS Code 알림 토스트
-- [ ] 배지 레벨 시스템 (Bronze → Silver → Gold → Platinum)
-- [ ] 새 배지: Release Maker, Refactor Hero, Doc Writer, Test Champion, Branch Cleaner
-- [ ] 커스텀 배지 정의 (.gitmetrics.json)
-
 ---
 
 ## P4 — 코드 품질 / 운영
 
 ### 리팩터링
 
-- [ ] `dashboardProvider.ts` 분할 (현재 3,025줄)
-- [ ] `reportGenerator.ts` 분할 (현재 2,230줄)
+- [ ] `dashboardProvider.ts` 분할 (현재 3,100+ 줄)
+- [ ] `reportGenerator.ts` 분할 (현재 2,230+ 줄)
 - [ ] `gitAnalyzer.ts` 분할 (현재 1,150줄)
 
 ### 성능
@@ -229,10 +249,10 @@
 
 | 기간 | 설치 수 | 별점 | 핵심 달성 |
 |------|---------|------|----------|
-| 현재 | 553 | — | baseline |
-| 1개월 | 1,000+ | 4.0+ | 검색 최적화, 스크린샷, 외부 채널 3개 이상 |
-| 3개월 | 3,000+ | 4.3+ | Walkthrough, PR Readiness, Weekly Brief |
-| 6개월 | 10,000+ | 4.5+ | 다중 저장소, 소셜 공유, AI 옵션 |
+| 현재 (0.2.9) | 553 | — | P0~P3 주요 기능 구현 완료 |
+| 1개월 | 1,000+ | 4.0+ | 스트릭 상태바, 배지 토스트, Git Wrapped |
+| 3개월 | 3,000+ | 4.3+ | AI 기능 옵션, GitHub 연동, 다중 저장소 |
+| 6개월 | 10,000+ | 4.5+ | 전체 바이럴 루프 완성 |
 | 12개월 | 50,000+ | 4.7+ | 팀/조직 단위 확산, 외부 연동 |
 
 ---
@@ -242,6 +262,9 @@
 | 날짜 | 버전 | 변경 내용 | 7일 후 설치 수 | 판단 |
 |------|------|----------|--------------|------|
 | 2026-05-01 | 0.2.5 | baseline | — | 검색 최적화 시작 |
+| 2026-05-01 | 0.2.6 | keywords/description/categories/review prompt | — | — |
+| 2026-05-01 | 0.2.7 | Walkthrough, Share with Team, Empty State, Copy Brief 귀속 | — | — |
+| 2026-05-02 | 0.2.8 | PR Readiness, Weekly Brief, Share Score | — | — |
 
 ---
 

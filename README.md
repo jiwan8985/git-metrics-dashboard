@@ -3,7 +3,7 @@
 **Turn your Git history into a repository health score** — risk detection, refactor radar, contributor analytics, and exportable team reports. No login. No cloud upload. Local-first.
 
 [![Install in VS Code](https://img.shields.io/badge/Install%20in-VS%20Code-007ACC?logo=visualstudiocode&logoColor=white)](vscode:extension/jiwan-dev.git-metrics-dashboard)
-![Version](https://img.shields.io/badge/version-0.2.8-blue.svg)
+![Version](https://img.shields.io/badge/version-0.2.9-blue.svg)
 ![VS Code](https://img.shields.io/badge/VS%20Code-1.85.0+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-yellow.svg)
 ![Languages](https://img.shields.io/badge/UI%20languages-4-brightgreen.svg)

@@ -294,6 +294,139 @@ export class BadgeSystem {
                 unlocked: false,
                 progress: 0,
                 progressDescription: ''
+            },
+            // ── New badges (v0.2.9) ──────────────────────────────────────────
+            {
+                id: 'hot_streak_14',
+                name: '핫 스트릭',
+                description: '14일 연속 커밋 달성',
+                icon: '🔥',
+                category: BadgeCategory.COMMIT_MASTER,
+                rarity: BadgeRarity.UNCOMMON,
+                criteria: { type: 'streak', threshold: 14 },
+                unlocked: false,
+                progress: 0,
+                progressDescription: ''
+            },
+            {
+                id: 'hot_streak_50',
+                name: '레전더리 스트릭',
+                description: '50일 연속 커밋 달성',
+                icon: '⚡',
+                category: BadgeCategory.COMMIT_MASTER,
+                rarity: BadgeRarity.LEGENDARY,
+                criteria: { type: 'streak', threshold: 50 },
+                unlocked: false,
+                progress: 0,
+                progressDescription: ''
+            },
+            {
+                id: 'doc_writer',
+                name: '문서 작성자',
+                description: '커밋의 20% 이상이 문서 파일 변경',
+                icon: '📝',
+                category: BadgeCategory.CODE_QUALITY,
+                rarity: BadgeRarity.UNCOMMON,
+                criteria: { type: 'percentage', threshold: 20 },
+                unlocked: false,
+                progress: 0,
+                progressDescription: ''
+            },
+            {
+                id: 'test_champion',
+                name: '테스트 챔피언',
+                description: '커밋의 15% 이상이 테스트 파일 변경',
+                icon: '✅',
+                category: BadgeCategory.CODE_QUALITY,
+                rarity: BadgeRarity.RARE,
+                criteria: { type: 'percentage', threshold: 15 },
+                unlocked: false,
+                progress: 0,
+                progressDescription: ''
+            },
+            {
+                id: 'refactor_hero',
+                name: '리팩터 히어로',
+                description: '삭제 라인이 추가 라인보다 많은 커밋이 30% 이상',
+                icon: '♻️',
+                category: BadgeCategory.CODE_QUALITY,
+                rarity: BadgeRarity.RARE,
+                criteria: { type: 'percentage', threshold: 30 },
+                unlocked: false,
+                progress: 0,
+                progressDescription: ''
+            },
+            {
+                id: 'midnight_coder',
+                name: '미드나이트 코더',
+                description: '자정(00:00~03:59) 커밋이 10% 이상',
+                icon: '🌙',
+                category: BadgeCategory.CONSISTENCY,
+                rarity: BadgeRarity.UNCOMMON,
+                criteria: { type: 'percentage', threshold: 10 },
+                unlocked: false,
+                progress: 0,
+                progressDescription: ''
+            },
+            {
+                id: 'speed_demon',
+                name: '스피드 데몬',
+                description: '하루 평균 3회 이상 커밋',
+                icon: '💨',
+                category: BadgeCategory.COMMIT_MASTER,
+                rarity: BadgeRarity.UNCOMMON,
+                criteria: { type: 'count', threshold: 3 },
+                unlocked: false,
+                progress: 0,
+                progressDescription: ''
+            },
+            {
+                id: 'first_blood',
+                name: '퍼스트 블러드',
+                description: '오전 9시 이전 첫 커밋 비율 20% 이상',
+                icon: '🌅',
+                category: BadgeCategory.CONSISTENCY,
+                rarity: BadgeRarity.COMMON,
+                criteria: { type: 'percentage', threshold: 20 },
+                unlocked: false,
+                progress: 0,
+                progressDescription: ''
+            },
+            {
+                id: 'release_maker',
+                name: '릴리스 메이커',
+                description: 'main/master 브랜치에 커밋 20개 이상',
+                icon: '🚀',
+                category: BadgeCategory.MILESTONE,
+                rarity: BadgeRarity.RARE,
+                criteria: { type: 'count', threshold: 20 },
+                unlocked: false,
+                progress: 0,
+                progressDescription: ''
+            },
+            {
+                id: 'mono_focus',
+                name: '모노 포커스',
+                description: '단일 파일 타입에 80% 이상 집중',
+                icon: '🎯',
+                category: BadgeCategory.EXPLORER,
+                rarity: BadgeRarity.COMMON,
+                criteria: { type: 'percentage', threshold: 80 },
+                unlocked: false,
+                progress: 0,
+                progressDescription: ''
+            },
+            {
+                id: 'code_reviewer',
+                name: '코드 리뷰어',
+                description: '3개 이하 파일 변경 커밋이 40% 이상 (리뷰 친화적 커밋 패턴)',
+                icon: '👁️',
+                category: BadgeCategory.COLLABORATOR,
+                rarity: BadgeRarity.RARE,
+                criteria: { type: 'percentage', threshold: 40 },
+                unlocked: false,
+                progress: 0,
+                progressDescription: ''
             }
         ];
     }
@@ -379,6 +512,39 @@ export class BadgeSystem {
 
             case 'code_marathon':
                 return this.calculateStreakProgress(commits, 60);
+
+            case 'hot_streak_14':
+                return this.calculateStreakProgress(commits, 14);
+
+            case 'hot_streak_50':
+                return this.calculateStreakProgress(commits, 50);
+
+            case 'doc_writer':
+                return this.calculateDocCommitsProgress(commits, criteria.threshold);
+
+            case 'test_champion':
+                return this.calculateTestCommitsProgress(commits, criteria.threshold);
+
+            case 'refactor_hero':
+                return this.calculateRefactorCommitsProgress(commits, criteria.threshold);
+
+            case 'midnight_coder':
+                return this.calculateMidnightCommitsProgress(metrics, criteria.threshold);
+
+            case 'speed_demon':
+                return this.calculateDailyAverageProgress(metrics, period, criteria.threshold);
+
+            case 'first_blood':
+                return this.calculateEarlyMorningCommitsProgress(metrics, criteria.threshold);
+
+            case 'release_maker':
+                return this.calculateReleaseMakerProgress(metrics, criteria.threshold);
+
+            case 'mono_focus':
+                return this.calculateMonoFocusProgress(metrics, criteria.threshold);
+
+            case 'code_reviewer':
+                return this.calculateCodeReviewerProgress(commits, criteria.threshold);
 
             default:
                 return { current: 0, required: criteria.threshold, unit: 'units', description: 'Unknown badge' };
@@ -577,6 +743,78 @@ export class BadgeSystem {
             unit: 'file types',
             description: 'File types with significant contribution'
         };
+    }
+
+    private calculateDocCommitsProgress(commits: CommitData[], required: number): BadgeProgress {
+        if (commits.length === 0) {
+            return { current: 0, required, unit: '%', description: 'Commits touching doc files' };
+        }
+        const docExtensions = /\.(md|txt|rst|adoc|wiki|pdf|docx?|tex)$/i;
+        const docCommits = commits.filter(c =>
+            c.files.some(f => docExtensions.test(f))
+        ).length;
+        const pct = Math.round((docCommits / commits.length) * 100);
+        return { current: pct, required, unit: '%', description: 'Commits touching documentation files' };
+    }
+
+    private calculateTestCommitsProgress(commits: CommitData[], required: number): BadgeProgress {
+        if (commits.length === 0) {
+            return { current: 0, required, unit: '%', description: 'Commits touching test files' };
+        }
+        const testPattern = /(test|spec|__tests__|\.test\.|\.spec\.)/i;
+        const testCommits = commits.filter(c =>
+            c.files.some(f => testPattern.test(f))
+        ).length;
+        const pct = Math.round((testCommits / commits.length) * 100);
+        return { current: pct, required, unit: '%', description: 'Commits touching test files' };
+    }
+
+    private calculateRefactorCommitsProgress(commits: CommitData[], required: number): BadgeProgress {
+        if (commits.length === 0) {
+            return { current: 0, required, unit: '%', description: 'Cleanup commits (deletions > insertions)' };
+        }
+        const cleanupCommits = commits.filter(c => (c.deletions || 0) > (c.insertions || 0)).length;
+        const pct = Math.round((cleanupCommits / commits.length) * 100);
+        return { current: pct, required, unit: '%', description: 'Cleanup commits (deletions > insertions)' };
+    }
+
+    private calculateMidnightCommitsProgress(metrics: MetricsData, required: number): BadgeProgress {
+        const midnightHours = [0, 1, 2, 3];
+        const midnightCommits = midnightHours.reduce((sum, h) =>
+            sum + (metrics.timeAnalysis.hourlyActivity[h.toString()] || 0), 0);
+        const pct = metrics.totalCommits > 0
+            ? Math.round((midnightCommits / metrics.totalCommits) * 100) : 0;
+        return { current: pct, required, unit: '%', description: 'Commits between midnight and 4 AM' };
+    }
+
+    private calculateEarlyMorningCommitsProgress(metrics: MetricsData, required: number): BadgeProgress {
+        const earlyHours = [5, 6, 7, 8];
+        const earlyCommits = earlyHours.reduce((sum, h) =>
+            sum + (metrics.timeAnalysis.hourlyActivity[h.toString()] || 0), 0);
+        const pct = metrics.totalCommits > 0
+            ? Math.round((earlyCommits / metrics.totalCommits) * 100) : 0;
+        return { current: pct, required, unit: '%', description: 'Commits before 9 AM' };
+    }
+
+    private calculateReleaseMakerProgress(metrics: MetricsData, required: number): BadgeProgress {
+        return { current: metrics.totalCommits, required, unit: 'commits', description: 'Total commits (main/master branch)' };
+    }
+
+    private calculateMonoFocusProgress(metrics: MetricsData, required: number): BadgeProgress {
+        if (metrics.fileTypeStats.length === 0) {
+            return { current: 0, required, unit: '%', description: 'Dominant file type percentage' };
+        }
+        const maxPct = Math.max(...metrics.fileTypeStats.map(s => s.percentage));
+        return { current: Math.round(maxPct), required, unit: '%', description: 'Dominant file type percentage' };
+    }
+
+    private calculateCodeReviewerProgress(commits: CommitData[], required: number): BadgeProgress {
+        if (commits.length === 0) {
+            return { current: 0, required, unit: '%', description: 'Small-scope commits (≤3 files)' };
+        }
+        const smallCommits = commits.filter(c => c.files.length <= 3).length;
+        const pct = Math.round((smallCommits / commits.length) * 100);
+        return { current: pct, required, unit: '%', description: 'Small-scope commits (≤3 files)' };
     }
 
     // 배지 카테고리별 필터링
