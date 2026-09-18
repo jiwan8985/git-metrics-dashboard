@@ -7,6 +7,48 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [0.3.1] - 2026-09-18
+
+### Fixed
+- 🔒 **Security: stored XSS via Git author name** — the TOP 3 contributor podium, developer ranking list, and top-contributor summary chip rendered author names without HTML-escaping. Since anyone who can commit to a repository controls their own `git config user.name`, this allowed malicious markup to execute inside the dashboard webview. All author-name render paths now go through the existing HTML-escaping helper.
+- 🔒 **Security: stored XSS in exported HTML reports** — the HTML report generator's escaping helper existed but was never actually called. Author names, refactor-radar file paths, and branch names in exported HTML reports are now escaped before being written to disk.
+- 🔒 **CSV formula-injection guard could be bypassed by a comma** — a value that both started with a formula-injection character (`=`, `+`, `@`, `-`) and contained a comma (e.g. an author name written "Last, First") was returned unquoted, corrupting the CSV row it appeared in. The guard and the comma/quote-wrapping logic are now both applied to the same value.
+- Fixed a rare Git log parsing edge case where a tracked filename containing a literal `|` character could be misread as the start of a new commit, silently dropping data for that commit and the next one.
+
+### Improved
+- **Refresh feedback** — clicking Refresh, changing the date range, or switching branches now shows a brief loading overlay instead of the dashboard appearing to do nothing while it re-analyzes the repository.
+- Slimmer, theme-aware scrollbars on the contributor, file-hotspot, and file-type lists.
+- Keyboard focus outlines added to buttons, file links, and dropdowns for keyboard navigation.
+
+### Added
+- `CONTRIBUTING.md` and GitHub issue templates (bug report / feature request) for contributors opening PRs or issues.
+
+---
+
+## [0.3.0] - 2026-09-18
+
+### Added
+- 🖱️ **Click-to-open files** — file names in Refactor Radar and the file hotspot table now open directly in the editor beside the dashboard
+- 📅 **Custom Date Range** — pick a start date instead of only the fixed 7/30/90/180/365-day presets
+- 👥 **Me vs Team Average** — pick a contributor (auto-selected to you when your `git config user.name` matches) and compare their commits, files, +/- lines, and daily average against the team average
+- ⭐ **`Git Metrics: Rate on Marketplace`** command — jump straight to the Marketplace review page any time, independent of the existing success-gated review prompt
+- ✨ **"What's New" notification** — after an automatic extension update, a one-time notification links to this changelog
+- 🤝 **Share with Team** now also available from the Explorer right-click context menu
+
+### Improved
+- Review prompt now also triggers at badge-unlock time (previously only after successful exports), in addition to the existing 3-success gate, 30-day snooze, and "don't ask again"
+- Marketplace-link attribution footer added to **Copy Summary** and CSV exports, matching the other export/copy paths
+- Keywords tuned for search: added `pull request`, `pr readiness`, `release notes`, `conventional commits`; removed the low-intent `manager-report` keyword
+- README rewritten as a single English document (language-specific READMEs removed — this only affects the Marketplace listing text, not the extension's UI, which still supports `en`/`ko`/`ja`/`zh-CN` via `gitMetrics.language`); version badge, minimum VS Code version, and Commands table now match the shipped extension
+- Narrow-panel table overflow — author and file-type tables now scroll horizontally instead of breaking layout below ~780px
+- `SECURITY.md` merged into `PRIVACY.md` (opened via `Git Metrics: Open Privacy & Security Notes`); `SUPPORT.md` removed — `Git Metrics: Get Support` now opens the GitHub Issues page directly
+
+### Removed
+- ~180 lines of unused theming/chart-color code in the dashboard styles module (dead code, not referenced by the actual rendered dashboard or reports)
+- GitHub Actions CI/publish workflows — build, lint, test, and publish are run locally (`npm run compile` / `lint` / `test` / `package` / `publish`)
+
+---
+
 ## [0.2.9] - 2026-05-02
 
 ### Added

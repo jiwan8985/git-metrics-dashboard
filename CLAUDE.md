@@ -57,13 +57,13 @@ extension.ts                   ← Activation, command registration, event wirin
 
 ## Key Extension Details
 
-- **Minimum VS Code version:** 1.102.0
+- **Minimum VS Code version:** 1.85.0
 - **Entry point:** `./out/extension.js` (compiled from `src/extension.ts`)
-- **Activation event:** `onCommand` for all `gitMetrics.*` commands
+- **Activation events:** `workspaceContains:.git`, `onStartupFinished` (VS Code auto-generates `onView`/`onCommand` activation from the `contributes` block, so those are no longer listed explicitly)
 - **Webview content security:** inline scripts are used; the CSP `nonce` pattern is applied for each panel
 
 **Registered commands** (prefix `gitMetrics.`):
-`showDashboard`, `quickExport`, `customExport`, `openReportsFolder`, `toggleTheme`, `refreshTreeView`, `changeLanguage`, `windowsTroubleshoot`
+`showDashboard`, `quickExport`, `customExport`, `openReportsFolder`, `toggleTheme`, `refreshTreeView`, `changeLanguage`, `openPrivacySecurity`, `openSupport`, `windowsTroubleshoot`, `copyReadmeBadge`, `rateExtension`, `shareWithTeam`, `generateReleaseNotes`, `generateMonthlyBrief`, `conventionalCommit`
 
 **Key configuration settings** (namespace `gitMetrics`):
 `defaultPeriod` (days, 1–365), `autoRefresh`, `autoRefreshInterval`, `theme` (auto/light/dark), `language` (auto/en/ko/ja/zh-CN), `export.*`

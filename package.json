@@ -2,7 +2,7 @@
   "name": "git-metrics-dashboard",
   "displayName": "Git Metrics Dashboard",
   "description": "Turn your Git history into a repository health score with risk detection, refactor radar, contributor analytics, and exportable team reports.",
-  "version": "0.2.13",
+  "version": "0.3.1",
   "publisher": "jiwan-dev",
   "repository": {
     "type": "git",
@@ -47,9 +47,12 @@
     "contributors",
     "report",
     "export",
-    "manager-report",
     "badges",
-    "achievements"
+    "achievements",
+    "pull request",
+    "pr readiness",
+    "release notes",
+    "conventional commits"
   ],
   "engines": {
     "vscode": "^1.85.0"
@@ -59,17 +62,6 @@
     "Other"
   ],
   "activationEvents": [
-    "onView:gitMetrics",
-    "onCommand:gitMetrics.showDashboard",
-    "onCommand:gitMetrics.refreshTreeView",
-    "onCommand:gitMetrics.quickExport",
-    "onCommand:gitMetrics.customExport",
-    "onCommand:gitMetrics.openPrivacySecurity",
-    "onCommand:gitMetrics.openSupport",
-    "onCommand:gitMetrics.windowsTroubleshoot",
-    "onCommand:gitMetrics.copyReadmeBadge",
-    "onCommand:gitMetrics.shareWithTeam",
-    "onCommand:gitMetrics.generateReleaseNotes",
     "workspaceContains:.git",
     "onStartupFinished"
   ],
@@ -138,7 +130,7 @@
       },
       {
         "command": "gitMetrics.openSupport",
-        "title": "Open Support Guide",
+        "title": "Get Support (GitHub Issues)",
         "category": "Git Metrics"
       },
       {
@@ -152,6 +144,11 @@
         "category": "Git Metrics"
       },
       {
+        "command": "gitMetrics.rateExtension",
+        "title": "Rate on Marketplace",
+        "category": "Git Metrics"
+      },
+      {
         "command": "gitMetrics.shareWithTeam",
         "title": "Share with Team (.vscode/extensions.json)",
         "category": "Git Metrics"
@@ -159,6 +156,16 @@
       {
         "command": "gitMetrics.generateReleaseNotes",
         "title": "Generate Release Notes",
+        "category": "Git Metrics"
+      },
+      {
+        "command": "gitMetrics.generateMonthlyBrief",
+        "title": "Generate Monthly Brief",
+        "category": "Git Metrics"
+      },
+      {
+        "command": "gitMetrics.conventionalCommit",
+        "title": "Conventional Commit Helper",
         "category": "Git Metrics"
       }
     ],
@@ -223,6 +230,10 @@
         {
           "command": "gitMetrics.toggleTheme",
           "group": "gitmetrics@4"
+        },
+        {
+          "command": "gitMetrics.shareWithTeam",
+          "group": "gitmetrics@5"
         }
       ]
     },
@@ -326,6 +337,18 @@
           "default": false,
           "description": "Show notification message when Git changes are detected"
         },
+        "gitMetrics.dailyCommitGoal": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "maximum": 50,
+          "description": "Daily commit goal (0 = disabled). Shows progress in status bar: 📝 2/5 today"
+        },
+        "gitMetrics.streakDangerAlert": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a reminder at 8 PM if you haven't committed today and have an active streak"
+        },
         "gitMetrics.language": {
           "type": "string",
           "enum": [
@@ -424,7 +447,10 @@
     "test:integration": "vscode-test",
     "test": "npm run test:unit",
     "package": "vsce package",
-    "publish": "vsce publish"
+    "publish": "vsce publish",
+    "compile:integration": "tsc -p tsconfig.integration.json",
+    "pretest:integration": "npm run compile && npm run compile:integration",
+    "baseline:phase0": "npm run compile && node scripts/phase0-baseline.cjs"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",

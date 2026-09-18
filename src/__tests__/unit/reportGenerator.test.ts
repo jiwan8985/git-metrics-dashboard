@@ -42,41 +42,26 @@ describe('ReportGenerator', () => {
         });
 
         it('should escape CSV special characters', () => {
-            const mockMetrics = createMockMetrics();
-            mockMetrics.authorStats = [{
-                name: 'Test User "Quoted"',
-                commits: 10,
-                files: 5,
-                insertions: 100,
-                deletions: 20,
-                percentage: 50,
-                rank: 1,
-                firstCommit: new Date(),
-                lastCommit: new Date(),
-                averageCommitsPerDay: 1
-            }];
-
-            // CSV should properly escape quotes
-            expect(reportGenerator).toBeDefined();
+            const escaped = (reportGenerator as any).escapeCSV('Test User "Quoted"');
+            expect(escaped).toBe('"Test User ""Quoted"""');
         });
 
         it('should prevent formula injection in CSV', () => {
-            const mockMetrics = createMockMetrics();
-            mockMetrics.authorStats = [{
-                name: '=1+1',
-                commits: 10,
-                files: 5,
-                insertions: 100,
-                deletions: 20,
-                percentage: 50,
-                rank: 1,
-                firstCommit: new Date(),
-                lastCommit: new Date(),
-                averageCommitsPerDay: 1
-            }];
+            const escaped = (reportGenerator as any).escapeCSV('=1+1');
+            expect(escaped).toBe("'=1+1");
+            expect(escaped.startsWith("'")).toBe(true);
+        });
 
-            // Formula injection should be prevented
-            expect(reportGenerator).toBeDefined();
+        it('should keep formula-injection guard and comma-quoting both applied to the same value', () => {
+            // A value that both starts with a formula-injection character AND contains a
+            // comma must still be comma-safe (quoted), not just formula-safe.
+            const escaped = (reportGenerator as any).escapeCSV('-John, Doe');
+            expect(escaped).toBe('"\'-John, Doe"');
+
+            // Splitting a CSV row on this value must not produce an extra field.
+            const row = `a,${escaped},b`;
+            const fields = row.match(/(".*?"|[^,]+)(?=,|$)/g);
+            expect(fields).toHaveLength(3);
         });
     });
 
@@ -130,6 +115,28 @@ describe('ReportGenerator', () => {
             };
 
             expect(reportGenerator).toBeDefined();
+        });
+
+        it('should escape a git-derived author name so it cannot inject markup into the report', () => {
+            const mockMetrics = createMockMetrics();
+            mockMetrics.authorStats = [{
+                ...mockMetrics.authorStats[0],
+                name: '<img src=x onerror=alert(1)>'
+            }];
+            const mockOptions: ReportOptions = {
+                format: 'html',
+                includeSummary: true,
+                includeAuthorStats: true,
+                includeFileStats: false,
+                includeBadges: false,
+                includeTimeAnalysis: false,
+                period: 30
+            };
+
+            const output = (reportGenerator as any).generateHTMLReport(mockMetrics, mockOptions);
+
+            expect(output).not.toContain('<img src=x onerror=alert(1)>');
+            expect(output).toContain('&lt;img src=x onerror=alert(1)&gt;');
         });
     });
 

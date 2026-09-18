@@ -409,8 +409,9 @@ export class GitAnalyzer {
             const trimmedLine = line.trim();
             if (!trimmedLine) { continue; }
 
-            // 커밋 헤더: hash|author|date|message 형식 (| 포함)
-            if (trimmedLine.includes('|')) {
+            // 커밋 헤더: hash|author|date|message 형식. 40자리 hex 해시로 시작하는지까지 확인해
+            // numstat 라인의 파일명에 우연히 '|'가 포함된 경우(파일명에 파이프 문자 사용) 오인식을 방지한다.
+            if (/^[0-9a-f]{40}\|/.test(trimmedLine)) {
                 // 이전 커밋 저장
                 if (currentCommit && currentCommit.hash) {
                     const commit = this.createCommitData(currentCommit);
@@ -1082,6 +1083,22 @@ export class GitAnalyzer {
                 .sort((a, b) => a.localeCompare(b));
         } catch {
             return [];
+        }
+    }
+
+    async getCurrentUserName(): Promise<string | undefined> {
+        if (!this.workspaceRoot) {
+            return undefined;
+        }
+
+        try {
+            const { stdout } = await execFileAsync('git', [
+                'config',
+                'user.name'
+            ], { cwd: this.workspaceRoot });
+            return stdout.trim() || undefined;
+        } catch {
+            return undefined;
         }
     }
 

@@ -1,0 +1,12 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "outDir": "out-integration",
+        "types": ["node", "mocha"],
+        "declaration": false,
+        "declarationMap": false,
+        "noEmitOnError": true
+    },
+    "include": ["src/test/**/*.ts"],
+    "exclude": ["node_modules", "src/__tests__", "src/__mocks__"]
+}
