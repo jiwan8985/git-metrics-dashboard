@@ -57,10 +57,9 @@ See [CLAUDE.md](./CLAUDE.md) for an architecture overview (`GitAnalyzer`, `Dashb
 
 ## Reporting bugs / requesting features
 
-Use the issue templates at
-[github.com/jiwan8985/git-metrics-dashboard/issues/new/choose](https://github.com/jiwan8985/git-metrics-dashboard/issues/new/choose).
-Include your VS Code version, extension version, and OS for bug reports — see the template for
-the full checklist.
+Open an issue at
+[github.com/jiwan8985/git-metrics-dashboard/issues](https://github.com/jiwan8985/git-metrics-dashboard/issues).
+For bug reports, please include your VS Code version, extension version, and OS.
 
 ## License
 

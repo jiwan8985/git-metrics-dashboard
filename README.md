@@ -253,7 +253,7 @@ Run **Git Metrics: Run Windows Troubleshooter** from the Command Palette for an 
 
 See [CONTRIBUTING.md](https://github.com/jiwan8985/git-metrics-dashboard/blob/main/CONTRIBUTING.md) for local setup, build/test commands, and PR guidelines.
 
-Bug reports and feature requests: [GitHub Issues](https://github.com/jiwan8985/git-metrics-dashboard/issues/new/choose)
+Bug reports and feature requests: [GitHub Issues](https://github.com/jiwan8985/git-metrics-dashboard/issues)
 
 ---
 

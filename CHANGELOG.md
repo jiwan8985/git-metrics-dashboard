@@ -21,7 +21,7 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Keyboard focus outlines added to buttons, file links, and dropdowns for keyboard navigation.
 
 ### Added
-- `CONTRIBUTING.md` and GitHub issue templates (bug report / feature request) for contributors opening PRs or issues.
+- `CONTRIBUTING.md` for contributors opening PRs.
 
 ---
 

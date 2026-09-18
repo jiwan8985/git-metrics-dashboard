@@ -37,9 +37,6 @@ vsc-extension-quickstart.md
 
 # Internal development docs (not for end users)
 CLAUDE.md
-AGENTS.md
-docs/**
-.github/**
 
 # VSIX artifacts
 *.vsix
