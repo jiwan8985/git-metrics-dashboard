@@ -1085,6 +1085,22 @@ export class GitAnalyzer {
         }
     }
 
+    async getCurrentUserName(): Promise<string | undefined> {
+        if (!this.workspaceRoot) {
+            return undefined;
+        }
+
+        try {
+            const { stdout } = await execFileAsync('git', [
+                'config',
+                'user.name'
+            ], { cwd: this.workspaceRoot });
+            return stdout.trim() || undefined;
+        } catch {
+            return undefined;
+        }
+    }
+
     async getBranchComparison(targetBranch?: string): Promise<BranchComparison | undefined> {
         if (!this.workspaceRoot || !targetBranch || targetBranch === 'N/A') {
             return undefined;

@@ -495,10 +495,7 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     const openSupportDisposable = vscode.commands.registerCommand('gitMetrics.openSupport', async () => {
-        await openBundledDocument(
-            'SUPPORT.md',
-            'Support guide is not bundled in this installation.'
-        );
+        await vscode.env.openExternal(vscode.Uri.parse('https://github.com/jiwan8985/git-metrics-dashboard/issues'));
     });
 
     // README 뱃지 복사 명령어
@@ -515,6 +512,13 @@ export function activate(context: vscode.ExtensionContext) {
             ));
         }
         triggerReviewPromptIfReady(context);
+    });
+
+    // 마켓플레이스 리뷰 바로가기 (언제든 직접 실행 가능, 자동 유도 게이트와 별개)
+    const rateExtensionDisposable = vscode.commands.registerCommand('gitMetrics.rateExtension', async () => {
+        await vscode.env.openExternal(vscode.Uri.parse(
+            'https://marketplace.visualstudio.com/items?itemName=jiwan-dev.git-metrics-dashboard&ssr=false#review-details'
+        ));
     });
 
     // 팀 공유 명령어
@@ -821,6 +825,7 @@ export function activate(context: vscode.ExtensionContext) {
             await vscode.env.clipboard.writeText(text);
             vscode.window.showInformationMessage('📋 공유 텍스트가 클립보드에 복사되었습니다!');
         }
+        triggerReviewPromptIfReady(context);
     });
 
     // 상태바 리포트 버튼 추가
@@ -903,6 +908,7 @@ export function activate(context: vscode.ExtensionContext) {
         openSupportDisposable,
         windowsTroubleshootDisposable,
         copyReadmeBadgeDisposable,
+        rateExtensionDisposable,
         shareWithTeamDisposable,
         generateReleaseNotesDisposable,
         generateMonthlyBriefDisposable,
@@ -986,6 +992,22 @@ export function activate(context: vscode.ExtensionContext) {
                 ));
             }
         });
+    } else {
+        // 업데이트 감지 시 "새 소식" 알림 (최초 설치 때는 위 환영 메시지가 이미 처리하므로 제외)
+        const currentVersion: string = context.extension.packageJSON.version;
+        const lastSeenVersion = context.globalState.get<string>('gitMetrics.lastSeenVersion');
+        if (lastSeenVersion && lastSeenVersion !== currentVersion) {
+            vscode.window.showInformationMessage(
+                `✨ Git Metrics Dashboard가 v${currentVersion}로 업데이트되었습니다!`,
+                '변경 사항 보기',
+                '닫기'
+            ).then(action => {
+                if (action === '변경 사항 보기') {
+                    openBundledDocument('CHANGELOG.md', 'Changelog is not bundled in this installation.');
+                }
+            });
+        }
+        context.globalState.update('gitMetrics.lastSeenVersion', currentVersion);
     }
 
 }

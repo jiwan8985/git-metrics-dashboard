@@ -20,6 +20,7 @@ module.exports = {
     '!src/extension.ts',
     '!src/dashboardProvider.ts',
     '!src/__tests__/**',
+    '!src/test/**',
   ],
   coverageThreshold: {
     global: {

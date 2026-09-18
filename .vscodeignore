@@ -36,14 +36,13 @@ vsc-extension-quickstart.md
 **/.vscode-test.*
 
 # Internal development docs (not for end users)
-TODO.md
-REFACTORING_SUMMARY.md
-DEVELOPMENT_GUIDE.md
-MARKETPLACE_STRATEGY.md
-PHASE_1_COMPLETE.md
-DEPLOYMENT_GUIDE.md
 CLAUDE.md
 AGENTS.md
+docs/**
 
 # VSIX artifacts
 *.vsix
+
+tsconfig.integration.json
+out-integration/**
+tmp/**

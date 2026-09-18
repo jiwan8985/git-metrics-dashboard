@@ -3,28 +3,34 @@
 **Turn your Git history into a repository health score** — risk detection, refactor radar, contributor analytics, and exportable team reports. No login. No cloud upload. Local-first.
 
 [![Install in VS Code](https://img.shields.io/badge/Install%20in-VS%20Code-007ACC?logo=visualstudiocode&logoColor=white)](vscode:extension/jiwan-dev.git-metrics-dashboard)
-![Version](https://img.shields.io/badge/version-0.2.13-blue.svg)
+![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)
 ![VS Code](https://img.shields.io/badge/VS%20Code-1.85.0+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-yellow.svg)
 ![Languages](https://img.shields.io/badge/UI%20languages-4-brightgreen.svg)
 
-**English** | [한국어](./README.ko.md) | [日本語](./README.ja.md) | [简体中文](./README.zh-CN.md)
+- 🧠 **One-screen health score** for any Git repo — install and open, no setup
+- 📤 **Export HTML/JSON/CSV/Markdown reports** for standups, reviews, and stakeholders
+- 🔒 **100% local** — nothing is ever uploaded
+
+<!-- Screenshots/GIF go here: Command Center health score, calendar heatmap + contributor podium, Refactor Radar, HTML report export, badge unlock toast, light/dark theme comparison -->
 
 ---
 
 ## ✨ Key Features
 
 ### 📈 Dashboard Analytics
-- **🧠 Repository Command Center** *(v0.2.4)* — one-screen repository health score based on momentum, churn, commit quality, collaboration, and branch hygiene
-- **🌿 Branch-scoped analytics** *(v0.2.4)* — select a local branch and recalculate health, churn, contributors, and reports for that branch
-- **🔀 Base Branch Comparison** *(v0.2.4)* — see ahead/behind commits and PR-sized diff stats against `main`, `master`, or `develop`
-- **🎯 Recommended Next Moves** *(v0.2.4)* — prioritized, actionable suggestions generated from real repository signals
-- **🔥 Refactor Radar** *(v0.2.4)* — highlights high-risk files by combining churn, commit frequency, and change volume
-- **📋 Copy Brief** *(v0.2.4)* — copy a standup-ready health summary with next actions and refactor candidates
-- **📅 Commit Calendar Heatmap** *(v0.2.3)* — GitHub-style 16-week activity grid with 5 color intensity levels
-- **🏆 Top 3 Contributor Podium** *(v0.2.3)* — Gold/Silver/Bronze podium above the author ranking list
-- **📋 Copy Summary** *(v0.2.3)* — One-click clipboard copy of a formatted stats summary
-- **Commit Streak** — current and longest consecutive commit streak with activity rate
+- **🧠 Repository Command Center** — one-screen repository health score based on momentum, churn, commit quality, collaboration, and branch hygiene
+- **🌿 Branch-scoped analytics** — select a local branch and recalculate health, churn, contributors, and reports for that branch
+- **🔀 Base Branch Comparison** — see ahead/behind commits and PR-sized diff stats against `main`, `master`, or `develop`
+- **🎯 Recommended Next Moves** — prioritized, actionable suggestions generated from real repository signals
+- **🔥 Refactor Radar** — highlights high-risk files by combining churn, commit frequency, and change volume; click any file to open it right beside the dashboard
+- **Custom Date Range** — pick a start date instead of the fixed 7/30/90/180/365-day presets
+- **Me vs Team Average** — pick a contributor to compare their commits, files, +/- lines, and daily average against the team average
+- **📋 Copy Brief** — copy a standup-ready health summary with next actions and refactor candidates
+- **📅 Commit Calendar Heatmap** — GitHub-style 16-week activity grid with 5 color intensity levels
+- **🏆 Top 3 Contributor Podium** — Gold/Silver/Bronze podium above the author ranking list
+- **📋 Copy Summary** — one-click clipboard copy of a formatted stats summary
+- **Commit Streak & Daily Goal** — current/longest consecutive commit streak, activity rate, an optional daily commit goal shown in the status bar, and an 8 PM reminder before an active streak breaks
 - **Week-over-Week Trend** — compare commit volume between first and second half of the period (▲▼ indicator)
 - **Conventional Commits Analysis** — compliance rate for feat/fix/chore/docs/etc. with donut chart
 - **Branch Status** — current branch name, total and active branch counts
@@ -34,12 +40,13 @@
 - **Contributor Rankings** — contribution metrics and activity patterns per author
 - **File Type Analysis** — support for 70+ programming languages
 - **Time-based Analysis** — hourly and daily activity heatmaps
-- **Achievement Badges** — gamification system with 20+ badges across 5 rarity tiers (including 3 new EPIC badges in v0.2.3)
+- **Achievement Badges** — gamification system with 35 badges across 5 rarity tiers
 - **Smart Themes** — full dark / light / auto theme support
 - **Polished Responsive UI** — modern command center, insight cards, quick navigation, and mobile-friendly dashboard layout
 
 ### 📄 Report Export
-- **Multiple Formats**: HTML, JSON, CSV, Markdown
+- **4 Formats**: HTML, JSON, CSV, Markdown
+- **4 Template Presets**: Full / Executive / PR / Developer — pick the shape that matches your audience
 - **Command Center Reports**: health score, risk signals, next moves, and refactor candidates are included in exported reports
 - **Branch-aware Reports**: quick and custom exports can target a selected branch
 - **Theme Integration**: VS Code theme automatically applied to HTML reports
@@ -47,12 +54,20 @@
 - **Badge Integration**: achievement badges included in reports
 - **Professional Quality**: suitable for team presentations and documentation
 
+### 🆕 Release Notes Generator
+- `Git Metrics: Generate Release Notes` groups every commit since the last tag by Conventional Commit type (feat/fix/chore/docs/…)
+- Copy to clipboard or save as `RELEASE_NOTES.md`
+
+### 🛠️ Developer Workflow Tools
+- **Conventional Commit Helper** — guided quick-pick for building a Conventional Commit message (type, scope, description)
+- **Generate Monthly Brief** — 30/60/90-day engineering brief, copied to clipboard or saved as `MONTHLY_BRIEF.md`
+- **Windows Troubleshooter** — diagnoses common Windows Git/environment issues and offers one-click fixes
+
 ### 🏢 Commercial Readiness
 - **Local-first privacy model**: repository data is analyzed locally and is not uploaded by the extension
 - **Security-aware exports**: CSV formula injection mitigation and local report output paths
 - **Adoption documents**: bundled Privacy, Security, and Support guides available from the Command Palette
 - **Executive reporting**: Command Center insights are exportable for standups, reviews, and stakeholder updates
-- **Lean package**: no runtime `node_modules` payload in the VSIX after dependency cleanup
 
 ---
 
@@ -116,6 +131,8 @@ Reports are saved to `<workspace>/git-metrics-reports/` by default (configurable
   "gitMetrics.autoRefresh": false,
   "gitMetrics.autoRefreshInterval": 5000,
   "gitMetrics.showChangeNotification": false,
+  "gitMetrics.dailyCommitGoal": 0,
+  "gitMetrics.streakDangerAlert": true,
   "gitMetrics.export.defaultFormat": "html",
   "gitMetrics.export.useThemeInReports": true,
   "gitMetrics.export.autoOpenAfterExport": false,
@@ -130,6 +147,10 @@ Reports are saved to `<workspace>/git-metrics-reports/` by default (configurable
 | `language` | `"auto"` | UI language: `auto` / `en` / `ko` / `ja` / `zh-CN` |
 | `autoRefresh` | `false` | Auto-refresh on Git changes |
 | `autoRefreshInterval` | `5000` | Change detection interval in ms |
+| `dailyCommitGoal` | `0` | Daily commit goal shown in the status bar (`0` disables it) |
+| `streakDangerAlert` | `true` | Remind you at 8 PM if today has no commit and a streak is active |
+
+The full setting list (including per-report export toggles) is available in VS Code's Settings UI under **Git Metrics Dashboard**.
 
 ---
 
@@ -179,14 +200,22 @@ Or, inside the dashboard, click **🤝 Share with Team** to copy the snippet to 
 
 | Command | Shortcut | Description |
 |---------|----------|-------------|
-| `gitMetrics.showDashboard` | `Ctrl+Shift+G D` | Open analytics dashboard |
-| `gitMetrics.quickExport` | `Ctrl+Shift+G E` | Quick export with defaults |
+| `gitMetrics.showDashboard` | `Ctrl+Shift+G D` | Open the analytics dashboard |
+| `gitMetrics.quickExport` | `Ctrl+Shift+G E` | Quick export with default settings |
 | `gitMetrics.customExport` | — | Export with custom options |
 | `gitMetrics.toggleTheme` | `Ctrl+Shift+G T` | Toggle dashboard theme |
-| `gitMetrics.openReportsFolder` | — | Open reports output folder |
-| `gitMetrics.changeLanguage` | — | Change UI language |
-| `gitMetrics.openPrivacySecurity` | — | Open privacy notes |
-| `gitMetrics.openSupport` | — | Open support guide |
+| `gitMetrics.openReportsFolder` | — | Open the reports output folder |
+| `gitMetrics.refreshTreeView` | — | Refresh the sidebar tree view |
+| `gitMetrics.changeLanguage` | — | Change the UI language |
+| `gitMetrics.generateReleaseNotes` | — | Generate release notes from commits since the last tag |
+| `gitMetrics.generateMonthlyBrief` | — | Generate a 30/60/90-day engineering brief |
+| `gitMetrics.conventionalCommit` | — | Build a Conventional Commit message interactively |
+| `gitMetrics.shareWithTeam` | — | Copy a `.vscode/extensions.json` recommendation snippet |
+| `gitMetrics.copyReadmeBadge` | — | Copy a "Analyzed with Git Metrics Dashboard" README badge |
+| `gitMetrics.rateExtension` | — | Open the Marketplace review page directly |
+| `gitMetrics.openPrivacySecurity` | — | Open the bundled Privacy & Security notes |
+| `gitMetrics.openSupport` | — | Open the GitHub Issues page for support |
+| `gitMetrics.windowsTroubleshoot` | — | Diagnose and fix common Windows Git issues |
 
 ---
 
@@ -202,7 +231,7 @@ Or, inside the dashboard, click **🤝 Share with Team** to copy the snippet to 
 2. Check that commits exist within the selected period
 3. Try increasing `gitMetrics.defaultPeriod`
 
-**Copy Summary button does nothing**
+**Copy Summary / Copy Brief button does nothing**
 1. Check that the VS Code clipboard API is available (some restricted environments block it)
 2. Verify clipboard permissions on your OS
 
@@ -214,6 +243,9 @@ Or, inside the dashboard, click **🤝 Share with Team** to copy the snippet to 
 **Charts not rendering**
 1. Restart VS Code (`Developer: Reload Window`)
 2. Check VS Code version ≥ 1.85.0
+
+**Windows-specific issues**
+Run **Git Metrics: Run Windows Troubleshooter** from the Command Palette for an automated diagnosis.
 
 ---
 

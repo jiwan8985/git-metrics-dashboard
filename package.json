@@ -47,9 +47,12 @@
     "contributors",
     "report",
     "export",
-    "manager-report",
     "badges",
-    "achievements"
+    "achievements",
+    "pull request",
+    "pr readiness",
+    "release notes",
+    "conventional commits"
   ],
   "engines": {
     "vscode": "^1.85.0"
@@ -59,19 +62,6 @@
     "Other"
   ],
   "activationEvents": [
-    "onView:gitMetrics",
-    "onCommand:gitMetrics.showDashboard",
-    "onCommand:gitMetrics.refreshTreeView",
-    "onCommand:gitMetrics.quickExport",
-    "onCommand:gitMetrics.customExport",
-    "onCommand:gitMetrics.openPrivacySecurity",
-    "onCommand:gitMetrics.openSupport",
-    "onCommand:gitMetrics.windowsTroubleshoot",
-    "onCommand:gitMetrics.copyReadmeBadge",
-    "onCommand:gitMetrics.shareWithTeam",
-    "onCommand:gitMetrics.generateReleaseNotes",
-    "onCommand:gitMetrics.generateMonthlyBrief",
-    "onCommand:gitMetrics.conventionalCommit",
     "workspaceContains:.git",
     "onStartupFinished"
   ],
@@ -140,7 +130,7 @@
       },
       {
         "command": "gitMetrics.openSupport",
-        "title": "Open Support Guide",
+        "title": "Get Support (GitHub Issues)",
         "category": "Git Metrics"
       },
       {
@@ -151,6 +141,11 @@
       {
         "command": "gitMetrics.copyReadmeBadge",
         "title": "Copy README Badge",
+        "category": "Git Metrics"
+      },
+      {
+        "command": "gitMetrics.rateExtension",
+        "title": "Rate on Marketplace",
         "category": "Git Metrics"
       },
       {
@@ -235,6 +230,10 @@
         {
           "command": "gitMetrics.toggleTheme",
           "group": "gitmetrics@4"
+        },
+        {
+          "command": "gitMetrics.shareWithTeam",
+          "group": "gitmetrics@5"
         }
       ]
     },
@@ -448,7 +447,10 @@
     "test:integration": "vscode-test",
     "test": "npm run test:unit",
     "package": "vsce package",
-    "publish": "vsce publish"
+    "publish": "vsce publish",
+    "compile:integration": "tsc -p tsconfig.integration.json",
+    "pretest:integration": "npm run compile && npm run compile:integration",
+    "baseline:phase0": "npm run compile && node scripts/phase0-baseline.cjs"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
