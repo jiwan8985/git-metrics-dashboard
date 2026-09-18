@@ -43,7 +43,7 @@ describe('GitAnalyzer', () => {
 
         it('should handle binary files (- instead of number)', () => {
             const gitOutput = [
-                'abc123|Author|2025-01-01 12:00:00 +0900|Add binary',
+                'abcdef1234567890abcdef1234567890abcdef12|Author|2025-01-01 12:00:00 +0900|Add binary',
                 '-\t-\timages/icon.png',
                 '10\t5\tsrc/index.ts'
             ].join('\n');
@@ -58,11 +58,29 @@ describe('GitAnalyzer', () => {
         });
 
         it('should handle commit messages containing pipe characters', () => {
-            const gitOutput = 'abc123|Author|2025-01-01 12:00:00 +0900|fix: handle a|b edge case\n5\t2\tsrc/util.ts';
+            const gitOutput = 'abcdef1234567890abcdef1234567890abcdef12|Author|2025-01-01 12:00:00 +0900|fix: handle a|b edge case\n5\t2\tsrc/util.ts';
             // @ts-ignore
             const result = analyzer.parseGitLog(gitOutput);
             expect(result).toHaveLength(1);
             expect(result[0].message).toBe('fix: handle a|b edge case');
+        });
+
+        it('should not mistake a numstat line for a commit header when the filename contains a pipe', () => {
+            // A tracked filename with a literal '|' (legal on Linux/macOS) must not be
+            // confused with the "40-hex-hash|..." commit header format.
+            const gitOutput = [
+                'abcdef1234567890abcdef1234567890abcdef12|Author|2025-01-01 12:00:00 +0900|first commit',
+                '3\t1\tsrc/weird|name.ts',
+                '5\t0\tsrc/normal.ts'
+            ].join('\n');
+
+            // @ts-ignore
+            const result = analyzer.parseGitLog(gitOutput);
+            expect(result).toHaveLength(1);
+            expect(result[0].files).toContain('src/weird|name.ts');
+            expect(result[0].files).toContain('src/normal.ts');
+            expect(result[0].insertions).toBe(8);
+            expect(result[0].deletions).toBe(1);
         });
     });
 

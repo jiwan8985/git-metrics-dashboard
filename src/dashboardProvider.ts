@@ -1216,6 +1216,81 @@ export class DashboardProvider {
             color: var(--text-muted);
             font-size: 18px;
         }
+
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            background: color-mix(in srgb, var(--bg-color) 82%, transparent);
+            backdrop-filter: blur(2px);
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+
+        .loading-overlay.visible {
+            display: flex;
+            opacity: 1;
+        }
+
+        .loading-spinner {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--primary-color);
+            animation: spin 0.7s linear infinite;
+        }
+
+        .loading-text {
+            color: var(--text-muted);
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 스크롤 가능한 패널의 슬림 스크롤바 (VS Code 웹뷰는 Chromium 기반이라 webkit 스크롤바 안전하게 사용 가능) */
+        .author-list::-webkit-scrollbar,
+        .file-list::-webkit-scrollbar,
+        .file-type-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .author-list::-webkit-scrollbar-track,
+        .file-list::-webkit-scrollbar-track,
+        .file-type-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .author-list::-webkit-scrollbar-thumb,
+        .file-list::-webkit-scrollbar-thumb,
+        .file-type-list::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 999px;
+        }
+
+        .author-list::-webkit-scrollbar-thumb:hover,
+        .file-list::-webkit-scrollbar-thumb:hover,
+        .file-type-list::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-color);
+        }
+
+        /* 키보드 포커스 표시 (접근성 폴리시) */
+        .btn:focus-visible,
+        .focus-file:focus-visible,
+        select:focus-visible,
+        input:focus-visible,
+        .file-link:focus-visible {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
         
         .stats-highlight {
             color: var(--success-color);
@@ -1805,6 +1880,10 @@ export class DashboardProvider {
     </style>
 </head>
 <body class="${currentTheme}-theme">
+    <div id="loading-overlay" class="loading-overlay" aria-hidden="true">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">새로고침 중...</div>
+    </div>
     <div class="header">
         <h1 class="title">Git Metrics Dashboard</h1>
         <div class="controls">
@@ -1931,7 +2010,7 @@ export class DashboardProvider {
 
     <div class="compact-summary">
         <div class="summary-chip"><span>최고 기록</span><strong>${Math.max(...Object.values(metrics.dailyCommits), 0)} / day</strong></div>
-        <div class="summary-chip"><span>🥇 TOP 기여자</span><strong>${metrics.topAuthor} (${metrics.authorStats[0]?.commits || 0})</strong></div>
+        <div class="summary-chip"><span>🥇 TOP 기여자</span><strong>${this.escapeHtml(metrics.topAuthor)} (${metrics.authorStats[0]?.commits || 0})</strong></div>
         <div class="summary-chip"><span>주력 언어</span><strong>${metrics.topFileType}</strong></div>
         <div class="summary-chip"><span>➕ 추가 라인</span><strong>+${(metrics.totalInsertions || 0).toLocaleString()}</strong></div>
         <div class="summary-chip"><span>➖ 삭제 라인</span><strong>-${(metrics.totalDeletions || 0).toLocaleString()}</strong></div>
@@ -2051,20 +2130,20 @@ export class DashboardProvider {
             ${metrics.authorStats.length >= 2 ? `
             <div class="podium-place">
                 <div class="podium-medal">🥈</div>
-                <div class="podium-name">${metrics.authorStats[1].name}</div>
+                <div class="podium-name">${this.escapeHtml(metrics.authorStats[1].name)}</div>
                 <div class="podium-commits">${metrics.authorStats[1].commits} commits</div>
                 <div class="podium-bar silver"></div>
             </div>` : ''}
             <div class="podium-place">
                 <div class="podium-medal">🥇</div>
-                <div class="podium-name">${metrics.authorStats[0].name}</div>
+                <div class="podium-name">${this.escapeHtml(metrics.authorStats[0].name)}</div>
                 <div class="podium-commits">${metrics.authorStats[0].commits} commits</div>
                 <div class="podium-bar gold"></div>
             </div>
             ${metrics.authorStats.length >= 3 ? `
             <div class="podium-place">
                 <div class="podium-medal">🥉</div>
-                <div class="podium-name">${metrics.authorStats[2].name}</div>
+                <div class="podium-name">${this.escapeHtml(metrics.authorStats[2].name)}</div>
                 <div class="podium-commits">${metrics.authorStats[2].commits} commits</div>
                 <div class="podium-bar bronze"></div>
             </div>` : ''}
@@ -2081,7 +2160,7 @@ export class DashboardProvider {
                             <div class="author-info">
                                 <div class="author-rank">${author.rank}</div>
                                 <div class="author-details">
-                                    <div class="author-name">👤 ${author.name}</div>
+                                    <div class="author-name">👤 ${this.escapeHtml(author.name)}</div>
                                     <div class="author-meta">
                                         ${author.commits} commits • ${author.files} files • 
                                         +${author.insertions}/-${author.deletions} lines
@@ -2310,13 +2389,20 @@ export class DashboardProvider {
         }
         
         // 컨트롤 함수들
+        function showLoadingOverlay() {
+            const overlay = document.getElementById('loading-overlay');
+            if (overlay) { overlay.classList.add('visible'); }
+        }
+
         function refresh() {
+            showLoadingOverlay();
             vscode.postMessage({
                 command: 'refresh'
             });
         }
 
         function changePeriod(days) {
+            showLoadingOverlay();
             // 버튼 활성화 상태 변경
             document.querySelectorAll('.btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
@@ -2346,6 +2432,7 @@ export class DashboardProvider {
             document.querySelectorAll('.btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById('custom-range-toggle').classList.add('active');
 
+            showLoadingOverlay();
             vscode.postMessage({
                 command: 'changeRange',
                 days: days
@@ -2353,6 +2440,7 @@ export class DashboardProvider {
         }
 
         function changeBranch(branch) {
+            showLoadingOverlay();
             vscode.postMessage({
                 command: 'changeBranch',
                 branch: branch || undefined

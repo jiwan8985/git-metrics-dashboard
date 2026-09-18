@@ -39,6 +39,7 @@ vsc-extension-quickstart.md
 CLAUDE.md
 AGENTS.md
 docs/**
+.github/**
 
 # VSIX artifacts
 *.vsix

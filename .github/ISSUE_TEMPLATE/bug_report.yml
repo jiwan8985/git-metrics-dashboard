@@ -1,0 +1,68 @@
+name: Bug Report
+description: Something in the dashboard, export, or a command isn't working as expected.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A clear description of the bug. Screenshots help a lot.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open a workspace with a Git repository
+        2. Run "Git Metrics: Open Dashboard"
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: false
+
+  - type: input
+    id: extension-version
+    attributes:
+      label: Extension version
+      description: Command Palette → "Extensions: Show Installed Extensions" → Git Metrics Dashboard
+      placeholder: "0.3.0"
+    validations:
+      required: true
+
+  - type: input
+    id: vscode-version
+    attributes:
+      label: VS Code version
+      description: Help → About (or `code --version`)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      options:
+        - Windows
+        - macOS
+        - Linux
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Console errors (if any)
+      description: >
+        Open the dashboard, then Command Palette → "Developer: Toggle Developer Tools" → Console tab.
+        Paste any errors mentioning `gitMetrics` or this extension.
+      render: shell
+    validations:
+      required: false

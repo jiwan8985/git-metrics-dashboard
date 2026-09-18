@@ -8,6 +8,13 @@ module.exports = {
       show: jest.fn(),
       clear: jest.fn(),
     })),
+    activeColorTheme: { kind: 1 },
+  },
+  ColorThemeKind: {
+    Light: 1,
+    Dark: 2,
+    HighContrast: 3,
+    HighContrastLight: 4,
   },
   workspace: {
     workspaceFolders: [

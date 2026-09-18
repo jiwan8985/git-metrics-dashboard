@@ -3,7 +3,7 @@
 **Turn your Git history into a repository health score** — risk detection, refactor radar, contributor analytics, and exportable team reports. No login. No cloud upload. Local-first.
 
 [![Install in VS Code](https://img.shields.io/badge/Install%20in-VS%20Code-007ACC?logo=visualstudiocode&logoColor=white)](vscode:extension/jiwan-dev.git-metrics-dashboard)
-![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)
+![Version](https://img.shields.io/badge/version-0.3.1-blue.svg)
 ![VS Code](https://img.shields.io/badge/VS%20Code-1.85.0+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-yellow.svg)
 ![Languages](https://img.shields.io/badge/UI%20languages-4-brightgreen.svg)
@@ -251,13 +251,9 @@ Run **Git Metrics: Run Windows Troubleshooter** from the Command Palette for an 
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/my-feature`
-3. Commit your changes: `git commit -m 'feat: add my feature'`
-4. Push: `git push origin feature/my-feature`
-5. Open a Pull Request
+See [CONTRIBUTING.md](https://github.com/jiwan8985/git-metrics-dashboard/blob/main/CONTRIBUTING.md) for local setup, build/test commands, and PR guidelines.
 
-Bug reports and feature requests: [GitHub Issues](https://github.com/jiwan8985/git-metrics-dashboard/issues)
+Bug reports and feature requests: [GitHub Issues](https://github.com/jiwan8985/git-metrics-dashboard/issues/new/choose)
 
 ---
 

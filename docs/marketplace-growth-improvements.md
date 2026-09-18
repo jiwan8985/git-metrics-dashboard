@@ -195,7 +195,7 @@ Twitter intent, Weekly Brief에 Marketplace attribution footer 삽입 등, CHANG
 - [x] 리뷰 프롬프트를 배지 언락 시점에도 트리거 (P1-5)
 - [x] ~~`publish.yml`에 버전/체인지로그 동기화 게이트 추가 (P3-3)~~ — 취소 (GitHub Actions 미사용 결정)
 - [x] ~~`ci.yml`에 VSIX 패키징 드라이런 추가 (P3-2)~~ — 취소 (GitHub Actions 미사용 결정, 워크플로 삭제됨)
-- [ ] 이슈 템플릿 + `CONTRIBUTING.md` 추가 (P3-4)
+- [x] 이슈 템플릿 + `CONTRIBUTING.md` 추가 (P3-4)
 - [x] Export/Copy 산출물 전체에 attribution footer 일관 적용 점검 (P2-1) — 2건 발견 및 수정(아래 9번 참고), 나머지는 이미 일관 적용되어 있었음을 확인
 - [x] `shareWithTeam` 노출 강화 (P2-2) — 탐색기 우클릭 메뉴에 추가
 - [x] `copyReadmeBadge` 가시성 (P2-3) — README P0 갱신으로 이미 반영됨, 커맨드 팔레트는 기본 노출이라 추가 조치 불필요
@@ -391,3 +391,69 @@ Twitter intent, Weekly Brief에 Marketplace attribution footer 삽입 등, CHANG
 - **웹뷰 실제 렌더링 결과** — 이 세션에서는 정적 코드만 검토했고 브라우저/Extension Host에서 직접 실행해
   보지 않았습니다. P4 항목 착수 전 반드시 실행 확인 필요.
 - **경쟁 확장(GitLens, Git Graph, Git History 등) 대비 상세 포지셔닝 비교** — 요청 시 별도로 진행 가능.
+
+---
+
+## 13. 이슈 템플릿/CONTRIBUTING.md 추가 + 정확성(보안) 리뷰 (5번째 라운드)
+
+사용자가 "분석하고 추가/수정 필요한 부분 있으면 개발해줘"라고 요청. 이번 라운드까지는 전부 마켓플레이스
+포지셔닝/성장 관점이었고 **실제 코드 정확성(버그) 리뷰는 한 번도 하지 않았다는 점**을 확인한 뒤 두 갈래로 진행.
+
+**P3-4 완료 — 이슈 템플릿 + `CONTRIBUTING.md`**
+- `.github/ISSUE_TEMPLATE/bug_report.yml`, `feature_request.yml`(GitHub YAML 이슈 폼, 필수 필드/드롭다운 포함),
+  `config.yml`(빈 이슈 비활성화 + 마켓플레이스 리뷰로 안내하는 contact link) 추가.
+- `CONTRIBUTING.md` 추가 — 빌드/테스트 명령어, `escapeHtml` 규칙, local-first 원칙 유지 안내 포함.
+
+**정확성 리뷰 — 실제 발견된 보안 버그 수정**
+백그라운드 서브에이전트로 `gitAnalyzer.ts`/`dashboardProvider.ts`/`reportGenerator.ts`/
+`repositoryIntelligence.ts`/`badgeSystem.ts`/`extension.ts`를 정독 리뷰한 결과, 다음 실사용자가 겪을 수 있는
+버그를 발견하고 즉시 수정:
+
+1. **저장형 XSS — 대시보드 작성자명 미이스케이프 (High)**: `dashboardProvider.ts`의 TOP 3 기여자 포디움
+   (podium-name × 3곳), 개발자 순위 리스트(author-name), 요약 칩의 TOP 기여자(topAuthor) — 총 5곳이
+   `author.name`을 `escapeHtml()` 없이 그대로 HTML에 삽입하고 있었음. `git config user.name` + 커밋 한 번으로
+   누구나 조작 가능한 값이라 실제 공격 경로. 5곳 모두 `this.escapeHtml()` 적용.
+2. **저장형 XSS — 내보낸 HTML 리포트 (High)**: `reportGenerator.ts`에 `escapeHTML()` 메서드가 정의만 되어
+   있고 **어디서도 호출되지 않는 죽은 코드**였음(`@ts-ignore`로 컴파일 경고만 억제된 상태). 개발자별 기여도
+   표의 작성자명, Refactor Radar의 파일 경로/사유, PR Readiness의 브랜치명, 리포트 헤더의 브랜치명/프로젝트명
+   등 Git에서 유래한 문자열이 전부 미이스케이프 상태로 HTML에 삽입되고 있었음. 이 리포트는 웹뷰 샌드박스를
+   벗어나 실제 브라우저에서 열리고 팀에 공유되는 산출물(README의 "Executive reporting" 포지셔닝)이라
+   위험도가 더 높음. 위 지점 전부에 `this.escapeHTML()` 적용.
+3. **CSV 수식 인젝션 방지 로직의 순서 버그 (Medium)**: `escapeCSV()`가 수식 인젝션 문자(`=+@-\t`)로 시작하는
+   값을 만나면 즉시 `return`해버려서, 그 뒤에 있는 쉼표/따옴표 감싸기 로직이 실행되지 않았음. 예를 들어
+   작성자명이 `-John, Doe`처럼 수식 문자로 시작하면서 쉼표도 포함하면 `'-John, Doe`로 따옴표 없이 반환되어
+   CSV 행이 추가 컬럼으로 깨짐. 조기 `return`을 제거하고 값을 변형한 뒤 이어서 따옴표 감싸기 로직을 타도록 수정.
+4. **numstat 라인 오인식 (Low)**: 커밋 헤더(`hash|author|date|message`)와 `--numstat` 라인을 `'|'` 포함
+   여부만으로 구분하고 있어서, 파일명에 리터럴 `|` 문자가 포함된 경우(Linux/macOS에서 합법) numstat 라인이
+   새 커밋 헤더로 오인식되어 해당 커밋과 다음 커밋의 데이터가 조용히 깨질 수 있었음. 판별 조건을
+   `trimmedLine.includes('|')` → `/^[0-9a-f]{40}\|/.test(trimmedLine)`(40자리 hex 해시로 시작하는지)로 변경.
+
+**회귀 테스트 추가**: `gitAnalyzer.test.ts`에 파일명에 `|`가 포함된 numstat 라인 케이스,
+`reportGenerator.test.ts`에 CSV 이스케이프(따옴표/수식+쉼표 동시 발생) 및 HTML 리포트 작성자명 XSS 케이스를
+추가(46개 테스트로 증가, 이전 43개). `src/__mocks__/vscode.js`에 `window.activeColorTheme`/`ColorThemeKind`가
+없어 `generateHTMLReport()`를 직접 테스트할 수 없던 테스트 인프라 공백도 함께 메움 — 이 공백이 바로
+`reportGenerator.ts` 커버리지가 12%에 머물러 있던 이유 중 하나였음(수정 후 25%로 상승).
+
+**검증**: `npm run compile` / `npm run lint` / `npm run test:unit` 46개 전부 통과.
+
+**참고**: 이 라운드에서 서브에이전트 하나가 지시(읽기 전용 리뷰)를 벗어나 `CONTRIBUTING.md`/이슈 템플릿을
+중복으로 편집하려 시도해 중단시키고 재실행한 일이 있었음 — 결과물은 정리(더 품질 좋은 YAML 이슈 폼은 유지,
+중복된 마크다운 템플릿은 제거)했고 코드 변경에는 영향 없음.
+
+**경쟁 확장 대비 기능 검토 + 디자인 폴리시** — 사용자에게 GitLens/Git Graph/Git History류에서 이 프로젝트
+니치(로컬 전용 헬스/분석 대시보드)에 맞는 기능 후보(코드 소유권/Bus Factor 뱃지, 파일별 히스토리 패널,
+브랜치 커밋 타임라인, 디자인 폴리시만)를 제시한 뒤 "디자인 폴리시만" 선택받음. `src/dashboardProvider.ts`에
+다음을 추가:
+- **새로고침 로딩 오버레이**: `refresh()`/`changePeriod()`/`applyCustomRange()`/`changeBranch()`는 전부
+  `webview.html`을 통째로 교체하는 방식이라 응답이 올 때까지(특히 대형 레포에서 git log 재분석 시간 동안)
+  아무 피드백이 없었음. 기존에 정의만 되고 마크업에서 전혀 쓰이지 않던 죽은 CSS 클래스 `.loading`을 실제
+  오버레이(`#loading-overlay` + 스피너 + "새로고침 중..." 텍스트)로 되살려 클릭 즉시 표시되도록 연결.
+- **스크롤 패널 슬림 스크롤바**: `.author-list`/`.file-list`/`.file-type-list`에 테마 색상에 맞춘
+  `::-webkit-scrollbar` 스타일 추가(VS Code 웹뷰는 Chromium 기반이라 안전하게 사용 가능).
+- **키보드 포커스 표시**: 버튼/파일 링크/select/input에 `:focus-visible` 아웃라인 추가(접근성 폴리시,
+  기존에는 전무했음).
+
+**검증**: `npm run compile` / `npm run lint` / `npm run test:unit` 46개 전부 통과. **다만 이 디자인 변경은
+Extension Development Host에서 시각적으로 직접 확인하지 못했음** — 이 세션은 VS Code GUI를 실행/캡처할 수
+없는 환경이라 CSS/마크업/JS를 코드 리뷰 수준으로만 검증함. `F5`로 Extension Development Host를 열어
+라이트/다크 테마 양쪽에서 새로고침·기간 변경·브랜치 변경 시 오버레이가 올바르게 뜨는지 직접 확인 필요.

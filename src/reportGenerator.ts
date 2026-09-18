@@ -881,7 +881,7 @@ export class ReportGenerator {
             <div class="header-layout">
                 <div class="header-main">
                     <h1>Git Metrics Report</h1>
-                    <p>${projectName} • ${options.period}일 분석 • 브랜치: ${metrics.branchStats?.currentBranch || 'N/A'} • 생성일: ${generatedAt}</p>
+                    <p>${this.escapeHTML(projectName)} • ${options.period}일 분석 • 브랜치: ${this.escapeHTML(metrics.branchStats?.currentBranch || 'N/A')} • 생성일: ${generatedAt}</p>
                     ${options.template ? `<div class="template-badge">${templateLabel[options.template] || options.template}</div>` : ''}
                 </div>
                 ${intelligence ? `
@@ -937,8 +937,8 @@ export class ReportGenerator {
             ? intelligence.focusFiles.map(file => `
                 <div class="focus-card">
                     <div class="focus-risk">Risk ${file.score}</div>
-                    <strong><code>${file.file}</code></strong>
-                    <div>${file.reason}</div>
+                    <strong><code>${this.escapeHTML(file.file)}</code></strong>
+                    <div>${this.escapeHTML(file.reason)}</div>
                 </div>
             `).join('')
             : '<p>High-risk file candidates were not detected in this period.</p>';
@@ -1008,7 +1008,7 @@ export class ReportGenerator {
         const authorRows = metrics.authorStats.slice(0, 10).map(author => `
             <tr>
                 <td><span class="badge badge-primary">${author.rank}</span></td>
-                <td><strong>${author.name}</strong></td>
+                <td><strong>${this.escapeHTML(author.name)}</strong></td>
                 <td>${author.commits}</td>
                 <td>${author.files}</td>
                 <td>
@@ -1294,7 +1294,7 @@ export class ReportGenerator {
                 <div class="pr-meta">
                     <div><span class="pr-size-badge">Size: ${pr.sizeLabel}</span></div>
                     <div style="font-size:14px;color:var(--text-muted)">
-                        <strong>${bc.targetBranch}</strong> → ${bc.baseBranch} &nbsp;·&nbsp;
+                        <strong>${this.escapeHTML(bc.targetBranch)}</strong> → ${this.escapeHTML(bc.baseBranch)} &nbsp;·&nbsp;
                         ${bc.filesChanged} files &nbsp;·&nbsp;
                         +${bc.insertions}/-${bc.deletions} lines &nbsp;·&nbsp;
                         ${bc.ahead} commits ahead
@@ -1757,11 +1757,12 @@ ${metrics.branchComparison ? `| Base 비교 | ${metrics.branchComparison.targetB
     private escapeCSV(value: any): string {
         if (value === null || value === undefined) {return '';}
 
-        const str = String(value).trim();
+        let str = String(value).trim();
 
-        // 수식 인젝션 문자로 시작하면 단일 따옴표 추가
+        // 수식 인젝션 문자로 시작하면 단일 따옴표 추가 (아래 따옴표/쉼표 감싸기 로직이
+        // 이 접두사가 붙은 문자열에도 마저 적용되도록 return하지 않고 이어서 처리)
         if (/^[=+@\-\t]/.test(str)) {
-            return `'${str}`;
+            str = `'${str}`;
         }
 
         // 큰따옴표 내부의 큰따옴표를 이스케이프
@@ -1779,15 +1780,13 @@ ${metrics.branchComparison ? `| Base 비교 | ${metrics.branchComparison.targetB
 
     /**
      * HTML 특수 문자 이스케이프 (XSS 방지)
-     * 현재는 CSV 리포트에서 주로 사용되며, 향후 HTML 리포트 개선 시 더 광범위하게 활용 예정
+     * 커밋 작성자명, 브랜치명, 파일 경로 등 Git 저장소 데이터에서 유래한 값은
+     * 임의의 문자를 포함할 수 있으므로 HTML 리포트에 삽입하기 전 반드시 이 메서드를 거친다.
      */
-    // @ts-ignore - 향후 HTML 리포트에서 사용 예정
-     
     private escapeHTML(value: any): string {
         if (value === null || value === undefined) {return '';}
 
         const str = String(value);
-        // 기본적인 HTML 이스케이프 (XSS 방지용)
         return str
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
@@ -1795,9 +1794,4 @@ ${metrics.branchComparison ? `| Base 비교 | ${metrics.branchComparison.targetB
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#x27;');
     }
-
-    /**
-     * 주석: escapeHTML 메서드는 HTML 리포트에서 사용자 입력을 안전하게 처리하기 위해
-     * 유지되고 있습니다. 현재는 CSV에서 주로 사용 중이며, HTML 리포트 개선 시 활용됩니다.
-     */
 }
